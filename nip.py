@@ -1,15 +1,16 @@
 import os
 import json
 import difflib
+import tkinter as tk
+from tkinter import filedialog, messagebox, scrolledtext
 
-SNAPSHOT_FILE = ".snapshot.json"
+SNAPSHOT_FILE = ".nip_snapshot.json"
 IGNORE_LIST = ["build", "dist", ".git", "node_modules", "__pycache__"]
 
 
 def get_all_files(directory):
     files = {}
     for root, _, filenames in os.walk(directory):
-        # Skip ignored directories
         if any(ignored in root for ignored in IGNORE_LIST):
             continue
         for filename in filenames:
@@ -24,7 +25,7 @@ def get_all_files(directory):
                         "mtime": os.path.getmtime(path)
                     }
             except Exception:
-                pass  # skip unreadable files
+                pass
     return files
 
 
@@ -49,10 +50,7 @@ def diff_files(old, new):
 
 def format_output(old_snapshot, new_snapshot):
     output = []
-    sorted_paths = sorted(new_snapshot.items(), key=lambda x: -x[1].get("mtime", 0))
-    sorted_paths = [p[0] for p in sorted_paths]
     all_paths = set(old_snapshot.keys()) | set(new_snapshot.keys())
-
     sorted_all = sorted(all_paths, key=lambda p: -new_snapshot.get(p, {}).get("mtime", 0))
 
     for path in sorted_all:
@@ -76,15 +74,49 @@ def format_output(old_snapshot, new_snapshot):
     return "\n".join(output)
 
 
+class NipGUI:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("NIP - Not-Important-Pseudo-git")
+        self.text_area = scrolledtext.ScrolledText(root, wrap=tk.WORD, width=100, height=40)
+        self.text_area.pack(padx=10, pady=10)
+
+        button_frame = tk.Frame(root)
+        button_frame.pack(pady=5)
+
+        tk.Button(button_frame, text="Choose Folder", command=self.choose_folder).pack(side=tk.LEFT, padx=5)
+        tk.Button(button_frame, text="Copy Output", command=self.copy_output).pack(side=tk.LEFT, padx=5)
+        tk.Button(button_frame, text="Undo Snapshot", command=self.undo_snapshot).pack(side=tk.LEFT, padx=5)
+
+        self.folder_path = None
+
+    def choose_folder(self):
+        self.folder_path = filedialog.askdirectory()
+        if self.folder_path:
+            old_snapshot = load_snapshot()
+            new_snapshot = get_all_files(self.folder_path)
+            result = format_output(old_snapshot, new_snapshot)
+            self.text_area.delete(1.0, tk.END)
+            self.text_area.insert(tk.END, result)
+            save_snapshot(new_snapshot)
+
+    def copy_output(self):
+        self.root.clipboard_clear()
+        self.root.clipboard_append(self.text_area.get(1.0, tk.END))
+        messagebox.showinfo("Copied", "Output copied to clipboard.")
+
+    def undo_snapshot(self):
+        if os.path.exists(SNAPSHOT_FILE):
+            os.remove(SNAPSHOT_FILE)
+            messagebox.showinfo("Undo", "Snapshot removed. Run again to re-capture.")
+        else:
+            messagebox.showinfo("Undo", "No snapshot file to remove.")
+
+
 def main():
-    directory = input("Enter the directory to scan: ").strip()
-    old_snapshot = load_snapshot()
-    new_snapshot = get_all_files(directory)
-
-    result = format_output(old_snapshot, new_snapshot)
-    print("\n" + result)
-
-    save_snapshot(new_snapshot)
+    root = tk.Tk()
+    app = NipGUI(root)
+    root.mainloop()
 
 
 if __name__ == "__main__":
