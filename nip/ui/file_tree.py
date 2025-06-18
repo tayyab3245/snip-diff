@@ -1,89 +1,104 @@
+"""
+Checkable file-system tree view
+-------------------------------
+
+• No longer relies on Qt.ItemIsTristate (removed in Qt 6.4)
+• Tri-state is handled in Python so it works on all PySide6 builds.
+"""
+
+from __future__ import annotations
+
 import os
 from typing import Dict, Set
 
 from PySide6.QtCore import Qt, QModelIndex
-from PySide6.QtGui import QGuiApplication
 from PySide6.QtWidgets import QFileSystemModel, QTreeView, QMessageBox
 
 
+# ----------------------------------------------------------------------
 class CheckableFSModel(QFileSystemModel):
-    """
-    QFileSystemModel where every row has a tri-state checkbox.
-    We store state per QModelIndex in self._state.
-    """
+    """QFileSystemModel where every index is user-checkable."""
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._state: Dict[int, Qt.CheckState] = {}
+        # key = absolute path, value = Qt.CheckState
+        self._state: Dict[str, Qt.CheckState] = {}
+    # public helper – wipe old selections --------------------------------
+    def clear_states(self):
+        """Remove **all** remembered check-boxes (called when root changes)."""
+        self._state.clear()
 
-    # ---------- helpers --------------------------------------------------
-    def _index_id(self, idx: QModelIndex) -> int:
-        """A stable int key for QModelIndex (can't hash index directly)."""
-        return idx.internalId()
+    # ---------- helpers -------------------------------------------------
+    def _path(self, idx: QModelIndex) -> str:
+        return self.filePath(idx)
 
-    # ---------- Qt overrides ---------------------------------------------
-    def flags(self, idx):
-        return super().flags(idx) | Qt.ItemIsUserCheckable | Qt.ItemIsTristate
+    # ---------- Qt overrides -------------------------------------------
+    def flags(self, idx: QModelIndex):
+        # Leave out ItemIsTristate; we simulate tri-state ourselves.
+        return super().flags(idx) | Qt.ItemIsUserCheckable
 
-    def data(self, idx, role):
+    def data(self, idx: QModelIndex, role):
         if role == Qt.CheckStateRole:
-            return self._state.get(self._index_id(idx), Qt.Unchecked)
+            return self._state.get(self._path(idx), Qt.Unchecked)
         return super().data(idx, role)
 
-    def setData(self, idx, value, role):
+    def setData(self, idx: QModelIndex, value, role):
         if role != Qt.CheckStateRole:
             return super().setData(idx, value, role)
 
+        # 1) apply to this index & all children
         self._set_state_recursive(idx, value)
-        self._update_parent_state(idx)
+
+        # 2) update ancestors so parents show Checked / PartiallyChecked / Unchecked
+        self._refresh_ancestors(idx.parent())
+
+        self.dataChanged.emit(idx, idx.siblingAtColumn(0))
         return True
 
-    # ---------- state propagation helpers --------------------------------
+    # ---------- state propagation --------------------------------------
     def _set_state_recursive(self, idx: QModelIndex, state: Qt.CheckState):
-        """Apply `state` to idx and all children."""
-        self._state[self._index_id(idx)] = state
-        for r in range(self.rowCount(idx)):
-            child = self.index(r, 0, idx)
+        """Apply `state` to idx and all its children."""
+        self._state[self._path(idx)] = state
+        for row in range(self.rowCount(idx)):
+            child = self.index(row, 0, idx)
             self._set_state_recursive(child, state)
-        self.dataChanged.emit(idx, idx)
 
-    def _update_parent_state(self, idx: QModelIndex):
-        """Bubble changes upward so parents become Checked / PartiallyChecked."""
-        parent = idx.parent()
-        if not parent.isValid():
-            return
+    def _refresh_ancestors(self, parent: QModelIndex):
+        """Bubble changes upward so ancestors get correct mixed state."""
+        while parent.isValid():
+            states = {
+                self._state.get(self._path(self.index(r, 0, parent)), Qt.Unchecked)
+                for r in range(self.rowCount(parent))
+            }
+            if states == {Qt.Checked}:          # all checked
+                new_state = Qt.Checked
+            elif states == {Qt.Unchecked}:      # none checked
+                new_state = Qt.Unchecked
+            else:                               # mixture
+                new_state = Qt.PartiallyChecked
+            self._state[self._path(parent)] = new_state
+            parent = parent.parent()
 
-        states = {self._state.get(self._index_id(self.index(r, 0, parent)), Qt.Unchecked)
-                  for r in range(self.rowCount(parent))}
-
-        new_state = Qt.Checked if states == {Qt.Checked} else (
-            Qt.Unchecked if states == {Qt.Unchecked} else Qt.PartiallyChecked
-        )
-
-        self._state[self._index_id(parent)] = new_state
-        self.dataChanged.emit(parent, parent)
-        self._update_parent_state(parent)
-
-    # ---------- API ------------------------------------------------------
+    # ---------- public API ---------------------------------------------
     def checked_paths(self, root_path: str) -> Set[str]:
         """
-        Return a set of *relative* paths (files or directories) that are Checked.
+        Return a set of *relative* paths that are fully Checked.
+        Directories marked PartiallyChecked are ignored (their children
+        decide individually).
         """
-        paths: Set[str] = set()
-        for idx_id, state in self._state.items():
+        rel: Set[str] = set()
+        for abs_path, state in self._state.items():
             if state != Qt.Checked:
                 continue
-            idx = self.index(idx_id)
-            if not idx.isValid():
-                continue
-            abs_path = self.filePath(idx)
-            rel_path = os.path.relpath(abs_path, root_path)
-            paths.add(rel_path)
-        return paths
+            rel.add(os.path.relpath(abs_path, root_path))
+        return rel
 
 
+# ----------------------------------------------------------------------
 class FileTree(QTreeView):
     """
-    Wrapper around CheckableFSModel to expose a cleaner API to MainWindow.
+    Thin wrapper around CheckableFSModel to expose
+    `set_root()`, `checked_paths()`, and `clear_snapshot()`.
     """
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -91,44 +106,52 @@ class FileTree(QTreeView):
         self.setModel(self._model)
         self.setHeaderHidden(True)
         self.setSelectionMode(QTreeView.ExtendedSelection)
-        # Hide size / type / modified columns
+        # A plain left-click now toggles the check mark for that row
+        self.clicked.connect(self._toggle_check)
+         
+        # Hide columns Size | Type | Date Modified  ← was lost
         for col in range(1, 4):
             self.hideColumn(col)
 
-        self._root_path: str | None = None
+        self._root_path: str | None = None        
 
-    # --------------------------------------------------
+    # toggle helper ----------------------------------------------------
+    def _toggle_check(self, idx: QModelIndex):
+        # Ignore clicks in columns > 0 (they’re hidden anyway)
+        if idx.column() != 0:
+            return
+        current = self._model.data(idx, Qt.CheckStateRole)
+        new_state = Qt.Unchecked if current == Qt.Checked else Qt.Checked
+        self._model.setData(idx, new_state, Qt.CheckStateRole)
+
+    # ---- basic actions -------------------------------------------------
+    def set_root(self, path: str):
+        if not path:
+            return
+        self._root_path = path
+        self._model.clear_states()          # ← forget previous selections
+        self._model.setRootPath(path)
+        self.setRootIndex(self._model.index(path))
+
     @property
     def root_path(self) -> str:
         if not self._root_path:
             raise RuntimeError("Root path not set")
         return self._root_path
 
-    def set_root(self, path: str):
-        """Called by toolbar when the user chooses a folder."""
-        if not path:
-            return
-        self._root_path = path
-        self._model.setRootPath(path)
-        self.setRootIndex(self._model.index(path))
-
-    # --------------------------------------------------
     def checked_paths(self) -> Set[str]:
-        """Return selected paths *relative* to root, or empty set if none."""
         if not self._root_path:
             return set()
         return self._model.checked_paths(self._root_path)
 
-    # --------------------------------------------------
+    # ---- undo snapshot helper -----------------------------------------
     def clear_snapshot(self):
-        """Remove .nip_snapshot.json in the selected root folder."""
-        from nip.config import SNAPSHOT_FILE
+        from nip.config import SNAPSHOT_FILE  # local import avoids cycle
         if not self._root_path:
             return
-
-        target = os.path.join(self._root_path, SNAPSHOT_FILE)
-        if os.path.exists(target):
-            os.remove(target)
+        snap = os.path.join(self._root_path, SNAPSHOT_FILE)
+        if os.path.exists(snap):
+            os.remove(snap)
             QMessageBox.information(self, "Undo", "Snapshot removed.")
         else:
             QMessageBox.information(self, "Undo", "No snapshot to remove.")

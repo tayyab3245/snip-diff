@@ -29,7 +29,7 @@ def get_all_files(
 
             if _should_skip(rel_path.split(os.sep), ignore_set):
                 continue
-            if include_paths and not any(
+            if include_paths is not None and not any(
                 rel_path == p or rel_path.startswith(f"{p}{os.sep}")
                 for p in include_paths
             ):
