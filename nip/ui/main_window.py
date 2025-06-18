@@ -1,5 +1,6 @@
 import sys
 from typing import Set, Optional
+from PySide6.QtCore import Qt, QTimer                 # +QTimer
 
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QMessageBox,
@@ -42,6 +43,10 @@ class MainWindow(QMainWindow):
         self.toolbar.export.connect(self.preview.export_to_file)
 
         self._worker: DiffWorker | None = None   # keep reference!
+        self._watcher = None               # LiveWatcher after first Run
+        self._debounce = QTimer(singleShot=True)
+        self._debounce.setInterval(300)    # ms – lump rapid saves together
+        self._debounce.timeout.connect(self._start_diff)
 
     # ------------------------------------------------------------------
     def _start_diff(self) -> None:
@@ -69,6 +74,14 @@ class MainWindow(QMainWindow):
         self._worker.finished.connect(self._worker.deleteLater)
         self._worker.finished.connect(lambda _=None: setattr(self, "_worker", None))
         self._worker.start()
+
+        # one-time setup – start filesystem watcher after first Run OK
+        if self._watcher is None:
+            from nip.core.worker import LiveWatcher
+            self._watcher = LiveWatcher(
+                self.tree.root_path,
+                lambda: self._debounce.start()      # debounce rapid events
+            )
 
     def _on_diff_done(self, text: str) -> None:
         self.preview.show_text(text)
