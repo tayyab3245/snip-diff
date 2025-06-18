@@ -39,8 +39,7 @@ class MainWindow(QMainWindow):
         self.toolbar.choose_folder.connect(self.tree.set_root)
         self.toolbar.run.connect(self._start_diff)
         self.toolbar.copy.connect(self.preview.copy_all)
-        self.toolbar.undo.connect(self.tree.clear_snapshot)
-        self.toolbar.export.connect(self.preview.export_to_file)
+        # Undo / Export buttons were removed
 
         self._worker: DiffWorker | None = None   # keep reference!
         self._watcher = None               # LiveWatcher after first Run

@@ -105,10 +105,22 @@ class FileTree(QTreeView):
         self._model = CheckableFSModel()
         self.setModel(self._model)
         self.setHeaderHidden(True)
-        self.setSelectionMode(QTreeView.ExtendedSelection)
+        self.setSelectionMode(QTreeView.SingleSelection)
         # A plain left-click now toggles the check mark for that row
         self.clicked.connect(self._toggle_check)
-         
+        # subtle opacity flash on click (safe; uses Qt property)
+        from PySide6.QtWidgets import QGraphicsOpacityEffect
+        from PySide6.QtCore    import QPropertyAnimation, QEasingCurve
+
+        eff = QGraphicsOpacityEffect(self)
+        self.setGraphicsEffect(eff)
+
+        self._flash = QPropertyAnimation(eff, b"opacity", self)
+        self._flash.setDuration(120)
+        self._flash.setStartValue(0.6)
+        self._flash.setEndValue(1.0)
+        self._flash.setEasingCurve(QEasingCurve.InOutQuad)
+
         # Hide columns Size | Type | Date Modified  ← was lost
         for col in range(1, 4):
             self.hideColumn(col)
@@ -123,6 +135,9 @@ class FileTree(QTreeView):
         current = self._model.data(idx, Qt.CheckStateRole)
         new_state = Qt.Unchecked if current == Qt.Checked else Qt.Checked
         self._model.setData(idx, new_state, Qt.CheckStateRole)
+        # fire the click flash
+        self._flash.stop()
+        self._flash.start()
 
     # ---- basic actions -------------------------------------------------
     def set_root(self, path: str):

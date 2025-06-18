@@ -16,6 +16,7 @@ class NipToolBar(QToolBar):
 
     def __init__(self, parent=None):
         super().__init__("Actions", parent)
+        self.setObjectName("toolbar")
 
         # Make sure text is always visible (no icons supplied)
         self.setToolButtonStyle(Qt.ToolButtonTextOnly)
@@ -41,19 +42,12 @@ class NipToolBar(QToolBar):
         act_copy.triggered.connect(self.copy)
         self.addAction(act_copy)
 
-        # Undo Snapshot ───────────────────────────────────────────────
-        act_undo = QAction("Undo Snapshot", self)
-        act_undo.setToolTip("Delete .nip_snapshot.json in the root folder")
-        act_undo.triggered.connect(self.undo)
-        self.addAction(act_undo)
-
-        # Export diff ────────────────────────────────────────────────
-        act_export = QAction("Export", self)
-        act_export.setShortcut("Ctrl+S")
-        act_export.setToolTip("Save diff to a text file (Ctrl+S)")
-        act_export.triggered.connect(self.export)
-        self.addAction(act_export)
-
+        # Search (Ctrl+F) ─────────────────────────────────────────────
+        act_find = QAction("Find", self)
+        act_find.setShortcut("Ctrl+F")
+        act_find.setToolTip("Search in diff (Ctrl+F)")
+        act_find.triggered.connect(lambda: self.parent().preview.start_search())
+        self.addAction(act_find)
     # ─────────────────────────────────────────────────────────────────
     def _on_choose(self):
         folder = QFileDialog.getExistingDirectory(self.parent(), "Select folder")
