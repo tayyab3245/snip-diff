@@ -10,76 +10,100 @@ This project is licensed under the MIT License. You are free to use, modify, and
 
 ## How It Works
 
-1. **Folder Selection**: Click **Choose Folder** or use `Ctrl+O` to pick a project directory.
-2. **File Tree**: A checkable tree displays all files and folders; select items to include in the diff.
-3. **Run Diff**: Click **Run** or press `F5` to generate a full unified diff using Python’s `difflib`.
-4. **Preview Panel**: View color-coded diffs with syntax highlighting (via Pygments) in a read-only panel.
-5. **Search & Copy**:
-
-   * Press `Ctrl+F` to search within the diff (with wraparound).
-   * Click **Copy Output** or press `Ctrl+C` to copy the entire diff to the clipboard.
-6. **Live Reload**: After the first run, NIP-Diff watches for file changes and auto-refreshes the diff (300 ms debounce).
+1. **Folder Selection**: Click **Choose Folder** or press `Ctrl+O` to select a project directory.
+2. **File Tree**: Browse and check the files/folders you want to include in the diff.
+3. **Run Diff**: Click **Run** or press `F5` to generate a unified diff (using Python’s `difflib`).
+4. **Preview Panel**: View color-coded diffs with VS Code–style syntax highlighting (via Pygments).
+5. **Search & Copy**: Use `Ctrl+F` to search (with wraparound) and `Ctrl+C` or **Copy Output** to copy the entire diff.
+6. **Live Reload**: After the initial run, NIP-Diff watches for changes and auto-refreshes the diff (300 ms debounce).
 
 ---
 
 ## Features
 
-* **Unified Diff**: Complete context for added, removed, and modified lines.
-* **Syntax Highlighting**: VS Code–style token coloring.
-* **Translucent UI**: Nintendo 3DS–inspired glass theme.
-* **In-View Search**: `Ctrl+F` with wraparound.
+* **Unified Diff**: Full-context diffs for added, removed, and modified lines.
+* **Syntax Highlighting**: VS Code–style token coloring with Pygments.
+* **Translucent UI**: Nintendo 3DS–inspired glass theme.
+* **In-View Search**: `Ctrl+F` search with wraparound.
 * **Clipboard Copy**: One-click full-diff copy.
 * **Live Filesystem Watcher**: Automatic updates on file changes.
 
 ---
 
+## Project Structure
+
+```
+nip-diff/              # project root
+├── requirements.txt    # dependency list (PySide6, Pygments)
+├── LICENSE             # MIT license file
+├── config/             # UI theme and defaults
+├── nip/                # main package
+│   ├── __init__.py
+│   ├── ui/             # UI components
+│   │   └── main_window.py  # entry point module
+│   └── core/           # diff logic & snapshot management
+└── README.md           # this file
+```
+
+> **Note:** There is no top-level `main.py`.  To launch the app, use the `nip.ui.main_window` module (see below).
+
 ## Prerequisites
 
 * **Python** 3.9 or later
 * **Git** (for cloning the repository)
-* **pip** (Python package installer)
-* **Virtual environment** tool (optional)
+* **pip** (package installer for Python)
+* **Virtual environment** tool (optional but recommended)
 
 ---
 
 ## Installation & Running
 
-### 1. Clone the Repository
+1. **Clone the repository** (avoids ZIP naming issues):
 
-```bash
-git clone https://github.com/your-username/nip-diff.git
-cd nip-diff
-```
+   ```bash
+   git clone https://github.com/your-username/nip-diff.git
+   cd nip-diff
+   ```
 
-### 2. Create & Activate Virtual Environment (Recommended)
+2. **Delete stale directories** (if you previously extracted a ZIP):
 
-* **macOS / Linux**
+   * **Windows (PowerShell)**
 
-  ```bash
-  python3 -m venv venv
-  source venv/bin/activate
-  ```
+     ```powershell
+     Remove-Item -Recurse -Force nip-diff-main
+     ```
+   * **macOS / Linux**
 
-* **Windows (PowerShell)**
+     ```bash
+     rm -rf nip-diff-main
+     ```
 
-  ```powershell
-  python -m venv venv
-  .\venv\Scripts\Activate.ps1
-  ```
+3. **Create and activate** a virtual environment:
 
-### 3. Install Dependencies
+   * **macOS / Linux**
 
-```bash
-pip install -r requirements.txt
-```
+     ```bash
+     python3 -m venv venv
+     source venv/bin/activate
+     ```
+   * **Windows (PowerShell)**
 
-### 4. Launch NIP-Diff
+     ```powershell
+     python -m venv venv
+     . .\venv\Scripts\Activate.ps1
+     ```
 
-```bash
-python -Xfaulthandler main.py
-```
+4. **Install dependencies**:
 
-Use the toolbar or keyboard shortcuts (`Ctrl+O`, `F5`, `Ctrl+C`, `Ctrl+F`) to interact.
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+5. **Launch NIP-Diff**:
+
+   ```bash
+   python -m nip.ui.main_window
+   ```
 
 ---
 
@@ -90,7 +114,7 @@ PySide6>=6.4
 Pygments>=2.15
 ```
 
-To update dependencies, edit `requirements.txt` and re-run:
+To update dependencies, modify `requirements.txt` and run:
 
 ```bash
 pip install -r requirements.txt
@@ -100,9 +124,9 @@ pip install -r requirements.txt
 
 ## Development Notes
 
-* **UI components**: `nip/ui/`
-* **Diff engine**: `nip/core/diff_engine.py`
-* **Snapshot storage**: `.nip_snapshot.json` (undo functionality)
+* **UI**: `nip/ui/`
+* **Diff Engine**: `nip/core/diff_engine.py`
+* **Snapshots**: `.nip_snapshot.json`
 * **Theme**: `config/theme.py`
 
 ---
