@@ -1,4 +1,4 @@
-# NIP-Diff
+# SNIP-Diff
 
 A lightweight desktop application for visually inspecting code diffs with full context. Built using **PySide6**, NIP-Diff emulates a modern Nintendo-style glass UI and delivers VS Code–style syntax highlighting for intuitive review of code changes.
 
