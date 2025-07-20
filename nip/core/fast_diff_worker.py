@@ -24,25 +24,33 @@ class FastDiffWorker(QThread):
     """Enhanced diff worker with smart caching"""
     
     finished = Signal(str)  # emits formatted diff text
-    progress = Signal(str)  # emits progress updates
+    progress = Signal(str, bool)  # emits (progress message, is_user_action)
     sections_ready = Signal(list)  # emits list of (title, content, collapsed) tuples
-    status_message = Signal(str, str)  # emits (message, type) for status overlay
+    status_message = Signal(str, str, bool)  # emits (message, type, is_user_action) for status overlay
+    operational_log = Signal(str, str)  # emits (message, level) for operational logging
     scan_completed = Signal(int, list, str)  # emits (scan_id, sections_data, cache_key) for race condition checking
 
     def __init__(self, root: str, include_paths: Optional[Set[str]], 
-                 callback: Callable[[str], None], scan_id: int = 0):
+                 callback: Callable[[str], None], scan_id: int = 0, is_user_action: bool = True):
         super().__init__()
         self._root = root
         # CRITICAL: Create immutable snapshot to prevent selection mutations during scan
         self._include_snapshot = snapshot_selection(include_paths)
         self._include = set(self._include_snapshot) if self._include_snapshot else None  # Convert back for compatibility
         self._scan_id = scan_id  # Track scan ID for race condition prevention
-        print(f"DEBUG: FastDiffWorker created with immutable selection: {self._include_snapshot}")
+        self._is_user_action = is_user_action  # Track if this is an explicit user action or background scan
+        self._cancelled = False  # Cooperative cancellation flag
+        self.operational_log.emit(f"FastDiffWorker created with immutable selection: {self._include_snapshot}", "debug")
         self.finished.connect(callback)
 
     def run(self):
         try:
-            self.progress.emit("Scanning for changes...")
+            # Early cancellation check
+            if self._cancelled:
+                return
+                
+            if self._is_user_action:
+                self.progress.emit("Scanning for changes...", True)
             
             # CRITICAL: Compute cache key BEFORE any cache operations
             # Include mode parameters that affect output - use immutable selection tuple
@@ -58,7 +66,7 @@ class FastDiffWorker(QThread):
                 include_binary=False  # Could be configurable
             )
             
-            print(f"DEBUG: Cache key computed from selection_tuple: {self._include_snapshot} -> {cache_key}")
+            self.operational_log.emit(f"Cache key computed from selection_tuple: {self._include_snapshot} -> {cache_key}", "debug")
             
             # Use cached diff engine for smart scanning with precomputed cache key
             start_time = time.time()
@@ -67,33 +75,47 @@ class FastDiffWorker(QThread):
             )
             scan_time = time.time() - start_time
             
+            # Check for cancellation after potentially long scanning operation
+            if self._cancelled:
+                return
+            
             # TEMPORARILY COMMENTED OUT: Remove early return to test if logic is blocking updates
             # if not changed_paths:
             #     print("DEBUG: No changed paths detected, returning early")
-            #     self.progress.emit("No changes detected")
+            #     self.progress.emit("No changes detected", self._is_user_action)
             #     # Emit status message instead of calling finished callback
-            #     self.status_message.emit("No changes detected since last scan", "info")
+            #     self.status_message.emit("No changes detected since last scan", "info", self._is_user_action)
             #     return
 
-            print(f"DEBUG: Found {len(changed_paths)} changed paths: {changed_paths}")
+            self.operational_log.emit(f"Found {len(changed_paths)} changed paths: {changed_paths}", "debug")
             if not changed_paths:
-                print("DEBUG: No changed paths - but continuing processing to test logic")
-            self.progress.emit(f"Found {len(changed_paths)} changed files in {scan_time:.1f}s")            # Load old snapshot for comparison, but filter it to current selection
+                self.operational_log.emit("No changed paths - but continuing processing to test logic", "debug")
+            
+            # Optimization: Avoid full rescan on mere deselection (no content changes)
+            # If selection shrank and no files inside the remaining selection changed, 
+            # we can skip expensive operations and just rebuild UI (which is now cheap with per-file sections)
+            if not changed_paths and not self._is_user_action:
+                self.operational_log.emit("Deselection detected with no content changes - using fast path", "debug")
+            
+            # Only show progress for user actions to reduce log noise in live mode
+            if self._is_user_action:
+                self.progress.emit(f"Found {len(changed_paths)} changed files in {scan_time:.1f}s", self._is_user_action)            # Load old snapshot for comparison, but filter it to current selection
             old_snapshot = cached_diff_engine._last_snapshot
             
             # CRITICAL FIX: Filter old snapshot to only include currently selected files
             # This prevents showing diffs from previously selected files
             filtered_old_snapshot = {}
-            if old_snapshot and self._include:
-                current_file_paths = set(new_files.keys())
+            if old_snapshot and self._include_snapshot:
+                # Use explicit selection snapshot instead of deriving from new_files.keys()
+                current_file_paths = set(self._include_snapshot)
                 for path in current_file_paths:
                     if path in old_snapshot:
                         filtered_old_snapshot[path] = old_snapshot[path]
                         
-                print(f"DEBUG: Snapshot filtering:")
-                print(f"  - Original old_snapshot keys: {set(old_snapshot.keys())}")
-                print(f"  - Current file paths: {current_file_paths}")
-                print(f"  - Filtered old_snapshot keys: {set(filtered_old_snapshot.keys())}")
+                self.operational_log.emit(f"Snapshot filtering:", "debug")
+                self.operational_log.emit(f"  - Original old_snapshot keys: {set(old_snapshot.keys())}", "debug")
+                self.operational_log.emit(f"  - Current selection paths: {current_file_paths}", "debug")
+                self.operational_log.emit(f"  - Filtered old_snapshot keys: {set(filtered_old_snapshot.keys())}", "debug")
             
             # Create visual sections with filtered snapshot
             sections = cached_diff_engine.create_visual_diff(
@@ -101,7 +123,8 @@ class FastDiffWorker(QThread):
             )
             
             # Generate traditional unified diff for copy functionality with filtered snapshot
-            new_snapshot = {k: v["content"] for k, v in new_files.items()}
+            allowed = set(self._include_snapshot or [])
+            new_snapshot = {k: v["content"] for k, v in new_files.items() if not allowed or k in allowed}
             unified_diff = format_output(filtered_old_snapshot, {k: v for k, v in new_files.items()})
             
             # Save ONLY the currently selected files to the snapshot  
@@ -109,35 +132,42 @@ class FastDiffWorker(QThread):
             cached_diff_engine.save_cache(new_snapshot, self._include, cache_key)
             cached_diff_engine._last_snapshot = new_snapshot
             
-            # Emit sections for visual display
+            # Emit sections for visual display - now one file per section
             sections_data = []
             for section in sections:
-                # Create content for this section
-                section_content = []
-                for file_change in section.files:
-                    if file_change.change_type == "added":
-                        section_content.append(f"+ {file_change.path}")
-                        section_content.append(file_change.content)
-                    elif file_change.change_type == "deleted":
-                        section_content.append(f"- {file_change.path}")
-                        section_content.append(file_change.old_content)
-                    elif file_change.change_type == "modified":
-                        section_content.append(f"~ {file_change.path}")
-                        # Simple before/after for now
-                        section_content.append("--- OLD ---")
-                        section_content.append(file_change.old_content[:500] + "..." if len(file_change.old_content) > 500 else file_change.old_content)
-                        section_content.append("--- NEW ---")
-                        section_content.append(file_change.content[:500] + "..." if len(file_change.content) > 500 else file_change.content)
+                # Each section now has exactly one file (per the new create_visual_diff implementation)
+                fc = section.files[0]
+                lines = []
                 
-                sections_data.append((
-                    section.title,
-                    "\n".join(section_content),
-                    section.collapsed
-                ))
+                # Use simple markers for change types
+                marker = {
+                    "added": "+",
+                    "deleted": "-", 
+                    "modified": "~",
+                    "unchanged": " "
+                }.get(fc.change_type, " ")
+                
+                lines.append(f"{marker} {fc.path}")
+                
+                if fc.change_type == "modified":
+                    lines.append("--- OLD ---")
+                    lines.append(fc.old_content)
+                    lines.append("--- NEW ---")
+                    lines.append(fc.content)
+                elif fc.change_type == "added":
+                    lines.append(fc.content)
+                elif fc.change_type == "deleted":
+                    lines.append(fc.old_content)
+                else:  # unchanged
+                    # Truncate long unchanged files to keep panel light
+                    content = fc.content[:1000] + ("..." if len(fc.content) > 1000 else "")
+                    lines.append(content)
+                
+                sections_data.append((section.title, "\n".join(lines), section.collapsed))
 
-            print(f"DEBUG: Emitting {len(sections_data)} sections for scan_id {self._scan_id}")
+            self.operational_log.emit(f"Emitting {len(sections_data)} sections for scan_id {self._scan_id}", "debug")
             for i, (title, content_preview, collapsed) in enumerate(sections_data):
-                print(f"  Section {i}: {title} (collapsed={collapsed}, content_length={len(content_preview)})")
+                self.operational_log.emit(f"  Section {i}: {title} (collapsed={collapsed}, content_length={len(content_preview)})", "debug")
             
             # Emit with scan ID and cache key for race condition checking and forced re-renders
             self.scan_completed.emit(self._scan_id, sections_data, cache_key)
@@ -146,11 +176,22 @@ class FastDiffWorker(QThread):
             self.finished.emit(unified_diff)
             
             elapsed = time.time() - start_time
-            self.progress.emit(f"Diff completed in {elapsed:.1f}s")
-            self.status_message.emit(f"Diff completed in {elapsed:.1f}s", "success")
+            
+            # Only show progress completion for user actions to reduce log noise
+            if self._is_user_action:
+                self.progress.emit(f"Diff completed in {elapsed:.1f}s", self._is_user_action)
+                self.status_message.emit(f"Diff completed in {elapsed:.1f}s", "success", self._is_user_action)
+            else:
+                # For background scans, just log operationally
+                self.operational_log.emit(f"Background diff completed in {elapsed:.1f}s", "debug")
             
         except Exception as e:
-            self.progress.emit(f"Error: {str(e)}")
-            self.status_message.emit(f"Error during diff: {str(e)}", "error")
+            # Only show error progress for user actions to reduce log noise
+            if self._is_user_action:
+                self.progress.emit(f"Error: {str(e)}", self._is_user_action)
+                self.status_message.emit(f"Error during diff: {str(e)}", "error", self._is_user_action)
+            else:
+                # For background scans, just log operationally
+                self.operational_log.emit(f"Background scan error: {str(e)}", "error")
             # Don't emit to finished for errors to prevent overwriting content
             return

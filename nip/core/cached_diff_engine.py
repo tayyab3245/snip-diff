@@ -267,53 +267,62 @@ class CachedDiffEngine:
         changed_paths: Set[str]
     ) -> List[DiffSection]:
         """
-        Create visually separated diff sections
+        Create visually separated diff sections - one section per file.
+        Shows ALL selected files (changed and unchanged) as individual expandable sections.
         """
         sections = []
         
-        # Group files by directory and type
-        file_groups = defaultdict(list)
+        # Process ALL files from current selection AND previously selected files that might be deleted
+        # Include files that existed in old snapshot but are deleted in new selection
+        all_selected_files = set(new_files.keys()) | (set(old_snapshot.keys()) - set(new_files.keys()))
         
-        # Process only changed files for performance
-        for path in changed_paths:
+        for path in sorted(all_selected_files):
             old_content = old_snapshot.get(path, "")
-            new_entry = new_files.get(path)
-            new_content = new_entry["content"] if new_entry else ""
+            new_entry = new_files.get(path)  # Use get() without default to detect None
+            new_content = new_entry.get("content", "") if new_entry is not None else ""
             
-            # Determine change type
+            # Determine change type for each file
             if not old_content and new_content:
                 change_type = "added"
+                icon = "🆕"
+                status = "Added"
+            elif old_content and new_entry is None:  # File was deleted
+                change_type = "deleted" 
+                icon = "🗑️"
+                status = "Deleted"
             elif old_content and not new_content:
-                change_type = "deleted"
+                change_type = "deleted" 
+                icon = "🗑️"
+                status = "Deleted"
             elif old_content != new_content:
                 change_type = "modified"
+                icon = "📝"
+                status = "Modified"
             else:
                 change_type = "unchanged"
+                icon = "📄"
+                status = "Unchanged"
             
-            # Group by directory
-            dir_name = os.path.dirname(path) or "Root"
-            file_groups[dir_name].append(FileChange(
+            # Create individual section for each file
+            file_change = FileChange(
                 path=path,
                 change_type=change_type,
                 content=new_content,
                 old_content=old_content
-            ))
-        
-        # Create sections for each directory
-        for dir_name, files in sorted(file_groups.items()):
-            # Count changes for section title
-            added = sum(1 for f in files if f.change_type == "added")
-            modified = sum(1 for f in files if f.change_type == "modified") 
-            deleted = sum(1 for f in files if f.change_type == "deleted")
+            )
             
-            title = f"📁 {dir_name}"
-            if added or modified or deleted:
-                title += f" (+{added} ~{modified} -{deleted})"
+            # File name with status indicator
+            filename = os.path.basename(path)
+            relative_dir = os.path.dirname(path)
+            title = f"{icon} {filename}"
+            if relative_dir:
+                title += f" ({relative_dir})"
+            title += f" - {status}"
             
             sections.append(DiffSection(
                 title=title,
-                files=files,
-                collapsed=len(files) > 10  # Auto-collapse large sections
+                files=[file_change],  # One file per section
+                collapsed=(change_type == "unchanged")  # Auto-collapse unchanged files
             ))
         
         return sections

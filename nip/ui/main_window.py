@@ -1,6 +1,7 @@
 import sys
 import os
 import time
+import logging
 from typing import Set, Optional, Tuple
 from PySide6.QtCore import Qt, QTimer                 # +QTimer
 
@@ -22,6 +23,15 @@ from nip.config           import STYLE
 def snapshot_selection(sel_set: Set[str]) -> Tuple[str, ...]:
     """Create immutable snapshot of selection to prevent mutation during scans"""
     return tuple(sorted(sel_set))
+
+
+# Configure operational logger for debug messages
+logger = logging.getLogger(__name__)
+if not logger.handlers:
+    handler = logging.StreamHandler()
+    handler.setFormatter(logging.Formatter('[%(levelname)s] %(message)s'))
+    logger.addHandler(handler)
+    logger.setLevel(logging.DEBUG)
 
 
 class MainWindow(QMainWindow):
@@ -57,7 +67,7 @@ class MainWindow(QMainWindow):
 
         # connections
         self.toolbar.choose_folder.connect(self._on_folder_selected)
-        self.toolbar.run.connect(self._start_fast_diff)  # Use fast diff by default
+        self.toolbar.run.connect(lambda: self._start_fast_diff(is_user_action=True))  # Explicit user action
         self.toolbar.copy.connect(self.preview.copy_all)
         # Connect file tree selection changes to immediate scan triggering
         self.tree.selection_changed.connect(self._on_selection_changed)
@@ -66,9 +76,10 @@ class MainWindow(QMainWindow):
         self._worker: FastDiffWorker | None = None   # Use fast worker
         self._watcher = None               # LiveWatcher after first Run
         self._latest_scan_id = 0           # Race condition guard - track latest scan request
+        self._live_scan_in_progress = False  # Track background live scans separately
         self._debounce = QTimer(singleShot=True)
         self._debounce.setInterval(300)    # ms – lump rapid saves together
-        self._debounce.timeout.connect(self._start_fast_diff)  # Use fast diff
+        self._debounce.timeout.connect(lambda: self._start_fast_diff(is_user_action=False))  # Live watch = background
 
     # ------------------------------------------------------------------
     def _on_folder_selected(self, folder_path: str):
@@ -89,20 +100,24 @@ class MainWindow(QMainWindow):
 
     def _on_selection_changed(self, new_selection):
         """Handle immediate file selection changes - trigger scan automatically"""
-        print(f"DEBUG: Main window received selection change: {new_selection}")
+        logger.debug(f"Selection changed to: {new_selection}")
         
         # Only auto-scan if we have a folder and the selection isn't empty
         if hasattr(self.tree, '_root_path') and self.tree._root_path and new_selection:
-            print(f"DEBUG: Auto-triggering scan for new selection")
-            self._start_fast_diff()
+            logger.debug("Auto-triggering background scan for new selection")
+            self._start_fast_diff(is_user_action=False)  # Background scan, no spinner
         else:
-            print(f"DEBUG: Skipping auto-scan - no folder or empty selection")
+            logger.debug("Skipping auto-scan - no folder or empty selection")
 
-    def _start_fast_diff(self) -> None:
-        """Start fast diff with intelligent caching - allows concurrent requests, discards stale results"""
+    def _start_fast_diff(self, is_user_action: bool = True) -> None:
+        """Start fast diff with intelligent caching - allows concurrent requests, discards stale results
+        
+        Args:
+            is_user_action: True for explicit user scans (show spinner), False for background scans (no spinner)
+        """
         # Stop any pending debounced scan
         if self._debounce.isActive():
-            print("DEBUG: Stopping pending debounced scan")
+            logger.debug("Stopping pending debounced scan")
             self._debounce.stop()
             
         if self.tree._root_path is None:      # property would raise, test private
@@ -110,7 +125,7 @@ class MainWindow(QMainWindow):
             return
 
         include: Set[str] = self.tree.checked_paths()
-        print(f"DEBUG: Scan triggered - selection: {include}, timestamp: {time.time()}")
+        logger.debug(f"Scan triggered - selection: {include}, user_action: {is_user_action}")
         
         if not include:               # nothing checked → show hint, abort
             QMessageBox.information(
@@ -122,29 +137,34 @@ class MainWindow(QMainWindow):
             
         # CRITICAL: Create immutable snapshot of selection to prevent mutation during scan
         current_selection = snapshot_selection(include)
-        print(f"DEBUG: Immutable selection snapshot: {current_selection}")
+        logger.debug(f"Immutable selection snapshot: {current_selection}")
         
         # Convert back to set for compatibility (but this is now a snapshot at this point in time)
         include_paths: Optional[Set[str]] = set(current_selection)
         
-        # Show progress
-        self.progress_bar.setVisible(True)
-        self.progress_bar.setRange(0, 0)  # Indeterminate progress
-        self.statusBar().showMessage("Scanning changes…", 0)
+        # Show progress only for explicit user actions
+        if is_user_action:
+            self.progress_bar.setVisible(True)
+            self.progress_bar.setRange(0, 0)  # Indeterminate progress
+            self.statusBar().showMessage("Scanning changes…", 0)
+        else:
+            # For background scans, track internally but don't show spinner
+            self._live_scan_in_progress = True
 
         # Increment scan ID to guard against race conditions (instead of blocking)
         self._latest_scan_id += 1
         current_scan_id = self._latest_scan_id
-        print(f"DEBUG: Starting scan with ID {current_scan_id} (allows concurrent requests)")
+        logger.debug(f"Starting scan with ID {current_scan_id} (user_action: {is_user_action})")
 
         # stop previous worker if it's still alive (rare)
         if self._worker and self._worker.isRunning():
-            self._worker.terminate()
+            self._worker._cancelled = True
             self._worker.wait()
 
-        self._worker = FastDiffWorker(self.tree.root_path, include_paths, self._on_diff_done, current_scan_id)
+        self._worker = FastDiffWorker(self.tree.root_path, include_paths, self._on_diff_done, current_scan_id, is_user_action)
         self._worker.progress.connect(self._on_progress)
         self._worker.status_message.connect(self._on_status_message)
+        self._worker.operational_log.connect(self._on_operational_log)
         
         # Connect to scan_completed with race condition guard
         self._worker.scan_completed.connect(self._on_scan_completed)
@@ -164,15 +184,15 @@ class MainWindow(QMainWindow):
 
     def _on_scan_completed(self, scan_id: int, sections_data: list, cache_key: str):
         """Handle scan completion with race condition guard"""
-        print(f"DEBUG: Scan {scan_id} completed, latest is {self._latest_scan_id}")
+        logger.debug(f"Scan {scan_id} completed, latest is {self._latest_scan_id}")
         
         # Guard against race conditions - ignore stale responses
         if scan_id != self._latest_scan_id:
-            print(f"DEBUG: IGNORING stale scan {scan_id} (latest: {self._latest_scan_id})")
+            logger.debug(f"IGNORING stale scan {scan_id} (latest: {self._latest_scan_id})")
             return
             
         # This is the latest scan, update the UI with cache key for forced re-render
-        print(f"DEBUG: ACCEPTING current scan {scan_id}, updating UI with cache key {cache_key}")
+        logger.debug(f"ACCEPTING current scan {scan_id}, updating UI with cache key {cache_key}")
         
         # ASSERTION: Ensure cache key is not empty
         assert cache_key, f"Cache key must not be empty here. Scan ID: {scan_id}"
@@ -183,21 +203,40 @@ class MainWindow(QMainWindow):
     def _on_worker_finished(self):
         """Clean up after worker finishes"""
         self.progress_bar.setVisible(False)
+        self._live_scan_in_progress = False
 
-    def _on_status_message(self, message: str, message_type: str):
-        """Handle status messages via overlay"""
-        if message_type == "info":
-            self.status_manager.show_info(message)
-        elif message_type == "success":
-            self.status_manager.show_success(message)
-        elif message_type == "warning":
-            self.status_manager.show_warning(message)
-        elif message_type == "error":
-            self.status_manager.show_error(message)
+    def _on_status_message(self, message: str, message_type: str, is_user_action: bool):
+        """Handle user-facing status messages via overlay (only for user actions)"""
+        if is_user_action:  # Only show status overlay for explicit user actions
+            if message_type == "info":
+                self.status_manager.show_info(message)
+            elif message_type == "success":
+                self.status_manager.show_success(message)
+            elif message_type == "warning":
+                self.status_manager.show_warning(message)
+            elif message_type == "error":
+                self.status_manager.show_error(message)
+        else:
+            # For background scans, just log operationally
+            logger.debug(f"Background scan {message_type}: {message}")
 
-    def _on_progress(self, message: str):
-        """Handle progress updates"""
-        self.statusBar().showMessage(message, 0)
+    def _on_operational_log(self, message: str, level: str):
+        """Handle operational debug messages - always go to logger"""
+        if level == "debug":
+            logger.debug(message)
+        elif level == "info":
+            logger.info(message)
+        elif level == "warning":
+            logger.warning(message)
+        elif level == "error":
+            logger.error(message)
+
+    def _on_progress(self, message: str, is_user_action: bool):
+        """Handle progress updates - only show for user actions"""
+        if is_user_action:
+            self.statusBar().showMessage(message, 0)
+        else:
+            logger.debug(f"Background progress: {message}")
 
     def _start_diff(self) -> None:
         if self.tree._root_path is None:      # property would raise, test private
@@ -234,8 +273,10 @@ class MainWindow(QMainWindow):
             )
 
     def _on_diff_done(self, text: str) -> None:
-        self.preview.show_text(text)
-        self.statusBar().showMessage("Done.", 3000)
+        """Legacy callback for compatibility - main processing now happens via scan_completed signal"""
+        logger.debug("Legacy diff callback triggered")
+        # Note: Main UI updates now happen via _on_scan_completed signal
+        # This is kept for compatibility with the finished signal
 
     def resizeEvent(self, event):
         """Handle window resize to reposition status overlay"""

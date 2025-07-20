@@ -46,7 +46,7 @@ class CollapsibleSection(QWidget):
     def _setup_ui(self):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(2)
+        layout.setSpacing(8)  # Increase spacing between header and content
         
         # Header with toggle button
         header = QFrame()
@@ -64,17 +64,17 @@ class CollapsibleSection(QWidget):
         
         # Toggle button
         self.toggle_btn = QPushButton("▼" if not self._collapsed else "▶")
-        self.toggle_btn.setFixedSize(20, 20)
+        self.toggle_btn.setFixedSize(24, 24)  # Larger toggle button
         self.toggle_btn.setStyleSheet("""
             QPushButton {
                 background-color: transparent;
                 border: none;
-                font-size: 12px;
+                font-size: 14px;
                 color: #cccccc;
             }
             QPushButton:hover {
                 background-color: #3c3c3c;
-                border-radius: 2px;
+                border-radius: 3px;
             }
         """)
         self.toggle_btn.clicked.connect(self.toggle)
@@ -85,7 +85,8 @@ class CollapsibleSection(QWidget):
             QLabel {
                 color: #cccccc;
                 font-weight: bold;
-                font-size: 13px;
+                font-size: 14px;
+                padding: 4px 0px;
             }
         """)
         
@@ -97,14 +98,18 @@ class CollapsibleSection(QWidget):
         self.content_widget = QPlainTextEdit()
         self.content_widget.setPlainText(self.content)
         self.content_widget.setReadOnly(True)
-        self.content_widget.setFont(QFont("Consolas, Monaco, monospace", 10))
+        self.content_widget.setFont(QFont("Consolas, Monaco, monospace", 11))  # Larger font
+        
+        # Set minimum height for better readability
+        self.content_widget.setMinimumHeight(120)  # More generous minimum height
+        
         self.content_widget.setStyleSheet("""
             QPlainTextEdit {
                 background-color: #1e1e1e;
                 color: #d4d4d4;
                 border: 1px solid #3c3c3c;
                 border-radius: 4px;
-                padding: 8px;
+                padding: 12px;
             }
         """)
         
@@ -194,7 +199,8 @@ class EnhancedPreviewPanel(QWidget):
         
         self.scroll_widget = QWidget()
         self.scroll_layout = QVBoxLayout(self.scroll_widget)
-        self.scroll_layout.setContentsMargins(0, 0, 0, 0)
+        self.scroll_layout.setContentsMargins(8, 8, 8, 8)  # More generous margins
+        self.scroll_layout.setSpacing(12)  # More spacing between sections
         
         self.scroll_area.setWidget(self.scroll_widget)
         

@@ -2,7 +2,24 @@
 Checkable file-system tree view
 -------------------------------
 
-• No longer relies on Qt.ItemIsTristate (removed in Qt 6.6+    # toggle helper ----------------------------------------------------
+• No longer relies on Qt.ItemIsTristate (removed in Qt 6.6+    # toggle help    # toggle helper ----------------------------------------------------
+    def _toggle_check(self, idx: QModelIndex):
+        # Ignore clicks in columns > 0 (they're hidden anyway)
+        if idx.column() != 0:
+            return
+        current = self._model.data(idx, Qt.CheckStateRole)
+        new_state = Qt.Unchecked if current == Qt.Checked else Qt.Checked
+        self._model.setData(idx, new_state, Qt.CheckStateRole)
+
+        # EMIT selection change (snapshot)
+        if self._root_path:
+            new_selection = self.checked_paths()
+            print(f"DEBUG: UI selection changed to {new_selection}")
+            self.selection_changed.emit(new_selection)
+
+        # fire the click flash
+        self._flash.stop()
+        self._flash.start()--------------------------------------------
     def _toggle_check(self, idx: QModelIndex):
         # Ignore clicks in columns > 0 (they're hidden anyway)
         if idx.column() != 0:
