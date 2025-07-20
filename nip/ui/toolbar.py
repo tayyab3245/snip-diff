@@ -42,14 +42,31 @@ class NipToolBar(QToolBar):
         act_copy.triggered.connect(self.copy)
         self.addAction(act_copy)
 
-        # Search (Ctrl+F) ─────────────────────────────────────────────
-        act_find = QAction("Find", self)
-        act_find.setShortcut("Ctrl+F")
-        act_find.setToolTip("Search in diff (Ctrl+F)")
-        act_find.triggered.connect(lambda: self.parent().preview.start_search())
-        self.addAction(act_find)
+        # Live Watch Toggle ────────────────────────────────────────────
+        self.act_live = QAction("Live Watch: ON", self)
+        self.act_live.setCheckable(True)
+        self.act_live.setChecked(True)  # Default to ON
+        self.act_live.setToolTip("Toggle automatic file watching")
+        self.act_live.triggered.connect(self._toggle_live_watch)
+        self.addAction(self.act_live)
     # ─────────────────────────────────────────────────────────────────
     def _on_choose(self):
         folder = QFileDialog.getExistingDirectory(self.parent(), "Select folder")
         if folder:
             self.choose_folder.emit(folder)
+    
+    def _toggle_live_watch(self):
+        """Toggle live file watching on/off"""
+        is_enabled = self.act_live.isChecked()
+        if is_enabled:
+            self.act_live.setText("Live Watch: ON")
+            # Re-enable the watcher if it exists
+            if hasattr(self.parent(), '_watcher') and self.parent()._watcher:
+                print("Live watch enabled")
+        else:
+            self.act_live.setText("Live Watch: OFF")
+            # Disable the watcher
+            if hasattr(self.parent(), '_watcher') and self.parent()._watcher:
+                self.parent()._watcher.deleteLater()
+                self.parent()._watcher = None
+                print("Live watch disabled")

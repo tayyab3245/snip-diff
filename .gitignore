@@ -1,1 +1,5 @@
 .nip_snapshot.json
+/.venv
+/nip/ui/__pycache__
+/nip/ui/__pycache__
+nip/config/__pycache__/theme.cpython-310.pyc

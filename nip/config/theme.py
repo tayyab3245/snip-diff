@@ -1,5 +1,5 @@
 """
-Nintendo 3-DS x mac-glass               (no Qt warnings – all props supported)
+Nintendo 3-DS x mac-glass theme (no Qt warnings - removed unsupported transition/transform)
 """
 STYLE = r"""
 /* =====  GLOBAL  ===================================================== */
@@ -22,10 +22,9 @@ QWidget#glass {             /* applied by GlassWindow mix-in            */
 #toolbar QToolButton {
     padding:6px 16px;  margin:0 5px;  border-radius:7px;
     background:#324B68;  color:#E9ECEF;
-    transition:background .12s ease, transform .12s ease;
 }
 #toolbar QToolButton:hover   { background:#3E5E7E; }
-#toolbar QToolButton:pressed { background:#1D70F8; transform:scale(.94); }
+#toolbar QToolButton:pressed { background:#1D70F8; }
 
 /* =====  PANES  ====================================================== */
 QTreeView,QPlainTextEdit {
