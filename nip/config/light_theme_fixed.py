@@ -1,87 +1,88 @@
 """
-Light Theme - Unified Matte Plastic Design System
-Recreating rich depth, shadows, and highlights from game library
+Light Theme - Modern Minimalist White Design System
+Professional, clean aesthetic with enhanced contrast and visible depth
+Balanced between flat design and 3D depth perception
 """
 
 from .tokens import DESIGN_TOKENS
 
 tokens = DESIGN_TOKENS
 
-# Light theme color palette (natural lighting and shadows)
+# Light theme color palette (modern minimalist white theme)
 LIGHT_UNIFIED = {
-    # === CORE THEME ===
+    # === CORE THEME - Modern Minimalist Palette ===
     'mode': 'light',
-    'background': '#f8f9fa',
+    'background': '#f6f8fa',       # Very light, slightly cool gray for clarity
     'primary': '#e60012',
-    'surface': '#ffffff',
-    'text': '#2c3e50',
+    'surface': '#ffffff',          # Pure white for raised elements like buttons and panels
+    'text': '#24292e',             # Dark, near-black for maximum readability
     'shadow': 'rgba(0,0,0,0.08)',
     'glow': 'rgba(230, 0, 18, 0.2)',
     
-    # === LIGHT THEME DEPTH SYSTEM - Matching Dark Theme Contrast Ratios ===
-    'panel_top': '#ffffff',        # Pure white highlight (equivalent to dark's #2e2e2e)
-    'panel_bot': '#e0e0e0',        # Base surface (equivalent to dark's #1a1a1a)  
-    'panel_edge': '#808080',       # Strong shadow (equivalent to dark's #0a0a0a)
-    'panel_rim': '#ffffff',        # Pure white rim light (equivalent to dark's #404040)
+    # === MODERN MINIMALIST DEPTH SYSTEM - Enhanced Contrast ===
+    'panel_top': '#ffffff',        # Pure white for raised surfaces
+    'panel_bot': '#e8eaed',        # Darker base surface for contrast
+    'panel_edge': '#b0b3b8',       # Stronger shadow/border color for definition
+    'panel_rim': '#ffffff',        # Pure white rim light
     
-    # Shadow layers - MATCHING dark theme's contrast ratios
-    'shadow_inset_light': '#ffffff',                         # Pure white inner highlight
-    'shadow_inset_dark': 'rgba(0, 0, 0, 0.6)',              # Strong dark inner shadow (matching dark's 0.8)
-    'shadow_outer_near': 'rgba(0, 0, 0, 0.25)',             # Close shadow (matching dark's 0.4)
-    'shadow_outer_far': 'rgba(0, 0, 0, 0.4)',               # Far shadow (matching dark's 0.6)
+    # Shadow layers - Enhanced contrast for better depth perception
+    'shadow_inset_light': 'rgba(255, 255, 255, 0.9)',   # Brighter inner highlight
+    'shadow_inset_dark': 'rgba(0, 0, 0, 0.25)',         # Darker inner shadow for definition
+    'shadow_outer_near': 'rgba(0, 0, 0, 0.15)',         # More visible close shadow
+    'shadow_outer_far': 'rgba(0, 0, 0, 0.12)',          # Noticeable far shadow
     
-    # === CLEAN SURFACE VARIATIONS - Matching Dark Theme Relationships ===
-    'surface_solid': '#e0e0e0',      # Base surface (equivalent to dark's #1a1a1a)
-    'surface_secondary': '#d8d8d8',  # Secondary surfaces (equivalent to dark's #242424)
-    'surface_elevated': '#ffffff',   # Elevated surfaces (equivalent to dark's #2e2e2e)
-    'surface_sunken': '#c8c8c8',     # Sunken areas (equivalent to dark's #141414)
-    'surface_raised': '#f8f8f8',     # Raised areas (equivalent to dark's #323232)
+    # === CLEAN SURFACE VARIATIONS - More Contrast ===
+    'surface_solid': '#e8eaed',      # Darker base surface
+    'surface_secondary': '#dee1e6',  # Mid-tone secondary surfaces
+    'surface_elevated': '#ffffff',   # Pure white for elevated surfaces
+    'surface_sunken': '#d3d7dc',     # Noticeably darker for sunken areas
+    'surface_raised': '#ffffff',     # Pure white for raised areas
     
-    # === NATURAL BORDERS - Soft and Clean ===
-    'border': '#dee2e6',             # Soft natural border
-    'border_light': '#f8f9fa',       # Light rim border
+    # === MODERN BORDERS - Enhanced Definition ===
+    'border': '#b0b3b8',             # Stronger border color for definition
+    'border_light': '#d8dce1',       # Mid-tone light border
     'border_focus': '#e60012',       # Focus state
     'border_selection': '#e60012',   # Selection state
     
     # === READABLE TEXT HIERARCHY ===
-    'text_primary': '#2c3e50',
-    'text_secondary': 'rgba(44, 62, 80, 0.7)',
-    'text_disabled': 'rgba(44, 62, 80, 0.4)',
+    'text_primary': '#24292e',       # Dark, near-black for maximum readability
+    'text_secondary': 'rgba(36, 41, 46, 0.7)',
+    'text_disabled': 'rgba(36, 41, 46, 0.4)',
     'text_inverse': '#ffffff',
-    'text_highlight': '#2c3e50',     # Darker contrast for light theme emphasis
+    'text_highlight': '#24292e',     # Same as primary for consistency
     
-    # === INTERACTION STATES WITH DEPTH ===
-    'hover': 'rgba(0, 0, 0, 0.04)',
-    'hover_bright': 'rgba(0, 0, 0, 0.08)',
-    'active': 'rgba(0, 0, 0, 0.12)',
+    # === INTERACTION STATES WITH ENHANCED DEPTH ===
+    'hover': 'rgba(0, 0, 0, 0.06)',
+    'hover_bright': 'rgba(0, 0, 0, 0.10)',
+    'active': 'rgba(0, 0, 0, 0.15)',
     'active_deep': 'rgba(0, 0, 0, 0.20)',
     'selected': '#e60012',
     'focus': '#e60012',
     
-    # === COMPONENT SPECIFIC WITH DARK THEME CONTRAST RATIOS ===
-    'toolbar_bg': 'rgba(255,255,255,.96)',
-    'toolbar_bg_top': '#ffffff',         # Pure white highlight (equivalent to dark's #2e2e2e)
-    'toolbar_bg_bot': '#e0e0e0',         # Base surface (equivalent to dark's #1a1a1a)
-    'toolbar_border_top': '#ffffff',     # Pure white rim light
-    'toolbar_border_bot': '#808080',     # Strong shadow (equivalent to dark's #0a0a0a)
+    # === COMPONENT SPECIFIC - Enhanced Contrast ===
+    'toolbar_bg': 'rgba(255,255,255,.98)',
+    'toolbar_bg_top': '#ffffff',         # Pure white for toolbar top
+    'toolbar_bg_bot': '#e8eaed',         # Darker base for contrast
+    'toolbar_border_top': 'rgba(255, 255, 255, 0.9)',     # Bright highlight
+    'toolbar_border_bot': '#b0b3b8',     # Strong shadow for definition
     
-    # Clean up old button references - use new system  
-    'button_bg_top': '#ffffff',          # Pure white highlight (equivalent to dark's #2e2e2e)
-    'button_bg_bot': '#e0e0e0',          # Base surface color (equivalent to dark's #1a1a1a)
-    'button_border_light': '#ffffff',    # Pure white rim light (equivalent to dark's #404040)
-    'button_border_dark': '#808080',     # Strong shadow color (equivalent to dark's #0a0a0a)
-    'button_hover_top': '#ffffff',       # Hover maintains highlight
-    'button_hover_bot': '#d8d8d8',       # Slightly darker on hover (matching dark ratio)
-    'button_pressed_top': '#d8d8d8',     # Pressed = darker (matching dark pressed ratio)
-    'button_pressed_bot': '#808080',     # Strong shadow when pressed (matching dark edge)
+    # Enhanced button system with better depth definition
+    'button_bg_top': '#ffffff',          # Pure white for button highlights
+    'button_bg_bot': '#e8eaed',          # Darker base for contrast
+    'button_border_light': 'rgba(255, 255, 255, 0.9)',    # Bright highlight border
+    'button_border_dark': '#b0b3b8',     # Strong border color for definition
+    'button_hover_top': '#ffffff',       # Hover maintains white
+    'button_hover_bot': '#dee1e6',       # More noticeable hover change
+    'button_pressed_top': '#dee1e6',     # Pressed = noticeably darker
+    'button_pressed_bot': '#d3d7dc',     # Clear press depth
     
-    # Enhanced hover states for better illusion
-    'tree_item_hover_light': 'rgba(230, 0, 18, 0.05)',
-    'tree_item_hover_dark': 'rgba(0, 0, 0, 0.12)', # Stronger shadow on hover
+    # Enhanced hover states with better contrast
+    'tree_item_hover_light': 'rgba(230, 0, 18, 0.04)',
+    'tree_item_hover_dark': 'rgba(0, 0, 0, 0.10)', # More visible shadow on hover
 }
 
 def generate_light_qss() -> str:
-    """Generate complete QSS stylesheet for light theme with rich matte plastic depth"""
+    """Generate complete QSS stylesheet for modern minimalist white theme with enhanced depth contrast"""
     theme = LIGHT_UNIFIED
     
     return f'''
@@ -108,9 +109,9 @@ QMainWindow {{
 /* === DEEP MATTE PLASTIC SURFACES === */
 QFrame, QGroupBox {{
     background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-        stop:0 {theme['panel_top']},
-        stop:0.1 {theme['surface_elevated']},
-        stop:0.9 {theme['surface_solid']},
+        stop:0 {theme['panel_rim']},
+        stop:0.05 {theme['panel_top']},
+        stop:0.95 {theme['surface_solid']},
         stop:1 {theme['panel_bot']});
     border-top: 2px solid {theme['border_light']};
     border-left: 1px solid {theme['border_light']};
@@ -151,14 +152,14 @@ QFrame#surface {{
     margin: 0 {tokens['spacing']['xs']};
     border-radius: {tokens['radius']['sm']};
     background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-        stop:0 {theme['button_bg_top']},
-        stop:0.1 {theme['surface_elevated']},
-        stop:0.9 {theme['surface_solid']},
+        stop:0 {theme['panel_rim']},
+        stop:0.05 {theme['button_bg_top']},
+        stop:0.95 {theme['surface_solid']},
         stop:1 {theme['button_bg_bot']});
     color: {theme['text_primary']};
     font-weight: {tokens['font']['weight']['medium']};
-    border-top: 1px solid {theme['panel_top']};          /* Light highlight on top (matching dark's pattern) */
-    border-left: 1px solid {theme['panel_top']};         /* Light highlight on left */
+    border-top: 1px solid {theme['panel_rim']};          /* Bright rim light on top */
+    border-left: 1px solid {theme['panel_rim']};         /* Bright rim light on left */
     border-right: 1px solid {theme['panel_edge']};       /* Dark shadow on right */
     border-bottom: 2px solid {theme['panel_edge']};      /* Stronger shadow on bottom */
     min-height: {tokens['button']['md']};
@@ -166,11 +167,11 @@ QFrame#surface {{
 
 #toolbar QToolButton:hover {{
     background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-        stop:0 {theme['button_hover_top']},
-        stop:0.1 {theme['surface_raised']},
-        stop:0.9 {theme['surface_elevated']},
+        stop:0 {theme['shadow_inset_light']},
+        stop:0.05 {theme['button_hover_top']},
+        stop:0.95 {theme['surface_elevated']},
         stop:1 {theme['button_hover_bot']});
-    border-top: 2px solid {theme['shadow_inset_light']};  /* Brighter highlight on hover */
+    border-top: 2px solid {theme['shadow_inset_light']};  /* Brighter rim light on hover */
     border-left: 1px solid {theme['shadow_inset_light']};
     border-right: 1px solid {theme['border_focus']};
     border-bottom: 2px solid {theme['border_focus']};
@@ -195,30 +196,30 @@ QPushButton {{
     padding: {tokens['spacing']['sm']} {tokens['spacing']['lg']};
     border-radius: {tokens['radius']['sm']};
     background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-        stop:0 {theme['panel_top']},
-        stop:0.1 {theme['surface_elevated']},
-        stop:0.9 {theme['surface_solid']},
+        stop:0 {theme['panel_rim']},
+        stop:0.05 {theme['panel_top']},
+        stop:0.95 {theme['surface_solid']},
         stop:1 {theme['panel_bot']});
     color: {theme['text_primary']};
     font-weight: {tokens['font']['weight']['medium']};
     min-height: {tokens['button']['md']};
     
-    /* Raised button: highlights on top/left, shadows on bottom/right - matching dark theme exactly */
-    border-top: 1px solid {theme['button_border_light']};
-    border-left: 1px solid {theme['button_border_light']};
+    /* Raised button: rim light on top/left, shadows on bottom/right - matching dark theme exactly */
+    border-top: 1px solid {theme['panel_rim']};
+    border-left: 1px solid {theme['panel_rim']};
     border-right: 1px solid {theme['button_border_dark']};
     border-bottom: 2px solid {theme['button_border_dark']};
 }}
 
 QPushButton:hover {{
     background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-        stop:0 {theme['button_hover_top']},
-        stop:0.1 {theme['surface_raised']},
-        stop:0.9 {theme['surface_elevated']},
+        stop:0 {theme['shadow_inset_light']},
+        stop:0.05 {theme['button_hover_top']},
+        stop:0.95 {theme['surface_elevated']},
         stop:1 {theme['button_hover_bot']});
     color: {theme['text_highlight']};
     
-    /* Enhanced raised appearance on hover - matching dark theme exactly */
+    /* Enhanced rim light appearance on hover - matching dark theme exactly */
     border-top: 2px solid {theme['shadow_inset_light']};
     border-left: 1px solid {theme['shadow_inset_light']};
     border-right: 1px solid {theme['border_focus']};
@@ -400,13 +401,13 @@ QScrollBar:vertical {{
 
 QScrollBar::handle:vertical {{
     background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-        stop:0 {theme['button_bg_top']},
-        stop:0.1 {theme['surface_elevated']},
-        stop:0.9 {theme['surface_solid']},
+        stop:0 {theme['panel_rim']},
+        stop:0.05 {theme['button_bg_top']},
+        stop:0.95 {theme['surface_solid']},
         stop:1 {theme['button_bg_bot']});
     border-radius: 6px;
-    border-top: 1px solid {theme['button_border_light']};
-    border-left: 1px solid {theme['button_border_light']};
+    border-top: 1px solid {theme['panel_rim']};
+    border-left: 1px solid {theme['panel_rim']};
     border-right: 1px solid {theme['button_border_dark']};
     border-bottom: 1px solid {theme['button_border_dark']};
     min-height: 25px;
@@ -449,13 +450,13 @@ QScrollBar:horizontal {{
 
 QScrollBar::handle:horizontal {{
     background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-        stop:0 {theme['button_bg_top']},
-        stop:0.1 {theme['surface_elevated']},
-        stop:0.9 {theme['surface_solid']},
+        stop:0 {theme['panel_rim']},
+        stop:0.05 {theme['button_bg_top']},
+        stop:0.95 {theme['surface_solid']},
         stop:1 {theme['button_bg_bot']});
     border-radius: 6px;
-    border-top: 1px solid {theme['button_border_light']};
-    border-left: 1px solid {theme['button_border_light']};
+    border-top: 1px solid {theme['panel_rim']};
+    border-left: 1px solid {theme['panel_rim']};
     border-right: 1px solid {theme['button_border_dark']};
     border-bottom: 1px solid {theme['button_border_dark']};
     min-width: 25px;
@@ -496,13 +497,13 @@ QComboBox {{
     padding: {tokens['spacing']['sm']} {tokens['spacing']['md']};
     border-radius: {tokens['radius']['sm']};
     background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-        stop:0 {theme['button_bg_top']},
-        stop:0.1 {theme['surface_elevated']},
-        stop:0.9 {theme['surface_solid']},
+        stop:0 {theme['panel_rim']},
+        stop:0.05 {theme['button_bg_top']},
+        stop:0.95 {theme['surface_solid']},
         stop:1 {theme['button_bg_bot']});
     color: {theme['text_primary']};
-    border-top: 1px solid {theme['button_border_light']};
-    border-left: 1px solid {theme['button_border_light']};
+    border-top: 1px solid {theme['panel_rim']};
+    border-left: 1px solid {theme['panel_rim']};
     border-right: 1px solid {theme['button_border_dark']};
     border-bottom: 2px solid {theme['button_border_dark']};
     min-height: {tokens['button']['sm']};
@@ -510,9 +511,9 @@ QComboBox {{
 
 QComboBox:hover {{
     background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-        stop:0 {theme['button_hover_top']},
-        stop:0.1 {theme['surface_raised']},
-        stop:0.9 {theme['surface_elevated']},
+        stop:0 {theme['shadow_inset_light']},
+        stop:0.05 {theme['button_hover_top']},
+        stop:0.95 {theme['surface_elevated']},
         stop:1 {theme['button_hover_bot']});
     border-top: 1px solid {theme['shadow_inset_light']};
     border-left: 1px solid {theme['shadow_inset_light']};
