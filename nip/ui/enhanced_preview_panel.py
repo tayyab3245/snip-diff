@@ -51,44 +51,19 @@ class CollapsibleSection(QWidget):
         # Header with toggle button
         header = QFrame()
         header.setFrameStyle(QFrame.Box)
-        header.setStyleSheet("""
-            QFrame {
-                background-color: #2d2d30;
-                border: 1px solid #3c3c3c;
-                border-radius: 4px;
-                padding: 4px;
-            }
-        """)
+        header.setObjectName("diffSectionHeader")  # Use CSS class instead of inline style
         
         header_layout = QHBoxLayout(header)
         
         # Toggle button
         self.toggle_btn = QPushButton("▼" if not self._collapsed else "▶")
         self.toggle_btn.setFixedSize(24, 24)  # Larger toggle button
-        self.toggle_btn.setStyleSheet("""
-            QPushButton {
-                background-color: transparent;
-                border: none;
-                font-size: 14px;
-                color: #cccccc;
-            }
-            QPushButton:hover {
-                background-color: #3c3c3c;
-                border-radius: 3px;
-            }
-        """)
+        self.toggle_btn.setObjectName("diffToggleButton")  # Use CSS class instead of inline style
         self.toggle_btn.clicked.connect(self.toggle)
         
         # Title label
         self.title_label = QLabel(self.title)
-        self.title_label.setStyleSheet("""
-            QLabel {
-                color: #cccccc;
-                font-weight: bold;
-                font-size: 14px;
-                padding: 4px 0px;
-            }
-        """)
+        self.title_label.setObjectName("diffSectionTitle")  # Use CSS class instead of inline style
         
         header_layout.addWidget(self.toggle_btn)
         header_layout.addWidget(self.title_label)
@@ -103,15 +78,7 @@ class CollapsibleSection(QWidget):
         # Set minimum height for better readability
         self.content_widget.setMinimumHeight(120)  # More generous minimum height
         
-        self.content_widget.setStyleSheet("""
-            QPlainTextEdit {
-                background-color: #1e1e1e;
-                color: #d4d4d4;
-                border: 1px solid #3c3c3c;
-                border-radius: 4px;
-                padding: 12px;
-            }
-        """)
+        self.content_widget.setObjectName("diffContentEditor")  # Use CSS class instead of inline style
         
         # Apply syntax highlighting
         self._apply_diff_highlighting()

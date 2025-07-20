@@ -284,23 +284,23 @@ class CachedDiffEngine:
             # Determine change type for each file
             if not old_content and new_content:
                 change_type = "added"
-                icon = "🆕"
+                icon = "[+]"
                 status = "Added"
             elif old_content and new_entry is None:  # File was deleted
                 change_type = "deleted" 
-                icon = "🗑️"
+                icon = "[D]"
                 status = "Deleted"
             elif old_content and not new_content:
                 change_type = "deleted" 
-                icon = "🗑️"
+                icon = "[D]"
                 status = "Deleted"
             elif old_content != new_content:
                 change_type = "modified"
-                icon = "📝"
+                icon = "[M]"
                 status = "Modified"
             else:
                 change_type = "unchanged"
-                icon = "📄"
+                icon = "[U]"
                 status = "Unchanged"
             
             # Create individual section for each file

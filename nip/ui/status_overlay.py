@@ -43,19 +43,7 @@ class StatusOverlay(QLabel):
     
     def _setup_styles(self):
         """Setup base styles for the overlay"""
-        self.setStyleSheet("""
-            QLabel {
-                background-color: rgba(45, 45, 48, 220);
-                border: 1px solid #3c3c3c;
-                border-radius: 8px;
-                padding: 12px 20px;
-                color: #ffffff;
-                font-weight: bold;
-                font-size: 13px;
-                min-width: 200px;
-                max-width: 400px;
-            }
-        """)
+        self.setObjectName("statusOverlay")  # Use CSS class instead of inline style
     
     def show_message(self, message: str, message_type: str = "info", duration: int = 3000):
         """
@@ -105,21 +93,16 @@ class StatusOverlay(QLabel):
             }
         }
         
-        style = styles.get(message_type, styles["info"])
+        # Apply message type specific styling via CSS classes
+        css_classes = {
+            "info": "statusOverlayInfo",
+            "success": "statusOverlaySuccess", 
+            "warning": "statusOverlayWarning",
+            "error": "statusOverlayError"
+        }
         
-        self.setStyleSheet(f"""
-            QLabel {{
-                background-color: {style["background"]};
-                border: 1px solid {style["border"]};
-                border-radius: 8px;
-                padding: 12px 20px;
-                color: {style["color"]};
-                font-weight: bold;
-                font-size: 13px;
-                min-width: 200px;
-                max-width: 400px;
-            }}
-        """)
+        css_class = css_classes.get(message_type, "statusOverlayInfo")
+        self.setObjectName(css_class)  # Use CSS class instead of inline styling
     
     def _position_overlay(self):
         """Position the overlay in the parent widget"""

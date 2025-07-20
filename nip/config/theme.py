@@ -1,58 +1,113 @@
 """
-Nintendo 3-DS x mac-glass theme (no Qt warnings - removed unsupported transition/transform)
+Unified Theme System - Single Source of Truth
+Based on unified matte plastic design system with consistent visual DNA
 """
-STYLE = r"""
-/* =====  GLOBAL  ===================================================== */
-* {
-    font-family:-apple-system,"Segoe UI","Fira Sans",sans-serif;
-    font-size:11.2pt;
-}
-QMainWindow,QToolTip,QMessageBox { background:transparent; color:#E9ECEF; }
 
-/* =====  GLASS EFFECT  ============================================== */
-QWidget#glass {             /* applied by GlassWindow mix-in            */
-    background:rgba(24,24,28,170);          /* translucent charcoal */
-}
+from .tokens import DESIGN_TOKENS
+from .dark_theme_new import generate_dark_qss, DARK_UNIFIED
+from .light_theme_fixed import generate_light_qss, LIGHT_UNIFIED
 
-/* =====  TOOLBAR  ==================================================== */
-#toolbar {
-    background:rgba(28,40,56,.92);          /* 3-DS shell teal */
-    border:none;
-}
-#toolbar QToolButton {
-    padding:6px 16px;  margin:0 5px;  border-radius:7px;
-    background:#324B68;  color:#E9ECEF;
-}
-#toolbar QToolButton:hover   { background:#3E5E7E; }
-#toolbar QToolButton:pressed { background:#1D70F8; }
+# Export design tokens for direct access
+__all__ = ['DESIGN_TOKENS', 'get_theme', 'ThemeManager', 'STYLE']
 
-/* =====  PANES  ====================================================== */
-QTreeView,QPlainTextEdit {
-    background:#1B212A;
-    border:1px solid #2A394B;
-    border-radius:9px;
-}
+class ThemeManager:
+    """Enhanced theme manager with styling methods and utilities"""
+    
+    def __init__(self, mode: str = 'dark'):
+        self.mode = mode
+        self._themes = {
+            'dark': {
+                'qss': generate_dark_qss(),
+                'colors': DARK_UNIFIED,
+                'name': 'Dark Theme'
+            },
+            'light': {
+                'qss': generate_light_qss(), 
+                'colors': LIGHT_UNIFIED,
+                'name': 'Light Theme'
+            }
+        }
+    
+    def get_qss(self, mode: str = None) -> str:
+        """Get the complete QSS stylesheet for the specified theme"""
+        theme_mode = mode or self.mode
+        return self._themes.get(theme_mode, self._themes['dark'])['qss']
+    
+    def get_colors(self, mode: str = None) -> dict:
+        """Get the color palette for the specified theme"""
+        theme_mode = mode or self.mode
+        return self._themes.get(theme_mode, self._themes['dark'])['colors']
+    
+    def get_theme_name(self, mode: str = None) -> str:
+        """Get the human-readable name of the theme"""
+        theme_mode = mode or self.mode
+        return self._themes.get(theme_mode, self._themes['dark'])['name']
+    
+    def set_mode(self, mode: str):
+        """Set the current theme mode"""
+        if mode in self._themes:
+            self.mode = mode
+        else:
+            raise ValueError(f"Unknown theme mode: {mode}. Available: {list(self._themes.keys())}")
+    
+    def get_available_themes(self) -> list:
+        """Get list of available theme modes"""
+        return list(self._themes.keys())
+    
+    def get_token(self, category: str, key: str = None):
+        """Get design token value"""
+        if key:
+            return DESIGN_TOKENS.get(category, {}).get(key)
+        return DESIGN_TOKENS.get(category)
 
-/* =====  CHECK-MARKS  =============================================== */
-QTreeView::indicator           { width:15px;height:15px;border-radius:3px; }
-QTreeView::indicator:unchecked { border:1px solid #5F738D; background:transparent; }
-QTreeView::indicator:checked   { border:none; background:#30D5FF; }          /* neon-cyan */
-QTreeView::indicator:indeterminate {
-    border:1px solid #FFC400;
-    background:repeating-linear-gradient(45deg,#FFC400 0 4px,transparent 4px 8px);
-}
+# Global theme manager instance
+theme_manager = ThemeManager()
 
-/* =====  SELECTION & FOCUS  ========================================= */
-*::item:selected { background:#1D70F8; color:#F2F5F7; }
-*::item:focus,
-QToolButton:focus { outline:2px solid #30D5FF; outline-offset:0; }
+def get_theme(mode: str = 'dark') -> dict:
+    """
+    Get theme with enhanced styling capabilities
+    Returns theme object with colors, tokens, and utilities
+    """
+    return {
+        'mode': mode,
+        'qss': theme_manager.get_qss(mode),
+        'colors': theme_manager.get_colors(mode),
+        'tokens': DESIGN_TOKENS,
+        'name': theme_manager.get_theme_name(mode)
+    }
 
-/* =====  SCROLLBARS  ================================================= */
-QScrollBar {
-    background:transparent; width:9px; height:9px;
-}
-QScrollBar::handle {
-    background:rgba(255,255,255,.26); border-radius:4px;
-}
-QScrollBar::handle:hover { background:rgba(255,255,255,.42); }
-"""
+def get_component_color(component: str, state: str = 'default', mode: str = None) -> str:
+    """
+    Get color for specific component and state
+    
+    Args:
+        component: Component name (e.g., 'toolbar', 'tree', 'button')
+        state: State name (e.g., 'default', 'hover', 'pressed', 'disabled')
+        mode: Theme mode ('dark' or 'light')
+    
+    Returns:
+        Color value as string
+    """
+    colors = theme_manager.get_colors(mode)
+    
+    # Build key name from component and state
+    if state == 'default':
+        key = f'{component}_bg'
+    else:
+        key = f'{component}_{state}'
+    
+    return colors.get(key, colors.get('surface_solid', '#000000'))
+
+def apply_theme_to_widget(widget, mode: str = None):
+    """
+    Apply theme stylesheet to a Qt widget
+    
+    Args:
+        widget: Qt widget to apply theme to
+        mode: Theme mode to apply ('dark' or 'light')
+    """
+    qss = theme_manager.get_qss(mode)
+    widget.setStyleSheet(qss)
+
+# Legacy compatibility - default to dark theme
+STYLE = theme_manager.get_qss('dark')

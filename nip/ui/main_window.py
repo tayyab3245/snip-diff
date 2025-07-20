@@ -17,7 +17,7 @@ from nip.ui.toolbar       import NipToolBar
 from nip.ui.status_overlay import StatusOverlay, StatusManager
 from nip.core.worker      import DiffWorker
 from nip.core.fast_diff_worker import FastDiffWorker
-from nip.config           import STYLE
+from nip.config           import theme_manager, get_theme, apply_theme_to_widget
 
 
 def snapshot_selection(sel_set: Set[str]) -> Tuple[str, ...]:
@@ -69,6 +69,7 @@ class MainWindow(QMainWindow):
         self.toolbar.choose_folder.connect(self._on_folder_selected)
         self.toolbar.run.connect(lambda: self._start_fast_diff(is_user_action=True))  # Explicit user action
         self.toolbar.copy.connect(self.preview.copy_all)
+        self.toolbar.theme_changed.connect(self._on_theme_changed)  # Connect theme toggle
         # Connect file tree selection changes to immediate scan triggering
         self.tree.selection_changed.connect(self._on_selection_changed)
         # Undo / Export buttons were removed
@@ -93,7 +94,7 @@ class MainWindow(QMainWindow):
         
         # Clear previous results and show helpful message
         self.preview.clear_sections()
-        self.preview.show_text("📁 Folder selected. Click 'Run' (F5) to scan for changes.")
+        self.preview.show_text("Folder selected. Click 'Run' (F5) to scan for changes.")
         
         # Show status
         self.status_manager.show_info(f"Selected folder: {os.path.basename(folder_path)}")
@@ -108,6 +109,27 @@ class MainWindow(QMainWindow):
             self._start_fast_diff(is_user_action=False)  # Background scan, no spinner
         else:
             logger.debug("Skipping auto-scan - no folder or empty selection")
+
+    def _on_theme_changed(self, theme_mode: str):
+        """Handle theme change - apply new theme to entire application"""
+        logger.debug(f"Theme changed to: {theme_mode}")
+        
+        # Update theme manager
+        theme_manager.set_mode(theme_mode)
+        
+        # Get new theme
+        theme = get_theme(theme_mode)
+        
+        # Apply to the entire application
+        from PySide6.QtWidgets import QApplication
+        app = QApplication.instance()
+        if app:
+            app.setStyleSheet(theme['qss'])
+            
+        # Show status message
+        self.status_manager.show_info(f"Theme changed to {theme['name']}")
+        
+        logger.debug(f"Applied {theme['name']} successfully")
 
     def _start_fast_diff(self, is_user_action: bool = True) -> None:
         """Start fast diff with intelligent caching - allows concurrent requests, discards stale results
@@ -287,7 +309,10 @@ class MainWindow(QMainWindow):
 # ----------------------------------------------------------------------
 def run_app() -> None:
     app = QApplication(sys.argv)
-    app.setStyleSheet(STYLE)
+    
+    # Apply unified theme system - default to dark theme
+    theme = get_theme('dark')
+    app.setStyleSheet(theme['qss'])
 
     win = MainWindow()
     # centre on primary screen

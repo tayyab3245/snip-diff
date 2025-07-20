@@ -29,15 +29,15 @@ class TitleBar(QWidget):
     def _circle(col: str) -> QPushButton:
         b = QPushButton()
         b.setFixedSize(14, 14)
-        b.setStyleSheet(f"""
-            QPushButton {{
-                background:{col};
-                border:none;
-                border-radius:3px;        /* square-ish */
-            }}
-            QPushButton:hover {{ filter:brightness(115%); }}
-            QPushButton:pressed {{ filter:brightness(85%); }}
-        """)
+        # Use CSS classes instead of inline styling
+        if col == "#F75E5E":
+            b.setObjectName("titleBarCloseButton")
+        elif col == "#F5BF4F":
+            b.setObjectName("titleBarMinimizeButton")
+        elif col == "#5EC947":
+            b.setObjectName("titleBarMaximizeButton")
+        else:
+            b.setObjectName("titleBarButton")
         return b
 
     # toggle helper ----------------------------------------------------

@@ -13,6 +13,7 @@ class NipToolBar(QToolBar):
     copy          = Signal()
     undo          = Signal()
     export        = Signal()
+    theme_changed = Signal(str)  # Emit theme mode when changed
 
     def __init__(self, parent=None):
         super().__init__("Actions", parent)
@@ -49,6 +50,15 @@ class NipToolBar(QToolBar):
         self.act_live.setToolTip("Toggle automatic file watching")
         self.act_live.triggered.connect(self._toggle_live_watch)
         self.addAction(self.act_live)
+
+        # Theme Toggle ─────────────────────────────────────────────────
+        self.act_theme = QAction("Dark", self)
+        self.act_theme.setToolTip("Toggle between light and dark theme")
+        self.act_theme.triggered.connect(self._toggle_theme)
+        self.addAction(self.act_theme)
+        
+        # Track current theme mode
+        self._current_theme = 'dark'
     # ─────────────────────────────────────────────────────────────────
     def _on_choose(self):
         folder = QFileDialog.getExistingDirectory(self.parent(), "Select folder")
@@ -70,3 +80,15 @@ class NipToolBar(QToolBar):
                 self.parent()._watcher.deleteLater()
                 self.parent()._watcher = None
                 print("Live watch disabled")
+
+    def _toggle_theme(self):
+        """Toggle between light and dark themes"""
+        if self._current_theme == 'dark':
+            self._current_theme = 'light'
+            self.act_theme.setText("Light")
+        else:
+            self._current_theme = 'dark'
+            self.act_theme.setText("Dark")
+        
+        # Emit the theme change signal
+        self.theme_changed.emit(self._current_theme)
