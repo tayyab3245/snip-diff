@@ -239,7 +239,12 @@ class MainWindow(QMainWindow):
         if app:
             app.setStyleSheet(global_style)
         
+        # Update neumorphic scroll bars in preview panel
+        if hasattr(self, 'preview') and hasattr(self.preview, 'set_theme'):
+            self.preview.set_theme(current_mode)
+        
         print("✓ Applied neumorphic theme globally")
+        print("✓ Updated neumorphic scroll bars")
         print("=== NEUMORPHIC THEME COMPLETE ===")
 
     def _apply_carved_styling(self):

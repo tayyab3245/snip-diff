@@ -24,6 +24,9 @@ from pygments import lex
 from pygments.lexers import get_lexer_for_filename, TextLexer
 from pygments.token import Token
 
+# Import neumorphic scroll bar
+from .neumorphic_scrollbar import NeumorphicScrollArea
+
 
 def _fmt(col: str) -> QTextCharFormat:
     """Create text format with color"""
@@ -157,7 +160,7 @@ class EnhancedPreviewPanel(QWidget):
         layout.setContentsMargins(4, 4, 4, 4)
         
         # Scroll area for sections (removed control buttons for simplicity)
-        self.scroll_area = QScrollArea()
+        self.scroll_area = NeumorphicScrollArea()
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
@@ -293,3 +296,8 @@ class EnhancedPreviewPanel(QWidget):
         if ok and search_text:
             # TODO: Implement search across all sections
             pass
+    
+    def set_theme(self, theme_mode):
+        """Update the theme for neumorphic scroll bars"""
+        if hasattr(self, 'scroll_area') and hasattr(self.scroll_area, 'set_theme'):
+            self.scroll_area.set_theme(theme_mode)
