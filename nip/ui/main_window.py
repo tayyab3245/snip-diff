@@ -7,9 +7,8 @@ from PySide6.QtCore import Qt, QTimer                 # +QTimer
 
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QMessageBox,
-    QSplitter, QStatusBar, QProgressBar
+    QSplitter, QStatusBar, QProgressBar, QWidget, QVBoxLayout
 )
-from PySide6.QtCore import Qt
 
 from nip.ui.file_tree   import FileTree
 from nip.ui.enhanced_preview_panel import EnhancedPreviewPanel
@@ -54,16 +53,43 @@ class MainWindow(QMainWindow):
         # ── splitter ──────────────────────────────────────────────────
         splitter = QSplitter(Qt.Horizontal)
         self.tree    = FileTree()
+        self.tree.setObjectName("leftPanel")  # Set object name for CSS styling
+        
+        # Create a wrapper widget for the preview panel to hold carved styling
+        self.preview_wrapper = QWidget()
+        self.preview_wrapper.setObjectName("rightPanel")
+        
         self.preview = EnhancedPreviewPanel()
+        
+        # Layout the preview inside the wrapper with margins to show wrapper background
+        wrapper_layout = QVBoxLayout(self.preview_wrapper)
+        wrapper_layout.setContentsMargins(16, 16, 16, 16)  # Original margins for proper carved look
+        wrapper_layout.addWidget(self.preview)
         
         # Status overlay for non-intrusive messages
         self.status_overlay = StatusOverlay(self)
         self.status_manager = StatusManager(self.status_overlay)
         
         splitter.addWidget(self.tree)
-        splitter.addWidget(self.preview)
+        splitter.addWidget(self.preview_wrapper)  # Add wrapper instead of preview directly
         splitter.setStretchFactor(1, 2)
         self.setCentralWidget(splitter)
+        
+        # Apply initial theme (this will override our styling)
+        from nip.config import get_theme, theme_manager
+        theme = get_theme(theme_manager.mode)
+        from PySide6.QtWidgets import QApplication
+        app = QApplication.instance()
+        if app:
+            app.setStyleSheet(theme['qss'])
+        
+        # THEN apply our carved styling after the theme
+        self._apply_carved_styling()
+        
+        # Use a timer to reapply styling after the window is fully initialized
+        from PySide6.QtCore import QTimer
+        self.style_timer = QTimer()
+        self.style_timer.singleShot(100, self._apply_carved_styling)  # Delay to ensure theme is applied
 
         # connections
         self.toolbar.choose_folder.connect(self._on_folder_selected)
@@ -110,6 +136,101 @@ class MainWindow(QMainWindow):
         else:
             logger.debug("Skipping auto-scan - no folder or empty selection")
 
+    def _apply_carved_styling(self):
+        """Apply subtle inner carved effects with background blending"""
+        from nip.config import get_theme, theme_manager
+        from PySide6.QtGui import QPalette, QColor
+        
+        # Get current theme
+        current_mode = theme_manager.mode
+        theme_data = get_theme(current_mode)
+        
+        # Get the background colors from theme
+        if current_mode == 'dark':
+            # Use the main background color from dark theme
+            main_bg = "#0f0f0f"  # From DARK_UNIFIED['background']
+            inner_bg = "#121212"  # Slightly lighter for inner panels
+            inner_shadow = "rgba(0, 0, 0, 0.8)"  # Dark inner shadow
+            inner_highlight = "rgba(255, 255, 255, 0.1)"  # Subtle highlight
+        else:
+            # Use the main background color from light theme  
+            main_bg = "#f6f8fa"  # From LIGHT_UNIFIED['background']
+            inner_bg = "#f0f0f0"  # Slightly darker for inner panels
+            inner_shadow = "rgba(0, 0, 0, 0.2)"  # Light inner shadow
+            inner_highlight = "rgba(255, 255, 255, 0.8)"  # Bright highlight
+        
+        print(f"\n=== APPLYING CARVED INNER EFFECTS ({current_mode}) ===")
+        print(f"Main background: {main_bg}")
+        print(f"Inner background: {inner_bg}")
+        
+        # 1. Apply carved styling to the preview wrapper with inner effects only
+        target_widget = self.preview_wrapper
+        target_widget.setStyleSheet(f"""
+            QWidget[objectName="rightPanel"], QWidget#rightPanel {{
+                background-color: {inner_bg};
+                border: none;
+                margin: 8px;
+                /* Traditional QSS inset border effect */
+                border-top: 2px solid {inner_shadow};
+                border-left: 2px solid {inner_shadow};
+                border-right: 2px solid {inner_highlight};
+                border-bottom: 2px solid {inner_highlight};
+                border-radius: 4px;
+            }}
+        """)
+        
+        # Set palette to match inner background
+        palette = target_widget.palette()
+        palette.setColor(QPalette.Window, QColor(inner_bg))
+        target_widget.setPalette(palette)
+        target_widget.setAutoFillBackground(True)
+        
+        # 2. Set preview panel to transparent so wrapper shows through
+        preview_panel = self.preview
+        preview_panel.setStyleSheet("QWidget { background: transparent; border: none; }")
+        
+        # 3. Make child widgets transparent to show wrapper background
+        children = target_widget.findChildren(QWidget)
+        for child in children:
+            if hasattr(child, 'setStyleSheet'):
+                if 'ScrollArea' in child.__class__.__name__:
+                    child.setStyleSheet("QScrollArea { background: transparent; border: none; }")
+                elif 'QWidget' == child.__class__.__name__:
+                    child.setStyleSheet("QWidget { background: transparent; border: none; }")
+        
+        # 4. Apply carved effect to file tree as well
+        self.tree.setStyleSheet(f"""
+            QTreeView {{
+                background-color: {inner_bg};
+                border: none;
+                margin: 8px;
+                /* Traditional QSS inset border effect */
+                border-top: 2px solid {inner_shadow};
+                border-left: 2px solid {inner_shadow};
+                border-right: 2px solid {inner_highlight};
+                border-bottom: 2px solid {inner_highlight};
+                border-radius: 4px;
+            }}
+        """)
+        
+        # 5. Blend the splitter to main background
+        splitter = target_widget.parent()
+        if splitter:
+            splitter.setStyleSheet(f"QSplitter {{ background-color: {main_bg}; border: none; }}")
+        
+        # 6. Blend the central widget to main background
+        central = self.centralWidget()
+        if central:
+            central.setStyleSheet(f"QWidget {{ background-color: {main_bg}; }}")
+            
+        # 7. Keep small margins to show the carved effect
+        wrapper_layout = target_widget.layout()
+        if wrapper_layout:
+            wrapper_layout.setContentsMargins(8, 8, 8, 8)
+        
+        print(f"✓ Applied carved inner effects - Main: {main_bg}, Inner: {inner_bg}")
+        print("=== CARVED INNER EFFECTS COMPLETE ===\n")
+
     def _on_theme_changed(self, theme_mode: str):
         """Handle theme change - apply new theme to entire application"""
         logger.debug(f"Theme changed to: {theme_mode}")
@@ -125,6 +246,9 @@ class MainWindow(QMainWindow):
         app = QApplication.instance()
         if app:
             app.setStyleSheet(theme['qss'])
+            
+        # Reapply carved styling for new theme
+        self._apply_carved_styling()
             
         # Show status message
         self.status_manager.show_info(f"Theme changed to {theme['name']}")
@@ -305,6 +429,13 @@ class MainWindow(QMainWindow):
         super().resizeEvent(event)
         if hasattr(self, 'status_overlay') and self.status_overlay.isVisible():
             self.status_overlay._position_overlay()
+
+    def showEvent(self, event):
+        """Handle window show event to ensure carved styling is applied"""
+        super().showEvent(event)
+        # Reapply carved styling when window becomes visible
+        if hasattr(self, 'preview_wrapper'):
+            self._apply_carved_styling()
 
 # ----------------------------------------------------------------------
 def run_app() -> None:

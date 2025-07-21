@@ -46,49 +46,50 @@ class CollapsibleSection(QWidget):
     def _setup_ui(self):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(8)  # Increase spacing between header and content
+        layout.setSpacing(0)  # No spacing since we're hiding the header
         
-        # Header with toggle button
+        # Header with toggle button - HIDDEN for full view
         header = QFrame()
         header.setFrameStyle(QFrame.Box)
-        header.setObjectName("diffSectionHeader")  # Use CSS class instead of inline style
+        header.setObjectName("diffSectionHeader")
+        header.hide()  # Hide the navigation header completely
         
         header_layout = QHBoxLayout(header)
         
         # Toggle button
         self.toggle_btn = QPushButton("▼" if not self._collapsed else "▶")
-        self.toggle_btn.setFixedSize(24, 24)  # Larger toggle button
-        self.toggle_btn.setObjectName("diffToggleButton")  # Use CSS class instead of inline style
+        self.toggle_btn.setFixedSize(16, 16)
+        self.toggle_btn.setObjectName("diffToggleButton")
         self.toggle_btn.clicked.connect(self.toggle)
         
         # Title label
         self.title_label = QLabel(self.title)
-        self.title_label.setObjectName("diffSectionTitle")  # Use CSS class instead of inline style
+        self.title_label.setObjectName("diffSectionTitle")
         
         header_layout.addWidget(self.toggle_btn)
         header_layout.addWidget(self.title_label)
         header_layout.addStretch()
         
-        # Content area
+        # Content area - full view, no containers
         self.content_widget = QPlainTextEdit()
         self.content_widget.setPlainText(self.content)
         self.content_widget.setReadOnly(True)
-        self.content_widget.setFont(QFont("Consolas, Monaco, monospace", 11))  # Larger font
+        self.content_widget.setFont(QFont("Consolas, Monaco, monospace", 11))
         
-        # Set minimum height for better readability
-        self.content_widget.setMinimumHeight(120)  # More generous minimum height
+        # Remove minimum height constraints for full view
+        self.content_widget.setMinimumHeight(0)
         
-        self.content_widget.setObjectName("diffContentEditor")  # Use CSS class instead of inline style
+        self.content_widget.setObjectName("diffContentEditor")
         
         # Apply syntax highlighting
         self._apply_diff_highlighting()
         
-        layout.addWidget(header)
+        layout.addWidget(header)  # Header is hidden but still in layout
         layout.addWidget(self.content_widget)
         
-        # Set initial state
-        if self._collapsed:
-            self.content_widget.hide()
+        # Force content to always be visible (no collapsing)
+        self._collapsed = False
+        self.content_widget.show()
     
     def _apply_diff_highlighting(self):
         """Apply basic diff syntax highlighting"""
@@ -124,14 +125,11 @@ class CollapsibleSection(QWidget):
             cursor.movePosition(QTextCursor.NextBlock)
     
     def toggle(self):
-        """Toggle collapsed state"""
-        self._collapsed = not self._collapsed
-        if self._collapsed:
-            self.content_widget.hide()
-            self.toggle_btn.setText("▶")
-        else:
-            self.content_widget.show()
-            self.toggle_btn.setText("▼")
+        """Toggle functionality disabled - always show full content"""
+        # Force content to always be visible
+        self._collapsed = False
+        self.content_widget.show()
+        self.toggle_btn.setText("▼")
     
     def get_content(self) -> str:
         """Get the content for copying"""
@@ -163,11 +161,15 @@ class EnhancedPreviewPanel(QWidget):
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        # REMOVED transparent background - let parent's carved styling show through
+        self.scroll_area.setStyleSheet("QScrollArea { border: none; }")
         
         self.scroll_widget = QWidget()
         self.scroll_layout = QVBoxLayout(self.scroll_widget)
         self.scroll_layout.setContentsMargins(8, 8, 8, 8)  # More generous margins
         self.scroll_layout.setSpacing(12)  # More spacing between sections
+        # REMOVED transparent background - let parent's carved styling show through
+        self.scroll_widget.setStyleSheet("QWidget { border: none; }")
         
         self.scroll_area.setWidget(self.scroll_widget)
         
@@ -246,8 +248,8 @@ class EnhancedPreviewPanel(QWidget):
         import hashlib
         text_hash = hashlib.sha256(text.encode()).hexdigest()[:8]
         cache_key = f"text_{text_hash}"
-        # Mark as placeholder since this is fallback content
-        self.show_sections([(" Diff Output", text, False)], cache_key, is_placeholder=True)
+        # Mark as placeholder since this is fallback content - use informative title
+        self.show_sections([("Ready", text, False)], cache_key, is_placeholder=True)
     
     def clear_sections(self):
         """Clear all sections"""

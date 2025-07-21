@@ -103,60 +103,136 @@ def generate_dark_qss() -> str:
 QMainWindow, QWidget {{
     background: {theme['background']};
     color: {theme['text_primary']};
+    margin: 0px;
+    padding: 0px;
 }}
 
 QMainWindow {{
-    background: qlineargradient(x1:0, y1:0, x2:1, y2:1, 
-        stop:0 {theme['background']}, 
-        stop:0.5 #0a0a0a, 
-        stop:1 {theme['background']});
+    background: {theme['background']};
+    margin: 0px;
+    padding: 0px;
 }}
 
-/* === DEEP MATTE PLASTIC SURFACES === */
+/* === MAIN LAYOUT COMPONENTS === */
+QSplitter {{
+    background: {theme['background']};
+    border: none;
+    margin: 0px;
+    padding: 0px;
+}}
+
+QSplitter::handle {{
+    background: {theme['background']};
+    border: none;
+    width: {tokens['spacing']['sm']};
+    height: {tokens['spacing']['sm']};
+}}
+
+/* === CARVED/INSET SURFACES - No Container Effect === */
 QFrame, QGroupBox {{
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-        stop:0 {theme['panel_top']},
-        stop:0.1 {theme['surface_elevated']},
-        stop:0.9 {theme['surface_solid']},
-        stop:1 {theme['panel_bot']});
-    border-top: 2px solid {theme['border_light']};
-    border-left: 1px solid {theme['border_light']};
-    border-right: 1px solid {theme['border']};
-    border-bottom: 2px solid {theme['border']};
+    /* Carved directly into background - no floating container */
+    background: {theme['background']};
+    border: none;
     border-radius: {tokens['radius']['md']};
 }}
 
 QFrame#surface {{
+    /* Deep carved surface directly in background canvas */
     background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-        stop:0 {theme['panel_rim']},
-        stop:0.05 {theme['panel_top']},
-        stop:0.95 {theme['panel_bot']},
-        stop:1 {theme['panel_edge']});
-    border-top: 2px solid {theme['shadow_inset_light']};
-    border-left: 1px solid {theme['shadow_inset_light']};
-    border-right: 2px solid {theme['shadow_inset_dark']};
-    border-bottom: 3px solid {theme['shadow_inset_dark']};
+        stop:0 {theme['surface_sunken']},
+        stop:0.1 {theme['surface_solid']},
+        stop:0.9 {theme['surface_solid']},
+        stop:1 {theme['surface_sunken']});
+    
+    /* Inset borders - carved into background */
+    border-top: 2px solid {theme['shadow_inset_dark']};
+    border-left: 2px solid {theme['shadow_inset_dark']};
+    border-right: 1px solid {theme['shadow_inset_light']};
+    border-bottom: 1px solid {theme['shadow_inset_light']};
     border-radius: {tokens['radius']['md']};
 }}
 
-/* === RICH TOOLBAR WITH DEPTH === */
-#toolbar {{
+/* === LEFT SIDEBAR - Carved Directory Panel === */
+QTreeView#leftPanel {{
+    /* Carved left panel extending to edges with proper spacing */
     background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-        stop:0 {theme['toolbar_bg_top']},
-        stop:0.1 {theme['toolbar_bg']},
-        stop:0.9 {theme['toolbar_bg']},
-        stop:1 {theme['toolbar_bg_bot']});
-    border: none;
-    border-top: 1px solid {theme['toolbar_border_top']};
-    border-bottom: 2px solid {theme['toolbar_border_bot']};
-    padding: {tokens['spacing']['sm']};
+        stop:0 {theme['surface_sunken']},
+        stop:0.1 {theme['tree_bg_inset']},
+        stop:0.9 {theme['tree_bg_inset']},
+        stop:1 {theme['surface_sunken']});
+    
+    /* Enhanced carved borders with stronger contrast */
+    border-top: 3px solid {theme['shadow_inset_dark']};
+    border-left: 3px solid {theme['shadow_inset_dark']};
+    border-right: 2px solid {theme['panel_rim']};
+    border-bottom: 2px solid {theme['panel_rim']};
     border-radius: {tokens['radius']['md']};
+    
+    margin-top: {tokens['spacing']['lg']};  /* Spacing from toolbar */
+    margin-left: {tokens['spacing']['lg']};  /* Spacing from left edge */
+    margin-right: {tokens['spacing']['md']};  /* Spacing from right panel */
+    margin-bottom: {tokens['spacing']['lg']};  /* Spacing from bottom edge */
+    selection-background-color: {theme['selected']};
+    selection-color: white;
+}}
+
+/* === RIGHT CONTENT AREA - Carved Context Panel === */
+QWidget#rightPanel {{
+    /* Identical carved panel as tree - exact same styling */
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 {theme['surface_sunken']},
+        stop:0.1 {theme['tree_bg_inset']},
+        stop:0.9 {theme['tree_bg_inset']},
+        stop:1 {theme['surface_sunken']}) !important;
+    
+    /* Enhanced carved borders with stronger contrast */
+    border-top: 3px solid {theme['shadow_inset_dark']} !important;
+    border-left: 3px solid {theme['shadow_inset_dark']} !important;
+    border-right: 2px solid {theme['panel_rim']} !important;
+    border-bottom: 2px solid {theme['panel_rim']} !important;
+    border-radius: {tokens['radius']['md']} !important;
+    
+    /* Enhanced spacing for the carved effect */
+    margin-top: {tokens['spacing']['lg']} !important;  /* Spacing from toolbar */
+    margin-left: {tokens['spacing']['md']} !important;  /* Spacing from left panel */
+    margin-right: {tokens['spacing']['lg']} !important;  /* Spacing from right edge */
+    margin-bottom: {tokens['spacing']['lg']} !important;  /* Spacing from bottom edge */
+}}
+
+/* === Alternative selector for Enhanced Preview Panel === */
+EnhancedPreviewPanel {{
+    /* Force carved background on the preview panel */
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 {theme['surface_sunken']},
+        stop:0.1 {theme['tree_bg_inset']},
+        stop:0.9 {theme['tree_bg_inset']},
+        stop:1 {theme['surface_sunken']}) !important;
+    
+    border-top: 2px solid {theme['shadow_inset_dark']} !important;
+    border-left: 2px solid {theme['shadow_inset_dark']} !important;
+    border-right: 1px solid {theme['shadow_inset_light']} !important;
+    border-bottom: 2px solid {theme['shadow_inset_light']} !important;
+    border-radius: {tokens['radius']['md']} !important;
+    margin-top: {tokens['spacing']['lg']} !important;
+    margin-left: {tokens['spacing']['md']} !important;
+    margin-right: {tokens['spacing']['lg']} !important;
+    margin-bottom: {tokens['spacing']['lg']} !important;
+}}
+
+/* === STATIC TOOLBAR - Fixed at Top === */
+QToolBar, #toolbar {{
+    /* Static toolbar - flush to top edge */
+    background: {theme['background']};
+    border: none;
+    padding: {tokens['spacing']['md']};
+    spacing: {tokens['spacing']['md']};
+    margin: 0px;
 }}
 
 #toolbar QToolButton {{
     padding: {tokens['spacing']['sm']} {tokens['spacing']['lg']};
     margin: 0 {tokens['spacing']['xs']};
-    border-radius: {tokens['radius']['sm']};
+    border-radius: 16px;  /* Reduced capsule shape */
     background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
         stop:0 {theme['button_bg_top']},
         stop:0.1 {theme['surface_elevated']},
@@ -164,11 +240,12 @@ QFrame#surface {{
         stop:1 {theme['button_bg_bot']});
     color: {theme['text_primary']};
     font-weight: {tokens['font']['weight']['medium']};
-    border-top: 1px solid {theme['button_border_light']};
-    border-left: 1px solid {theme['button_border_light']};
-    border-right: 1px solid {theme['button_border_dark']};
-    border-bottom: 2px solid {theme['button_border_dark']};
-    min-height: {tokens['button']['md']};
+    border-top: 2px solid {theme['button_border_light']};
+    border-left: 2px solid {theme['button_border_light']};
+    border-right: 2px solid {theme['button_border_dark']};
+    border-bottom: 3px solid {theme['button_border_dark']};
+    min-height: {tokens['button']['sm']};
+    min-width: 60px;
 }}
 
 #toolbar QToolButton:hover {{
@@ -178,9 +255,9 @@ QFrame#surface {{
         stop:0.9 {theme['surface_elevated']},
         stop:1 {theme['button_hover_bot']});
     border-top: 2px solid {theme['shadow_inset_light']};
-    border-left: 1px solid {theme['shadow_inset_light']};
-    border-right: 1px solid {theme['border_focus']};
-    border-bottom: 2px solid {theme['border_focus']};
+    border-left: 2px solid {theme['shadow_inset_light']};
+    border-right: 2px solid {theme['border_focus']};
+    border-bottom: 3px solid {theme['border_focus']};
     color: {theme['text_highlight']};
 }}
 
@@ -197,10 +274,10 @@ QFrame#surface {{
     color: white;
 }}
 
-/* === RICH BUTTONS WITH MULTI-LAYER DEPTH === */
+/* === RICH BUTTONS WITH CAPSULE SHAPE === */
 QPushButton {{
-    padding: {tokens['spacing']['sm']} {tokens['spacing']['lg']};
-    border-radius: {tokens['radius']['sm']};
+    padding: {tokens['spacing']['md']} {tokens['spacing']['xl']};
+    border-radius: 18px;  /* Capsule shape */
     background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
         stop:0 {theme['button_bg_top']},
         stop:0.1 {theme['surface_elevated']},
@@ -208,11 +285,12 @@ QPushButton {{
         stop:1 {theme['button_bg_bot']});
     color: {theme['text_primary']};
     font-weight: {tokens['font']['weight']['medium']};
-    border-top: 1px solid {theme['button_border_light']};
-    border-left: 1px solid {theme['button_border_light']};
-    border-right: 1px solid {theme['button_border_dark']};
-    border-bottom: 2px solid {theme['button_border_dark']};
+    border-top: 2px solid {theme['button_border_light']};
+    border-left: 2px solid {theme['button_border_light']};
+    border-right: 2px solid {theme['button_border_dark']};
+    border-bottom: 3px solid {theme['button_border_dark']};
     min-height: {tokens['button']['md']};
+    min-width: 80px;
 }}
 
 QPushButton:hover {{
@@ -222,9 +300,9 @@ QPushButton:hover {{
         stop:0.9 {theme['surface_elevated']},
         stop:1 {theme['button_hover_bot']});
     border-top: 2px solid {theme['shadow_inset_light']};
-    border-left: 1px solid {theme['shadow_inset_light']};
-    border-right: 1px solid {theme['border_focus']};
-    border-bottom: 2px solid {theme['border_focus']};
+    border-left: 2px solid {theme['shadow_inset_light']};
+    border-right: 2px solid {theme['border_focus']};
+    border-bottom: 3px solid {theme['border_focus']};
     color: {theme['text_highlight']};
 }}
 
@@ -255,11 +333,12 @@ QPushButton#primary {{
         stop:0.9 #cc0010,
         stop:1 #990008);
     color: white;
-    border-top: 1px solid #ff4d5a;
-    border-left: 1px solid #ff4d5a;
+    border-top: 2px solid #ff4d5a;
+    border-left: 2px solid #ff4d5a;
     border-right: 2px solid #990008;
     border-bottom: 3px solid #660006;
     font-weight: {tokens['font']['weight']['bold']};
+    border-radius: 18px;  /* Capsule shape */
 }}
 
 QPushButton#primary:hover {{
@@ -269,7 +348,7 @@ QPushButton#primary:hover {{
         stop:0.9 {theme['primary']},
         stop:1 #cc0010);
     border-top: 2px solid #ff8a94;
-    border-left: 1px solid #ff8a94;
+    border-left: 2px solid #ff8a94;
     border-right: 2px solid #660006;
     border-bottom: 3px solid #440004;
     color: white;
@@ -288,22 +367,7 @@ QPushButton#primary:pressed {{
     color: white;
 }}
 
-/* === DEEP INSET TREE VIEW === */
-QTreeView {{
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-        stop:0 {theme['tree_bg_inset']},
-        stop:0.1 {theme['tree_bg']},
-        stop:0.9 {theme['tree_bg']},
-        stop:1 {theme['surface_solid']});
-    border-top: 2px solid {theme['tree_border_outer']};
-    border-left: 2px solid {theme['tree_border_outer']};
-    border-right: 1px solid {theme['tree_border_inner']};
-    border-bottom: 1px solid {theme['tree_border_inner']};
-    border-radius: {tokens['radius']['md']};
-    selection-background-color: {theme['selected']};
-    selection-color: white;
-}}
-
+/* === TREE VIEW ITEMS - Styling for tree content === */
 QTreeView::item {{
     padding: {tokens['spacing']['xs']} {tokens['spacing']['sm']};
     border: none;
@@ -364,48 +428,59 @@ QTreeView::indicator:unchecked:hover {{
     border-bottom: 1px solid {theme['border_focus']};
 }}
 
-/* === DEEPLY INSET TEXT AREAS === */
+/* === SIMPLE TEXT AREAS - No Carved Effect === */
 QPlainTextEdit, QTextEdit {{
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-        stop:0 {theme['preview_bg_inset']},
-        stop:0.1 {theme['preview_bg']},
-        stop:0.9 {theme['preview_bg']},
-        stop:1 {theme['surface_solid']});
+    /* Simple text area - flat appearance */
+    background: {theme['background']};
     color: {theme['text_primary']};
-    border-top: 2px solid {theme['preview_border_outer']};
-    border-left: 2px solid {theme['preview_border_outer']};
-    border-right: 1px solid {theme['preview_border_inner']};
-    border-bottom: 1px solid {theme['preview_border_inner']};
-    border-radius: {tokens['radius']['md']};
+    border: none;
+    border-radius: 0px;
     padding: {tokens['spacing']['md']};
     font-family: {tokens['font']['family']};
     font-size: {tokens['font']['size']['sm']};
 }}
 
 QPlainTextEdit:focus, QTextEdit:focus {{
-    border-top: 2px solid {theme['shadow_inset_dark']};
-    border-left: 2px solid {theme['shadow_inset_dark']};
-    border-right: 2px solid {theme['border_focus']};
-    border-bottom: 2px solid {theme['border_focus']};
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-        stop:0 {theme['surface_sunken']},
-        stop:0.1 {theme['preview_bg']},
-        stop:0.9 {theme['preview_bg']},
-        stop:1 {theme['surface_elevated']});
+    /* Simple focus state - just a subtle border */
+    border: 1px solid {theme['border_focus']};
+    background: {theme['background']};
 }}
 
-/* === RICH SCROLLBARS WITH DEPTH === */
+/* === SIMPLE LABELS AND HEADERS === */
+QLabel {{
+    /* Flat labels - no 3D styling */
+    background: transparent;
+    color: {theme['text_primary']};
+    border: none;
+    padding: {tokens['spacing']['xs']};
+    font-family: {tokens['font']['family']};
+}}
+
+QLabel#fileTitle, QLabel#headerLabel {{
+    /* File titles and headers - simple and clean */
+    background: transparent;
+    color: {theme['text_primary']};
+    border: none;
+    padding: {tokens['spacing']['sm']};
+    font-weight: {tokens['font']['weight']['medium']};
+    font-size: {tokens['font']['size']['md']};
+}}
+
+/* === CARVED SCROLLBARS - Inset Channels === */
 QScrollBar:vertical {{
+    /* Scrollbar track carved into background */
     background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
         stop:0 {theme['surface_sunken']},
-        stop:0.5 {theme['surface_solid']},
-        stop:1 {theme['surface_elevated']});
+        stop:0.5 {theme['background']},
+        stop:1 {theme['surface_sunken']});
     width: 14px;
     border-radius: 7px;
-    border-top: 1px solid {theme['border']};
-    border-left: 1px solid {theme['border']};
-    border-right: 1px solid {theme['border_light']};
-    border-bottom: 1px solid {theme['border_light']};
+    
+    /* Inset track appearance */
+    border-top: 1px solid {theme['shadow_inset_dark']};
+    border-left: 1px solid {theme['shadow_inset_dark']};
+    border-right: 1px solid {theme['shadow_inset_light']};
+    border-bottom: 1px solid {theme['shadow_inset_light']};
 }}
 
 QScrollBar::handle:vertical {{
@@ -448,16 +523,19 @@ QScrollBar::handle:vertical:pressed {{
 }}
 
 QScrollBar:horizontal {{
+    /* Horizontal scrollbar track carved into background */
     background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
         stop:0 {theme['surface_sunken']},
-        stop:0.5 {theme['surface_solid']},
-        stop:1 {theme['surface_elevated']});
+        stop:0.5 {theme['background']},
+        stop:1 {theme['surface_sunken']});
     height: 14px;
     border-radius: 7px;
-    border-top: 1px solid {theme['border']};
-    border-left: 1px solid {theme['border']};
-    border-right: 1px solid {theme['border_light']};
-    border-bottom: 1px solid {theme['border_light']};
+    
+    /* Inset track appearance */
+    border-top: 1px solid {theme['shadow_inset_dark']};
+    border-left: 1px solid {theme['shadow_inset_dark']};
+    border-right: 1px solid {theme['shadow_inset_light']};
+    border-bottom: 1px solid {theme['shadow_inset_light']};
 }}
 
 QScrollBar::handle:horizontal {{
@@ -500,24 +578,48 @@ QScrollBar::handle:horizontal:pressed {{
 }}
 
 QScrollBar::add-line, QScrollBar::sub-line {{
-    background: none;
+    background: transparent;
     border: none;
+    width: 0px;
+    height: 0px;
 }}
 
-/* === RAISED COMBO BOXES === */
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
+    background: transparent;
+    border: none;
+    width: 0px;
+    height: 0px;
+}}
+
+QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {{
+    background: transparent;
+    border: none;
+    width: 0px;
+    height: 0px;
+}}
+
+QScrollBar::up-arrow, QScrollBar::down-arrow, 
+QScrollBar::left-arrow, QScrollBar::right-arrow {{
+    background: transparent;
+    border: none;
+    width: 0px;
+    height: 0px;
+}}
+
+/* === RAISED COMBO BOXES WITH CAPSULE SHAPE === */
 QComboBox {{
-    padding: {tokens['spacing']['sm']} {tokens['spacing']['md']};
-    border-radius: {tokens['radius']['sm']};
+    padding: {tokens['spacing']['md']} {tokens['spacing']['lg']};
+    border-radius: 16px;  /* Capsule shape */
     background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
         stop:0 {theme['button_bg_top']},
         stop:0.1 {theme['surface_elevated']},
         stop:0.9 {theme['surface_solid']},
         stop:1 {theme['button_bg_bot']});
     color: {theme['text_primary']};
-    border-top: 1px solid {theme['button_border_light']};
-    border-left: 1px solid {theme['button_border_light']};
-    border-right: 1px solid {theme['button_border_dark']};
-    border-bottom: 2px solid {theme['button_border_dark']};
+    border-top: 2px solid {theme['button_border_light']};
+    border-left: 2px solid {theme['button_border_light']};
+    border-right: 2px solid {theme['button_border_dark']};
+    border-bottom: 3px solid {theme['button_border_dark']};
     min-height: {tokens['button']['sm']};
 }}
 
@@ -527,24 +629,26 @@ QComboBox:hover {{
         stop:0.1 {theme['surface_raised']},
         stop:0.9 {theme['surface_elevated']},
         stop:1 {theme['button_hover_bot']});
-    border-top: 1px solid {theme['shadow_inset_light']};
-    border-left: 1px solid {theme['shadow_inset_light']};
-    border-right: 1px solid {theme['border_focus']};
-    border-bottom: 2px solid {theme['border_focus']};
+    border-top: 2px solid {theme['shadow_inset_light']};
+    border-left: 2px solid {theme['shadow_inset_light']};
+    border-right: 2px solid {theme['border_focus']};
+    border-bottom: 3px solid {theme['border_focus']};
     color: {theme['text_highlight']};
 }}
 
 QComboBox::drop-down {{
     border: none;
     background: transparent;
-    width: 20px;
+    width: 12px;  /* Reduced from 20px */
+    padding: 2px;  /* Minimal padding */
 }}
 
 QComboBox::down-arrow {{
     image: none;
     border-style: solid;
-    border-width: 5px 4px 0 4px;
+    border-width: 3px 2px 0 2px;  /* Reduced from 5px 4px 0 4px */
     border-color: {theme['text_primary']} transparent transparent transparent;
+    margin: 1px;  /* Minimal margin */
 }}
 
 QComboBox QAbstractItemView {{
@@ -556,6 +660,56 @@ QComboBox QAbstractItemView {{
     border-radius: {tokens['radius']['md']};
     selection-background-color: {theme['selected']};
     outline: none;
+}}
+
+/* === FILE SECTIONS - Simple Borders Around Content === */
+QFrame#diffSectionHeader {{
+    /* Clean header - no border */
+    background: transparent;
+    border: none;
+    padding: {tokens['spacing']['xs']};
+    margin: {tokens['spacing']['xs']} 0;
+}}
+
+QPushButton#diffToggleButton {{
+    /* Small compact toggle button */
+    background: transparent;
+    border: none;
+    padding: 0px;
+    margin: 0px;
+    font-size: 10px;
+    color: {theme['text_secondary']};
+    min-width: 16px;
+    min-height: 16px;
+    max-width: 16px;
+    max-height: 16px;
+}}
+
+QPushButton#diffToggleButton:hover {{
+    color: {theme['text_primary']};
+    background: {theme['hover']};
+    border-radius: 2px;
+}}
+
+QLabel#diffSectionTitle {{
+    /* Clean file title styling - reduced spacing */
+    background: transparent;
+    color: {theme['text_primary']};
+    border: none;
+    padding: 2px {tokens['spacing']['xs']};  /* Reduced padding */
+    font-weight: {tokens['font']['weight']['medium']};
+    font-size: {tokens['font']['size']['sm']};
+}}
+
+QPlainTextEdit#diffContentEditor {{
+    /* Flat code area - no container, transparent on carved background */
+    background: transparent;
+    color: {theme['text_primary']};
+    border: none;
+    border-radius: 0px;
+    padding: {tokens['spacing']['md']};
+    font-family: "Consolas, Monaco, monospace";
+    font-size: {tokens['font']['size']['sm']};
 }}
 
 /* Continue with remaining components... */

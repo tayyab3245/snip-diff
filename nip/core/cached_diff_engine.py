@@ -311,13 +311,15 @@ class CachedDiffEngine:
                 old_content=old_content
             )
             
-            # File name with status indicator
+            # File name with simplified format
             filename = os.path.basename(path)
             relative_dir = os.path.dirname(path)
-            title = f"{icon} {filename}"
+            
+            # Simplified title format
             if relative_dir:
-                title += f" ({relative_dir})"
-            title += f" - {status}"
+                title = f"{filename} ({relative_dir})"
+            else:
+                title = filename
             
             sections.append(DiffSection(
                 title=title,
