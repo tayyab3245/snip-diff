@@ -1,0 +1,10 @@
+{
+  ".gitignore": {
+    "content": "# NIP-Diff specific files\n.nip_snapshot.json\n\n# Python cache files\n__pycache__/\n*.py[cod]\n*$py.class\n*.so\n\n# Virtual environments\n.env\n.venv\nenv/\nvenv/\nENV/\nenv.bak/\nvenv.bak/\n\n# PyInstaller\n*.manifest\n*.spec\nbuild/\ndist/\n\n# IDE files\n.vscode/\n.idea/\n*.swp\n*.swo\n*~\n\n# OS files\n.DS_Store\n.DS_Store?\n._*\n.Spotlight-V100\n.Trashes\nehthumbs.db\nThumbs.db\n\n# Logs\n*.log\nlogs/\n\n# Temporary files\n*.tmp\n*.temp\n",
+    "mtime": 1753049631.4573624
+  },
+  "nip.spec": {
+    "content": "# -*- mode: python ; coding: utf-8 -*-\n\n\na = Analysis(\n    ['nip.py'],\n    pathex=[],\n    binaries=[],\n    datas=[],\n    hiddenimports=[],\n    hookspath=[],\n    hooksconfig={},\n    runtime_hooks=[],\n    excludes=[],\n    noarchive=False,\n    optimize=0,\n)\npyz = PYZ(a.pure)\n\nexe = EXE(\n    pyz,\n    a.scripts,\n    a.binaries,\n    a.datas,\n    [],\n    name='nip',\n    debug=False,\n    bootloader_ignore_signals=False,\n    strip=False,\n    upx=True,\n    upx_exclude=[],\n    runtime_tmpdir=None,\n    console=False,\n    disable_windowed_traceback=False,\n    argv_emulation=False,\n    target_arch=None,\n    codesign_identity=None,\n    entitlements_file=None,\n)\n",
+    "mtime": 1750194523.9421592
+  }
+}
