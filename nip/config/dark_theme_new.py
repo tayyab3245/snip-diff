@@ -288,8 +288,8 @@ QTreeView::item:selected {{
 /* === ACCORDION SECTIONS === */
 QFrame#diffSectionHeader {{
     background-color: {theme['inner_bg']};
-    height: 32px;
-    padding: {tokens['spacing']['xs']};
+    height: 28px;
+    padding: 2px 4px;
     margin: 0px;
     border-top: 1px solid {theme['button_border_light']};
     border-left: 1px solid {theme['button_border_light']};

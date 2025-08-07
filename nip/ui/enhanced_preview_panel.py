@@ -214,8 +214,8 @@ class EnhancedPreviewPanel(QWidget):
         
         self.scroll_widget = QWidget()
         self.scroll_layout = QVBoxLayout(self.scroll_widget)
-        self.scroll_layout.setContentsMargins(8, 8, 8, 8)
-        self.scroll_layout.setSpacing(12)
+        self.scroll_layout.setContentsMargins(2, 2, 2, 2)
+        self.scroll_layout.setSpacing(1)
         self.scroll_widget.setStyleSheet("QWidget { border: none; }")
         
         self.scroll_area.setWidget(self.scroll_widget)
