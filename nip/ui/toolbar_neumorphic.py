@@ -10,7 +10,6 @@ class NipToolBar(QToolBar):
     Emits high-level signals consumed by MainWindow.
     """
     choose_folder = Signal(str)
-    run           = Signal()
     copy          = Signal()
     undo          = Signal()
     export        = Signal()
@@ -102,12 +101,10 @@ class NipToolBar(QToolBar):
 
         # Create neumorphic buttons
         self.btn_choose = self._create_neumorphic_button("Choose Folder", self._on_choose)
-        self.btn_run = self._create_neumorphic_button("Run", self.run.emit)
         self.btn_copy = self._create_neumorphic_button("Copy", self.copy.emit)
         
         # Add buttons to layout
         main_layout.addWidget(self.btn_choose)
-        main_layout.addWidget(self.btn_run)
         main_layout.addWidget(self.btn_copy)
         
         # Add separator
@@ -178,7 +175,7 @@ class NipToolBar(QToolBar):
         """)
         
         # Get all button wrappers
-        buttons = [self.btn_choose, self.btn_run, self.btn_copy, self.btn_live, self.btn_theme]
+        buttons = [self.btn_choose, self.btn_copy, self.btn_live, self.btn_theme]
         
         for wrapper in buttons:
             if hasattr(wrapper, '_button'):

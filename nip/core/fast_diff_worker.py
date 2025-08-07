@@ -74,9 +74,25 @@ class FastDiffWorker(QThread):
             
             # Use cached diff engine for smart scanning with precomputed cache key
             start_time = time.time()
-            new_files, changed_paths = cached_diff_engine.get_changed_files_only(
-                self._root, self._include, cache_key
-            )
+            
+            # CRITICAL FIX: Convert absolute paths to relative paths for get_changed_files_only
+            # The cached diff engine expects relative paths but _include_snapshot contains absolute paths
+            if self._include:
+                relative_include = set()
+                for abs_path in self._include:
+                    try:
+                        rel_path = os.path.relpath(abs_path, self._root)
+                        relative_include.add(rel_path)
+                    except Exception as e:
+                        self.operational_log.emit(f"Path conversion error for {abs_path}: {e}", "error")
+                
+                new_files, changed_paths = cached_diff_engine.get_changed_files_only(
+                    self._root, relative_include, cache_key
+                )
+            else:
+                new_files, changed_paths = cached_diff_engine.get_changed_files_only(
+                    self._root, self._include, cache_key
+                )
             scan_time = time.time() - start_time
             
             # Check for cancellation after potentially long scanning operation

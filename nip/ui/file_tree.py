@@ -2,42 +2,8 @@
 Checkable file-system tree view
 -------------------------------
 
-• No longer relies on Qt.ItemIsTristate (removed in Qt 6.6+    # toggle help    # toggle helper ----------------------------------------------------
-    def _toggle_check(self, idx: QModelIndex):
-        # Ignore clicks in columns > 0 (they're hidden anyway)
-        if idx.column() != 0:
-            return
-        current = self._model.data(idx, Qt.CheckStateRole)
-        new_state = Qt.Unchecked if current == Qt.Checked else Qt.Checked
-        self._model.setData(idx, new_state, Qt.CheckStateRole)
-
-        # EMIT selection change (snapshot)
-        if self._root_path:
-            new_selection = self.checked_paths()
-            print(f"DEBUG: UI selection changed to {new_selection}")
-            self.selection_changed.emit(new_selection)
-
-        # fire the click flash
-        self._flash.stop()
-        self._flash.start()--------------------------------------------
-    def _toggle_check(self, idx: QModelIndex):
-        # Ignore clicks in columns > 0 (they're hidden anyway)
-        if idx.column() != 0:
-            return
-        current = self._model.data(idx, Qt.CheckStateRole)
-        new_state = Qt.Unchecked if current == Qt.Checked else Qt.Checked
-        self._model.setData(idx, new_state, Qt.CheckStateRole)
-        
-        # CRITICAL: Log selection change immediately and trigger UI update
-        new_selection = self.checked_paths()
-        print(f"DEBUG: UI selection changed to {new_selection}")
-        
-        # Emit selection change signal for immediate UI updates
-        self.selection_changed.emit(new_selection)
-        
-        # fire the click flash
-        self._flash.stop()
-        self._flash.start()i-state is handled in Python so it works on all PySide6 builds.
+• No longer relies on Qt.ItemIsTristate (removed in Qt 6.6+)
+• The check-state is handled in Python so it works on all PySide6 builds.
 """
 
 from __future__ import annotations
@@ -97,35 +63,53 @@ class CheckableFSModel(QFileSystemModel):
             child = self.index(row, 0, idx)
             self._set_state_recursive(child, state)
 
-    def _refresh_ancestors(self, parent: QModelIndex):
-        """Bubble changes upward so ancestors get correct mixed state."""
-        while parent.isValid():
-            states = {
-                self._state.get(self._path(self.index(r, 0, parent)), Qt.Unchecked)
-                for r in range(self.rowCount(parent))
-            }
-            if states == {Qt.Checked}:          # all checked
-                new_state = Qt.Checked
-            elif states == {Qt.Unchecked}:      # none checked
-                new_state = Qt.Unchecked
-            else:                               # mixture
-                new_state = Qt.PartiallyChecked
-            self._state[self._path(parent)] = new_state
-            parent = parent.parent()
+    def _refresh_ancestors(self, parent_idx: QModelIndex):
+        """Walk up the tree & set each ancestor to Checked/PartiallyChecked/Unchecked."""
+        if not parent_idx.isValid():
+            return  # reached root
 
-    # ---------- public API ---------------------------------------------
+        all_checked = True
+        any_checked = False
+        for row in range(self.rowCount(parent_idx)):
+            child_idx = self.index(row, 0, parent_idx)
+            child_state = self.data(child_idx, Qt.CheckStateRole)
+            if child_state == Qt.Checked:
+                any_checked = True
+            elif child_state == Qt.PartiallyChecked:
+                any_checked = True
+                all_checked = False
+            else:  # Unchecked
+                all_checked = False
+
+        if all_checked:
+            new_state = Qt.Checked
+        elif any_checked:
+            new_state = Qt.PartiallyChecked
+        else:
+            new_state = Qt.Unchecked
+
+        old_state = self._state.get(self._path(parent_idx), Qt.Unchecked)
+        if old_state != new_state:
+            self._state[self._path(parent_idx)] = new_state
+            self.dataChanged.emit(parent_idx, parent_idx)
+            self._refresh_ancestors(parent_idx.parent())
+
     def checked_paths(self, root_path: str) -> Set[str]:
-        """
-        Return a set of *relative* paths that are fully Checked.
-        Directories marked PartiallyChecked are ignored (their children
-        decide individually).
-        """
-        rel: Set[str] = set()
-        for abs_path, state in self._state.items():
-            if state != Qt.Checked:
-                continue
-            rel.add(os.path.relpath(abs_path, root_path))
-        return rel
+        """Return absolute paths of all fully-checked items (not partial)."""
+        checked = set()
+        self._collect_checked(self.index(root_path), checked)
+        return checked
+
+    def _collect_checked(self, idx: QModelIndex, out_set: Set[str]):
+        if not idx.isValid():
+            return
+        state = self.data(idx, Qt.CheckStateRole)
+        if state == Qt.Checked:
+            out_set.add(self._path(idx))
+        # recurse children
+        for row in range(self.rowCount(idx)):
+            child_idx = self.index(row, 0, idx)
+            self._collect_checked(child_idx, out_set)
 
 
 # ----------------------------------------------------------------------
@@ -145,6 +129,10 @@ class FileTree(QTreeView):
         self.setSelectionMode(QTreeView.SingleSelection)
         # A plain left-click now toggles the check mark for that row
         self.clicked.connect(self._toggle_check)
+        # ALSO connect to model data changes for when checkboxes are clicked directly
+        self._model.dataChanged.connect(self._on_data_changed)
+        print("DEBUG: FileTree initialized, clicked signal connected to _toggle_check")
+        print("DEBUG: Also connected model.dataChanged to _on_data_changed")
         # subtle opacity flash on click (safe; uses Qt property)
         from PySide6.QtWidgets import QGraphicsOpacityEffect
         from PySide6.QtCore    import QPropertyAnimation, QEasingCurve
@@ -166,15 +154,31 @@ class FileTree(QTreeView):
 
     # toggle helper ----------------------------------------------------
     def _toggle_check(self, idx: QModelIndex):
-        # Ignore clicks in columns > 0 (they’re hidden anyway)
+        print(f"DEBUG: _toggle_check called for index {idx.row()}")
+        # Ignore clicks in columns > 0 (they're hidden anyway)
         if idx.column() != 0:
+            print("DEBUG: Ignoring click on column > 0")
             return
         current = self._model.data(idx, Qt.CheckStateRole)
         new_state = Qt.Unchecked if current == Qt.Checked else Qt.Checked
+        print(f"DEBUG: Changing state from {current} to {new_state}")
         self._model.setData(idx, new_state, Qt.CheckStateRole)
         # fire the click flash
         self._flash.stop()
         self._flash.start()
+        
+        # Emit selection changed signal for auto-scan functionality
+        new_selection = self.checked_paths()
+        print(f"DEBUG: Emitting selection_changed signal with {len(new_selection)} files: {new_selection}")
+        self.selection_changed.emit(new_selection)
+
+    def _on_data_changed(self, topLeft, bottomRight, roles):
+        """Handle model data changes (when checkboxes are clicked directly)"""
+        if Qt.CheckStateRole in roles:
+            print("DEBUG: Model data changed - checkbox was clicked")
+            new_selection = self.checked_paths()
+            print(f"DEBUG: Emitting selection_changed signal with {len(new_selection)} files: {new_selection}")
+            self.selection_changed.emit(new_selection)
 
     # ---- basic actions -------------------------------------------------
     def set_root(self, path: str):

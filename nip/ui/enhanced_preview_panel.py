@@ -49,7 +49,7 @@ class CollapsibleSection(QWidget):
     def _setup_ui(self):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
+        layout.setSpacing(0)  # No spacing between header and content
         
         # Header with toggle button - NOW VISIBLE for interaction
         self.header = QFrame()
@@ -58,6 +58,8 @@ class CollapsibleSection(QWidget):
         # REMOVED: header.hide() - header is now visible for interaction
         
         header_layout = QHBoxLayout(self.header)
+        header_layout.setContentsMargins(6, 2, 6, 2)  # Very compact margins
+        header_layout.setSpacing(6)  # Minimal spacing between items
         
         # Toggle button
         self.toggle_btn = QPushButton("▼" if not self._collapsed else "▶")
@@ -145,10 +147,7 @@ class CollapsibleSection(QWidget):
             self.content_widget.setMinimumHeight(full_document_height)
             self.content_widget.setMaximumHeight(full_document_height)
             
-            # Add to layout
-            self.layout().addWidget(self.content_widget)
-            
-            # Add to layout first
+            # Add to layout once
             self.layout().addWidget(self.content_widget)
             
             # Force layout update to recognize new size
@@ -231,8 +230,8 @@ class EnhancedPreviewPanel(QWidget):
         
         self.scroll_widget = QWidget()
         self.scroll_layout = QVBoxLayout(self.scroll_widget)
-        self.scroll_layout.setContentsMargins(2, 2, 2, 2)
-        self.scroll_layout.setSpacing(4)
+        self.scroll_layout.setContentsMargins(4, 4, 4, 4)  # Reduced top margin
+        self.scroll_layout.setSpacing(2)  # Reduced spacing between sections
         self.scroll_widget.setStyleSheet("QWidget { border: none; }")
         
         self.scroll_area.setWidget(self.scroll_widget)
@@ -298,13 +297,27 @@ class EnhancedPreviewPanel(QWidget):
             self.scroll_layout.addWidget(section)
     
     def show_text(self, text: str):
-        """Show plain text (fallback for compatibility) - treated as placeholder"""
-        # Generate a cache key for text content to enable proper change detection
-        import hashlib
-        text_hash = hashlib.sha256(text.encode()).hexdigest()[:8]
-        cache_key = f"text_{text_hash}"
-        # Mark as placeholder since this is fallback content - use informative title
-        self.show_sections([("Ready", text, False)], cache_key, is_placeholder=True)
+        """Show plain text as a compact message at the top (not collapsible)"""
+        # Clear any existing sections first
+        self.clear_sections()
+        
+        # Create a simple, compact message widget instead of collapsible section
+        message_widget = QWidget()
+        message_layout = QVBoxLayout(message_widget)
+        message_layout.setContentsMargins(12, 12, 12, 12)  # Compact margins
+        message_layout.setSpacing(8)  # Tight spacing
+        
+        # Create a simple label for the message
+        message_label = QLabel(text)
+        message_label.setObjectName("welcomeMessage")
+        message_label.setWordWrap(True)
+        message_label.setAlignment(Qt.AlignTop | Qt.AlignLeft)
+        
+        message_layout.addWidget(message_label)
+        message_layout.addStretch()  # Push content to top
+        
+        # Add to scroll layout at the top
+        self.scroll_layout.addWidget(message_widget)
     
     def clear_sections(self):
         """Clear all sections"""

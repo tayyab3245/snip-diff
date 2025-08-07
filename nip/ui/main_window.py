@@ -78,6 +78,16 @@ class MainWindow(QMainWindow):
         # Set up central theme system and apply initial theme
         self._setup_connections()
         self._apply_theme()
+        
+        # Show welcome message on startup
+        welcome_text = (
+            "Welcome to NIP-Diff!\n\n"
+            "📁 Choose a folder to begin\n"
+            "📄 Select files to view differences\n"
+            "🔄 Changes are scanned automatically\n\n"
+            "Use the toolbar to choose a folder and get started."
+        )
+        self.preview.show_text(welcome_text)
 
         self._worker: FastDiffWorker | None = None   # Use fast worker
         self._watcher = None               # LiveWatcher after first Run
@@ -85,7 +95,7 @@ class MainWindow(QMainWindow):
         self._live_scan_in_progress = False  # Track background live scans separately
         self._debounce = QTimer(singleShot=True)
         self._debounce.setInterval(300)    # ms – lump rapid saves together
-        self._debounce.timeout.connect(lambda: self._start_fast_diff(is_user_action=False))  # Live watch = background
+        self._debounce.timeout.connect(lambda: (print("DEBUG: Debounce timer fired!"), self._start_fast_diff(is_user_action=False))[1])  # Live watch = background
 
     # ------------------------------------------------------------------
     def _on_folder_selected(self, folder_path: str):
@@ -99,32 +109,36 @@ class MainWindow(QMainWindow):
         
         # Clear previous results and show helpful message
         self.preview.clear_sections()
-        self.preview.show_text("Folder selected. Click 'Run' (F5) to scan for changes.")
+        self.preview.show_text("Folder selected. Select files in the tree to view differences.")
         
         # Show status
         self.status_manager.show_info(f"Selected folder: {os.path.basename(folder_path)}")
 
     def _on_selection_changed(self, new_selection):
-        """Handle immediate file selection changes - trigger scan automatically"""
+        """Handle immediate file selection changes - trigger scan automatically with debouncing"""
+        print(f"DEBUG: MainWindow received selection_changed signal with {len(new_selection)} files")
         logger.debug(f"Selection changed to: {new_selection}")
         
-        # Only auto-scan if we have a folder and the selection isn't empty
-        if hasattr(self.tree, '_root_path') and self.tree._root_path and new_selection:
-            logger.debug("Auto-triggering background scan for new selection")
-            self._start_fast_diff(is_user_action=False)  # Background scan, no spinner
+        # Auto-scan if we have a folder (regardless of selection state)
+        if hasattr(self.tree, '_root_path') and self.tree._root_path:
+            print(f"DEBUG: Auto-triggering scan for folder {self.tree._root_path}")
+            logger.debug("Auto-triggering debounced background scan for selection change")
+            # Use debouncing to handle rapid selection changes
+            self._debounce.start()  # This will restart the timer if already active
         else:
-            logger.debug("Skipping auto-scan - no folder or empty selection")
+            print("DEBUG: Skipping auto-scan - no folder selected")
+            logger.debug("Skipping auto-scan - no folder selected")
 
     def _setup_connections(self):
         """Set up all signal connections"""
         # Connect toolbar signals
         self.toolbar.choose_folder.connect(self._on_folder_selected)
-        self.toolbar.run.connect(lambda: self._start_fast_diff(is_user_action=True))  # Explicit user action
         self.toolbar.copy.connect(self.preview.copy_all)
         self.toolbar.theme_changed.connect(self._on_theme_changed)  # Connect theme toggle
         
         # Connect file tree selection changes to immediate scan triggering
         self.tree.selection_changed.connect(self._on_selection_changed)
+        print("DEBUG: Connected tree.selection_changed to _on_selection_changed")
 
     def _apply_theme(self):
         """Apply the current theme using the central theme system"""
@@ -162,24 +176,34 @@ class MainWindow(QMainWindow):
         Args:
             is_user_action: True for explicit user scans (show spinner), False for background scans (no spinner)
         """
+        print(f"DEBUG: _start_fast_diff called with is_user_action={is_user_action}")
+        
         # Stop any pending debounced scan
         if self._debounce.isActive():
             logger.debug("Stopping pending debounced scan")
             self._debounce.stop()
             
         if self.tree._root_path is None:      # property would raise, test private
+            print("DEBUG: No folder selected, showing warning")
             QMessageBox.warning(self, "No folder", "Please choose a folder first.")
             return
 
         include: Set[str] = self.tree.checked_paths()
+        print(f"DEBUG: Checked paths: {include}")
         logger.debug(f"Scan triggered - selection: {include}, user_action: {is_user_action}")
         
-        if not include:               # nothing checked → show hint, abort
-            QMessageBox.information(
-                self, "Nothing selected",
-                "Tick one or more check-boxes in the tree first "
-                "(left-click on a row to toggle)."
-            )
+        if not include:               # nothing checked → clear preview or show hint
+            if is_user_action:
+                # Only show message for explicit user actions, not automatic scans
+                QMessageBox.information(
+                    self, "Nothing selected",
+                    "Tick one or more check-boxes in the tree first "
+                    "(left-click on a row to toggle)."
+                )
+            else:
+                # For automatic scans with empty selection, just clear the preview
+                logger.debug("Empty selection in automatic scan - clearing preview")
+                self.preview.show_text("Select files to view differences")
             return
             
         # CRITICAL: Create immutable snapshot of selection to prevent mutation during scan

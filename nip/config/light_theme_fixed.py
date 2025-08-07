@@ -131,16 +131,12 @@ QSplitter::handle {{
     background-color: {theme['main_bg']};
 }}
 
-/* === NEUMORPHIC TREE VIEW === */
+/* === FLAT TREE VIEW === */
 QTreeView {{
-    background-color: {theme['inner_bg']};
+    background-color: {theme['tree_bg']};
     color: {theme['text_color']};
-    border: none;
+    border: 1px solid {theme['border']};
     margin: 8px;
-    border-top: 2px solid {theme['inner_shadow']};
-    border-left: 2px solid {theme['inner_shadow']};
-    border-right: 2px solid {theme['inner_highlight']};
-    border-bottom: 2px solid {theme['inner_highlight']};
     border-radius: 4px;
 }}
 
@@ -332,6 +328,16 @@ QPushButton#diffToggleButton {{
 QPushButton#diffToggleButton:hover {{
     background: {theme['hover']};
     border-radius: 2px;
+}}
+
+/* === WELCOME MESSAGE === */
+QLabel#welcomeMessage {{
+    color: {theme['text_color']};
+    font-size: 14px;
+    line-height: 1.4;
+    background: transparent;
+    border: none;
+    padding: 8px;
 }}
 
 /* === MENUS === */
