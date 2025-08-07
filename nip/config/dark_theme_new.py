@@ -276,8 +276,40 @@ QTreeView::item:hover {{
 }}
 
 QTreeView::item:selected {{
-    background: {theme['selected']};
-    color: white;
+    background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+        stop: 0 {theme['tree_border_outer']}, stop: 1 {theme['main_bg']});
+    border-top: 1px solid {theme['tree_border_outer']};
+    border-left: 1px solid {theme['tree_border_outer']};
+    border-bottom: 1px solid {theme['tree_border_inner']};
+    border-right: 1px solid {theme['tree_border_inner']};
+    color: {theme['text_color']};
+}}
+
+/* === ACCORDION SECTIONS === */
+QFrame#diffSectionHeader {{
+    background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+        stop: 0 {theme['surface_elevated']}, stop: 1 {theme['main_bg']});
+    border-bottom: 1px solid {theme['border']};
+    border-radius: {tokens['radius']['sm']};
+    padding: {tokens['spacing']['xs']};
+    margin-bottom: 2px;
+}}
+
+QLabel#diffSectionTitle {{
+    font-weight: {tokens['font']['weight']['medium']};
+    color: {theme['text_color']};
+}}
+
+QPushButton#diffToggleButton {{
+    background: transparent;
+    border: none;
+    color: {theme['text_color']};
+    padding: 2px;
+}}
+
+QPushButton#diffToggleButton:hover {{
+    background: {theme['tree_item_hover_light']};
+    border-radius: 2px;
 }}
 
 /* === MENUS === */
