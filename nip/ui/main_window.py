@@ -136,9 +136,10 @@ class MainWindow(QMainWindow):
             app.setStyleSheet(qss)
             print(f"✓ Applied central theme: {theme_manager.mode} mode")
             
-        # Update neumorphic scroll bars in preview panel
+        # Update neumorphic scroll bars in preview panel with complete color dictionary
         if hasattr(self, 'preview') and hasattr(self.preview, 'set_theme'):
-            self.preview.set_theme(theme_manager.mode)
+            theme_colors = theme_manager.get_colors()
+            self.preview.set_theme(theme_colors)
 
     def _on_theme_changed(self, theme_mode: str):
         """Handle theme change using central theme system"""

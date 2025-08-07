@@ -85,6 +85,14 @@ DARK_UNIFIED = {
     'preview_bg_inset': '#232428',   # Use neumorphic background
     'preview_border_outer': 'rgba(0, 0, 0, 0.8)',    # Use neumorphic inner shadow
     'preview_border_inner': 'rgba(58, 58, 58, 1.0)',  # Use neumorphic inner highlight
+    
+    # === NEUMORPHIC SCROLLBAR COLORS ===
+    'scrollbar_track_bg': '#232428',              # Track background (sunken appearance)
+    'scrollbar_handle_bg': '#2a2a2e',             # Handle background (raised appearance)
+    'scrollbar_shadow_out': 'rgba(0, 0, 0, 0.5)', # Outer shadow for raised effect
+    'scrollbar_highlight_out': 'rgba(255, 255, 255, 0.1)', # Outer highlight
+    'scrollbar_shadow_in': 'rgba(0, 0, 0, 0.7)',  # Inner shadow for sunken track
+    'scrollbar_highlight_in': 'rgba(58, 58, 58, 0.8)', # Inner highlight for track
 }
 
 def generate_dark_qss() -> str:
@@ -333,5 +341,19 @@ QMenu::item {{
 QMenu::item:selected {{
     background: {theme['selected']};
     color: white;
+}}
+
+/* === DOCUMENT SEPARATOR === */
+QFrame#documentSeparator {{
+    border: none;
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+        stop:0 transparent,
+        stop:0.1 rgb(4, 236, 180),
+        stop:0.5 rgb(4, 236, 180),
+        stop:0.9 rgb(4, 236, 180),
+        stop:1 transparent);
+    margin: 8px 16px;
+    max-height: 2px;
+    min-height: 2px;
 }}
 '''

@@ -119,28 +119,45 @@ class CollapsibleSection(QWidget):
         if self.content_widget is None:
             self.content_widget = QPlainTextEdit()
             self.content_widget.setPlainText(self.content)
-            
-            # Calculate the required height based on the document's layout
-            doc = self.content_widget.document()
-            layout = doc.documentLayout()
-            required_height = int(layout.documentSize().height())
-            
-            # Add a small vertical padding (10px) to prevent text clipping
-            total_height = required_height + 10
-            
-            # Explicitly set the widget's fixed height
-            self.content_widget.setFixedHeight(total_height)
-            
             self.content_widget.setReadOnly(True)
             self.content_widget.setFont(QFont("Consolas, Monaco, monospace", 11))
-            self.content_widget.setMinimumHeight(0)
             self.content_widget.setObjectName("diffContentEditor")
             
-            # Apply syntax highlighting
-            self._apply_diff_highlighting()
+            # Remove individual scrollbars since we show full content
+            self.content_widget.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+            self.content_widget.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+            
+            # Document-style: Set a large fixed height to show ALL content
+            # Calculate actual content height needed
+            doc = self.content_widget.document()
+            doc.setTextWidth(-1)  # No text wrapping - full width
+            
+            # Count lines and calculate proper height
+            line_count = self.content.count('\n') + 1
+            font_metrics = self.content_widget.fontMetrics()
+            line_height = font_metrics.lineSpacing()
+            
+            # Full document height = lines * line height + padding
+            full_document_height = line_count * line_height + 40
+            
+            # Always use the full calculated height, never compress
+            self.content_widget.setFixedHeight(full_document_height)
+            self.content_widget.setMinimumHeight(full_document_height)
+            self.content_widget.setMaximumHeight(full_document_height)
             
             # Add to layout
             self.layout().addWidget(self.content_widget)
+            
+            # Add to layout first
+            self.layout().addWidget(self.content_widget)
+            
+            # Force layout update to recognize new size
+            self.updateGeometry()
+            if self.parent():
+                self.parent().updateGeometry()
+            
+            # Apply syntax highlighting
+            self._apply_diff_highlighting()
     
     def _update_visibility(self):
         """Update widget visibility based on collapsed state"""
@@ -215,7 +232,7 @@ class EnhancedPreviewPanel(QWidget):
         self.scroll_widget = QWidget()
         self.scroll_layout = QVBoxLayout(self.scroll_widget)
         self.scroll_layout.setContentsMargins(2, 2, 2, 2)
-        self.scroll_layout.setSpacing(1)
+        self.scroll_layout.setSpacing(4)
         self.scroll_widget.setStyleSheet("QWidget { border: none; }")
         
         self.scroll_area.setWidget(self.scroll_widget)
@@ -261,8 +278,18 @@ class EnhancedPreviewPanel(QWidget):
         # Clear existing sections
         self.clear_sections()
         
-        # Add new sections
-        for title, content, collapsed in sections_data:
+        # Add new sections with separators
+        for i, (title, content, collapsed) in enumerate(sections_data):
+            # Add separator before each section (except the first one)
+            if i > 0:
+                separator = QFrame()
+                separator.setFrameShape(QFrame.HLine)
+                separator.setFrameShadow(QFrame.Sunken)
+                separator.setObjectName("documentSeparator")
+                separator.setFixedHeight(2)  # Make it slightly thicker and more visible
+                # Remove inline styling to let theme CSS take effect
+                self.scroll_layout.addWidget(separator)
+            
             section = CollapsibleSection(title, content, collapsed)
             section.setProperty("cache_key", effective_cache_key)
             section.setProperty("content_hash", content_hash)
@@ -322,7 +349,7 @@ class EnhancedPreviewPanel(QWidget):
             # TODO: Implement search across all sections
             pass
     
-    def set_theme(self, theme_mode):
+    def set_theme(self, theme_colors):
         """Update the theme for neumorphic scroll bars"""
         if hasattr(self, 'scroll_area') and hasattr(self.scroll_area, 'set_theme'):
-            self.scroll_area.set_theme(theme_mode)
+            self.scroll_area.set_theme(theme_colors)

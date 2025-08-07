@@ -96,6 +96,14 @@ LIGHT_UNIFIED = {
     'preview_bg_inset': '#E3EDF7',   # Use neumorphic background
     'preview_border_outer': 'rgba(111, 140, 176, 0.4)',    # Use neumorphic inner shadow
     'preview_border_inner': 'rgba(255, 255, 255, 0.8)',    # Use neumorphic inner highlight
+    
+    # === NEUMORPHIC SCROLLBAR COLORS ===
+    'scrollbar_track_bg': '#E3EDF7',              # Track background (sunken appearance)
+    'scrollbar_handle_bg': '#F7F5F1',             # Handle background (raised appearance)
+    'scrollbar_shadow_out': 'rgba(0, 0, 0, 0.1)', # Outer shadow for raised effect
+    'scrollbar_highlight_out': 'rgba(255, 255, 255, 0.8)', # Outer highlight
+    'scrollbar_shadow_in': 'rgba(111, 140, 176, 0.4)',  # Inner shadow for sunken track
+    'scrollbar_highlight_in': 'rgba(255, 255, 255, 0.9)', # Inner highlight for track
 }
 
 def generate_light_qss() -> str:
@@ -344,5 +352,19 @@ QMenu::item {{
 QMenu::item:selected {{
     background: {theme['selected']};
     color: white;
+}}
+
+/* === DOCUMENT SEPARATOR === */
+QFrame#documentSeparator {{
+    border: none;
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+        stop:0 transparent,
+        stop:0.1 {theme['inner_shadow']},
+        stop:0.5 {theme['border']},
+        stop:0.9 {theme['inner_shadow']},
+        stop:1 transparent);
+    margin: 8px 16px;
+    max-height: 2px;
+    min-height: 2px;
 }}
 '''
