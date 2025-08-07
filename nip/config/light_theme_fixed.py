@@ -298,12 +298,15 @@ QTreeView::item:selected {{
 
 /* === ACCORDION SECTIONS === */
 QFrame#diffSectionHeader {{
-    background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
-        stop: 0 {theme['surface_elevated']}, stop: 1 {theme['main_bg']});
-    border-bottom: 1px solid {theme['border']};
-    border-radius: {tokens['radius']['sm']};
+    background-color: {theme['inner_bg']};
+    height: 32px;
     padding: {tokens['spacing']['xs']};
-    margin-bottom: 2px;
+    margin: 0px;
+    border-top: 1px solid {theme['button_border_light']};
+    border-left: 1px solid {theme['button_border_light']};
+    border-right: 1px solid {theme['button_border_dark']};
+    border-bottom: 1px solid {theme['button_border_dark']};
+    border-radius: {tokens['radius']['sm']};
 }}
 
 QLabel#diffSectionTitle {{
