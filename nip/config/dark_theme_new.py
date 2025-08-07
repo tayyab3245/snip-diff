@@ -349,6 +349,74 @@ QMenu::item:selected {{
     color: white;
 }}
 
+/* === INSTRUCTIONS PANEL === */
+QLabel#instructionsLabel {{
+    color: {theme['text_color']};
+    font-size: 12px;
+    font-weight: bold;
+    margin-bottom: 4px;
+}}
+
+QPlainTextEdit#instructionsInput {{
+    background: {theme['surface_sunken']};
+    border: 1px solid {theme['border']};
+    border-radius: 4px;
+    color: {theme['text_color']};
+    font-size: 11px;
+    padding: 4px;
+    selection-background-color: {theme['primary']};
+}}
+
+QPlainTextEdit#instructionsInput:focus {{
+    border: 1px solid {theme['border_focus']};
+}}
+
+QComboBox#positionControl {{
+    background: {theme['surface_raised']};
+    border: 1px solid {theme['border']};
+    border-radius: 4px;
+    color: {theme['text_color']};
+    font-size: 11px;
+    padding: 4px;
+    min-width: 200px;
+}}
+
+QComboBox#positionControl:hover {{
+    background: {theme['surface_elevated']};
+}}
+
+QComboBox#positionControl::drop-down {{
+    border: none;
+    width: 20px;
+}}
+
+QComboBox#positionControl::down-arrow {{
+    image: none;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 4px solid {theme['text_color']};
+    margin-right: 4px;
+}}
+
+QPushButton#copySectionButton {{
+    background: {theme['surface_raised']};
+    border: 1px solid {theme['border']};
+    border-radius: 4px;
+    color: {theme['text_color']};
+    font-size: 10px;
+    padding: 4px 8px;
+    margin-left: 4px;
+}}
+
+QPushButton#copySectionButton:hover {{
+    background: {theme['surface_elevated']};
+    border-color: {theme['border_light']};
+}}
+
+QPushButton#copySectionButton:pressed {{
+    background: {theme['surface_sunken']};
+}}
+
 /* === DOCUMENT SEPARATOR === */
 QFrame#documentSeparator {{
     border: none;

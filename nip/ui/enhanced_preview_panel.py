@@ -17,7 +17,7 @@ from PySide6.QtGui import (
 )
 from PySide6.QtWidgets import (
     QPlainTextEdit, QWidget, QVBoxLayout, QInputDialog, QHBoxLayout,
-    QLabel, QPushButton, QFrame, QScrollArea, QSplitter
+    QLabel, QPushButton, QFrame, QScrollArea, QSplitter, QComboBox
 )
 
 from pygments import lex
@@ -38,6 +38,9 @@ def _fmt(col: str) -> QTextCharFormat:
 
 class CollapsibleSection(QWidget):
     """A collapsible section widget for organizing diff content"""
+    
+    # Signal for requesting copy operation
+    copy_requested = Signal(str)
     
     def __init__(self, title: str, content: str = "", collapsed: bool = False):
         super().__init__()
@@ -71,9 +74,15 @@ class CollapsibleSection(QWidget):
         self.title_label = QLabel(self.title)
         self.title_label.setObjectName("diffSectionTitle")
         
+        # Copy button
+        self.copy_btn = QPushButton("Copy")
+        self.copy_btn.setObjectName("copySectionButton")
+        self.copy_btn.clicked.connect(self._handle_copy_click)
+        
         header_layout.addWidget(self.toggle_btn)
         header_layout.addWidget(self.title_label)
         header_layout.addStretch()
+        header_layout.addWidget(self.copy_btn)
         
         # Content area - with proper lazy loading
         self.content_widget = None  # Lazy loading - create only when needed
@@ -180,6 +189,10 @@ class CollapsibleSection(QWidget):
         """Get the content for copying"""
         return self.content
     
+    def _handle_copy_click(self):
+        """Handle copy button click by emitting signal"""
+        self.copy_requested.emit(self.get_content())
+    
     def set_content(self, content: str):
         """Update the content"""
         self.content = content
@@ -200,6 +213,39 @@ class EnhancedPreviewPanel(QWidget):
     def _setup_ui(self):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(4, 4, 4, 4)
+        
+        # Instructions panel
+        instructions_panel = QWidget()
+        instructions_layout = QVBoxLayout(instructions_panel)
+        instructions_layout.setContentsMargins(4, 4, 4, 4)
+        instructions_layout.setSpacing(4)
+        
+        # Instructions label
+        instructions_label = QLabel("Custom AI Instructions")
+        instructions_label.setObjectName("instructionsLabel")
+        instructions_layout.addWidget(instructions_label)
+        
+        # Instructions input
+        self.instructions_input = QPlainTextEdit()
+        self.instructions_input.setObjectName("instructionsInput")
+        self.instructions_input.setPlaceholderText("Your custom instructions for the AI go here...")
+        self.instructions_input.setMaximumHeight(80)  # Keep it compact
+        instructions_layout.addWidget(self.instructions_input)
+        
+        # Position control
+        position_layout = QHBoxLayout()
+        position_label = QLabel("Position:")
+        position_layout.addWidget(position_label)
+        
+        self.position_control = QComboBox()
+        self.position_control.setObjectName("positionControl")
+        self.position_control.addItem("Prepend (Instructions at Top)")
+        self.position_control.addItem("Append (Instructions at Bottom)")
+        position_layout.addWidget(self.position_control)
+        position_layout.addStretch()
+        
+        instructions_layout.addLayout(position_layout)
+        layout.addWidget(instructions_panel)
         
         # Control bar for expand/collapse all functionality
         control_bar = QWidget()
@@ -293,6 +339,10 @@ class EnhancedPreviewPanel(QWidget):
             section.setProperty("cache_key", effective_cache_key)
             section.setProperty("content_hash", content_hash)
             section.setProperty("is_placeholder", is_placeholder)
+            
+            # Connect per-file copy signal to central copy handler
+            section.copy_requested.connect(self._execute_copy)
+            
             self.sections.append(section)
             self.scroll_layout.addWidget(section)
     
@@ -343,6 +393,29 @@ class EnhancedPreviewPanel(QWidget):
             if not section._collapsed:
                 section.toggle()
     
+    def _execute_copy(self, code_content: str):
+        """Central method to handle all copy operations with custom instructions"""
+        # Read instructions and position
+        instructions = self.instructions_input.toPlainText().strip()
+        position = self.position_control.currentText()
+        
+        # Prepare final content
+        if instructions:
+            separator = "\n" + "-" * 50 + "\n"
+            if "Prepend" in position:
+                # Instructions at top
+                final_content = instructions + separator + code_content
+            else:
+                # Instructions at bottom
+                final_content = code_content + separator + instructions
+        else:
+            # No instructions, just the code
+            final_content = code_content
+        
+        # Copy to clipboard
+        clipboard = QGuiApplication.clipboard()
+        clipboard.setText(final_content)
+    
     def copy_all(self):
         """Copy all content to clipboard"""
         full_content = []
@@ -352,8 +425,7 @@ class EnhancedPreviewPanel(QWidget):
             full_content.append("")  # Empty line between sections
         
         clipboard_text = "\n".join(full_content)
-        clipboard = QGuiApplication.clipboard()
-        clipboard.setText(clipboard_text)
+        self._execute_copy(clipboard_text)
     
     def start_search(self):
         """Start search functionality (placeholder for now)"""
