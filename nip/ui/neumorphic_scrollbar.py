@@ -1,12 +1,10 @@
 # neumorphic_scrollbar.py
+import sys
 from PySide6.QtCore    import Qt, QRect, QSize, QPoint
 from PySide6.QtWidgets import QWidget, QScrollArea, QVBoxLayout, QHBoxLayout
 from PySide6.QtWidgets import QApplication
 from PySide6.QtGui     import QColor
-import sys
-import os
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-from Neumorphism.Neumorphism import BoxShadowWrapper            # your cloned file
+from .neumorphism.Neumorphism import BoxShadowWrapper            # your cloned file
 
 # ---------- colour tokens reused from the palette --------------------
 LIGHT_BG          = QColor("#EAE7DF")               # track concave

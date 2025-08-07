@@ -1,5 +1,6 @@
 # NIP-Diff specific files
 .nip_snapshot.json
+.nip_snapshot_cache.json
 
 # Python cache files
 __pycache__/

@@ -1,8 +1,5 @@
 from PySide6 import QtCore, QtWidgets, QtGui
-import sys
-import os
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-from Neumorphism.Neumorphism import BoxShadow, BoxShadowWrapper
+from .neumorphism.Neumorphism import BoxShadow, BoxShadowWrapper
 
 class Calculator(QtWidgets.QWidget):
     def __init__(self):
