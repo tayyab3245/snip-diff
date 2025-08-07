@@ -354,16 +354,22 @@ QLabel#instructionsLabel {{
     color: {theme['text_color']};
     font-size: 12px;
     font-weight: bold;
-    margin-bottom: 4px;
+    margin-bottom: 2px;
+    margin-top: 0px;
 }}
 
 QPlainTextEdit#instructionsInput {{
-    background: {theme['surface_sunken']};
-    border: 1px solid {theme['border']};
-    border-radius: 4px;
+    background-color: {theme['inner_bg']};
     color: {theme['text_color']};
+    border: none;
+    margin: 2px;
+    padding: 6px;
+    border-top: 2px solid {theme['inner_shadow']};
+    border-left: 2px solid {theme['inner_shadow']};
+    border-right: 2px solid {theme['inner_highlight']};
+    border-bottom: 2px solid {theme['inner_highlight']};
+    border-radius: 4px;
     font-size: 11px;
-    padding: 4px;
     selection-background-color: {theme['primary']};
 }}
 
@@ -372,22 +378,36 @@ QPlainTextEdit#instructionsInput:focus {{
 }}
 
 QComboBox#positionControl {{
-    background: {theme['surface_raised']};
-    border: 1px solid {theme['border']};
-    border-radius: 4px;
+    background-color: {theme['inner_bg']};
     color: {theme['text_color']};
-    font-size: 11px;
-    padding: 4px;
-    min-width: 200px;
+    border: none;
+    margin: 2px;
+    padding: 2px 6px;
+    border-top: 2px solid {theme['inner_shadow']};
+    border-left: 2px solid {theme['inner_shadow']};
+    border-right: 2px solid {theme['inner_highlight']};
+    border-bottom: 2px solid {theme['inner_highlight']};
+    border-radius: 4px;
+    font-size: 10px;
+    min-width: 160px;
+    max-height: 24px;
 }}
 
 QComboBox#positionControl:hover {{
-    background: {theme['surface_elevated']};
+    background-color: {theme['surface_elevated']};
+}}
+
+QComboBox#positionControl:pressed {{
+    border-top: 2px solid {theme['inner_highlight']};
+    border-left: 2px solid {theme['inner_highlight']};
+    border-right: 2px solid {theme['inner_shadow']};
+    border-bottom: 2px solid {theme['inner_shadow']};
 }}
 
 QComboBox#positionControl::drop-down {{
     border: none;
     width: 20px;
+    background: transparent;
 }}
 
 QComboBox#positionControl::down-arrow {{
@@ -396,6 +416,42 @@ QComboBox#positionControl::down-arrow {{
     border-right: 4px solid transparent;
     border-top: 4px solid {theme['text_color']};
     margin-right: 4px;
+}}
+
+QComboBox#positionControl QAbstractItemView {{
+    background-color: {theme['inner_bg']};
+    color: {theme['text_color']};
+    border: 1px solid {theme['inner_shadow']};
+    selection-background-color: {theme['surface_elevated']};
+}}
+
+/* QCheckBox Neumorphic Styling */
+QCheckBox {{
+    color: {theme['text_color']};
+    spacing: 8px;
+}}
+
+QCheckBox::indicator {{
+    width: 16px;
+    height: 16px;
+    background-color: {theme['inner_bg']};
+    border-top: 2px solid {theme['inner_highlight']};
+    border-left: 2px solid {theme['inner_highlight']};
+    border-right: 2px solid {theme['inner_shadow']};
+    border-bottom: 2px solid {theme['inner_shadow']};
+    border-radius: 3px;
+}}
+
+QCheckBox::indicator:hover {{
+    background-color: {theme['surface_elevated']};
+}}
+
+QCheckBox::indicator:checked {{
+    background-color: {theme['primary']};
+    border-top: 2px solid {theme['inner_shadow']};
+    border-left: 2px solid {theme['inner_shadow']};
+    border-right: 2px solid {theme['inner_highlight']};
+    border-bottom: 2px solid {theme['inner_highlight']};
 }}
 
 QPushButton#copySectionButton {{

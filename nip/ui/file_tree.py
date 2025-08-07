@@ -127,6 +127,10 @@ class FileTree(QTreeView):
         self.setModel(self._model)
         self.setHeaderHidden(True)
         self.setSelectionMode(QTreeView.SingleSelection)
+        
+        # Apply neumorphic styling
+        self._setup_theme_styling()
+        
         # A plain left-click now toggles the check mark for that row
         self.clicked.connect(self._toggle_check)
         # ALSO connect to model data changes for when checkboxes are clicked directly
@@ -150,7 +154,168 @@ class FileTree(QTreeView):
         for col in range(1, 4):
             self.hideColumn(col)
 
-        self._root_path: str | None = None        
+        self._root_path: str | None = None
+    
+    def _setup_theme_styling(self):
+        """Apply neumorphic theme styling to the file tree"""
+        # Dark theme neumorphic styling (matching theme file)
+        dark_style = """
+            QTreeView {
+                background-color: #232428;
+                color: rgb(4, 236, 180);
+                border: 1px solid #0a0a0a;
+                margin: 8px;
+                border-radius: 4px;
+                font-size: 16px;
+                outline: none;
+                selection-background-color: transparent;
+            }
+            
+            QTreeView::item {
+                border: none;
+                padding: 4px 8px;
+                background: transparent;
+                border-radius: 2px;
+                margin: 1px;
+                outline: none;
+            }
+            
+            QTreeView::item:hover {
+                background: rgba(255, 255, 255, 0.06);
+            }
+            
+            QTreeView::item:selected {
+                background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                    stop: 0 rgba(0, 0, 0, 0.8), stop: 1 #232428);
+                border-top: 1px solid rgba(0, 0, 0, 0.8);
+                border-left: 1px solid rgba(0, 0, 0, 0.8);
+                border-bottom: 1px solid rgba(58, 58, 58, 1.0);
+                border-right: 1px solid rgba(58, 58, 58, 1.0);
+                color: rgb(4, 236, 180);
+                outline: none;
+            }
+            
+            QTreeView::item:selected:focus {
+                outline: none;
+                border: none;
+            }
+            
+            QTreeView:focus {
+                outline: none;
+                border: 1px solid #0a0a0a;
+            }
+        """
+        
+        self.setStyleSheet(dark_style)
+        
+        # Remove focus policy to prevent dotted borders
+        self.setFocusPolicy(Qt.NoFocus)
+        
+        # Store current theme
+        self._current_theme = 'dark'
+    
+    def set_theme(self, theme_colors):
+        """Update the theme for the file tree"""
+        # Determine theme mode from colors
+        bg_color = theme_colors.get('main_bg', '#232428')
+        self._current_theme = 'dark' if bg_color.startswith('#2') else 'light'
+        
+        if self._current_theme == 'dark':
+            style = """
+                QTreeView {
+                    background-color: #232428;
+                    color: rgb(4, 236, 180);
+                    border: 1px solid #0a0a0a;
+                    margin: 8px;
+                    border-radius: 4px;
+                    font-size: 16px;
+                    outline: none;
+                    selection-background-color: transparent;
+                }
+                
+                QTreeView::item {
+                    border: none;
+                    padding: 4px 8px;
+                    background: transparent;
+                    border-radius: 2px;
+                    margin: 1px;
+                    outline: none;
+                }
+                
+                QTreeView::item:hover {
+                    background: rgba(255, 255, 255, 0.06);
+                }
+                
+                QTreeView::item:selected {
+                    background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                        stop: 0 rgba(0, 0, 0, 0.8), stop: 1 #232428);
+                    border-top: 1px solid rgba(0, 0, 0, 0.8);
+                    border-left: 1px solid rgba(0, 0, 0, 0.8);
+                    border-bottom: 1px solid rgba(58, 58, 58, 1.0);
+                    border-right: 1px solid rgba(58, 58, 58, 1.0);
+                    color: rgb(4, 236, 180);
+                    outline: none;
+                }
+                
+                QTreeView::item:selected:focus {
+                    outline: none;
+                    border: none;
+                }
+                
+                QTreeView:focus {
+                    outline: none;
+                    border: 1px solid #0a0a0a;
+                }
+            """
+        else:  # light theme
+            style = """
+                QTreeView {
+                    background-color: #E3EDF7;
+                    color: #979797;
+                    border: 1px solid #d0d0d0;
+                    margin: 8px;
+                    border-radius: 4px;
+                    font-size: 16px;
+                    outline: none;
+                    selection-background-color: transparent;
+                }
+                
+                QTreeView::item {
+                    border: none;
+                    padding: 4px 8px;
+                    background: transparent;
+                    border-radius: 2px;
+                    margin: 1px;
+                    outline: none;
+                }
+                
+                QTreeView::item:hover {
+                    background: rgba(0, 0, 0, 0.06);
+                }
+                
+                QTreeView::item:selected {
+                    background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                        stop: 0 rgba(111, 140, 176, 0.4), stop: 1 #E3EDF7);
+                    border-top: 1px solid rgba(111, 140, 176, 0.4);
+                    border-left: 1px solid rgba(111, 140, 176, 0.4);
+                    border-bottom: 1px solid #FFFFFF;
+                    border-right: 1px solid #FFFFFF;
+                    color: #979797;
+                    outline: none;
+                }
+                
+                QTreeView::item:selected:focus {
+                    outline: none;
+                    border: none;
+                }
+                
+                QTreeView:focus {
+                    outline: none;
+                    border: 1px solid #d0d0d0;
+                }
+            """
+        
+        self.setStyleSheet(style)        
 
     # toggle helper ----------------------------------------------------
     def _toggle_check(self, idx: QModelIndex):

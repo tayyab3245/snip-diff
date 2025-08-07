@@ -6,8 +6,8 @@ from PySide6.QtWidgets import QApplication
 from PySide6.QtGui     import QColor
 from .neumorphism.Neumorphism import BoxShadowWrapper            # your cloned file
 
-# Minimum handle height to ensure usability
-MIN_HANDLE_HEIGHT = 40
+# Minimum handle height to ensure usability - 30% of scrollbar minimum
+MIN_HANDLE_HEIGHT = 80
 
 
 def raised_shadow(radius=8, shadow_color=None, highlight_color=None):
@@ -41,8 +41,9 @@ class Handle(QWidget):
     def __init__(self, parent=None, theme_colors=None):
         super().__init__(parent)
         self.theme_colors = theme_colors or {}
-        self.setMinimumWidth(14)
-        self.setMinimumHeight(40)
+        self.setMinimumWidth(16)
+        # Set minimum height to be 30% of a typical scrollbar (assuming ~300px height)
+        self.setMinimumHeight(90)  # 30% of ~300px
         self.setAttribute(Qt.WA_TransparentForMouseEvents, True)  # logic in bar
         
         # Set background color from theme
@@ -98,22 +99,34 @@ class Track(QWidget):
     def update_position(self, value, maximum, page_step=10):
         bar_height = self.height() if self.vertical else self.width()
         
-        # --- START NEW LOGIC ---
+        # --- FIXED: ENFORCE 30% MINIMUM RULE ---
+        
+        # Calculate 30% of the scrollbar height as absolute minimum
+        minimum_30_percent = int(bar_height * 0.30)
         
         # Calculate the total content height (maximum is content_height - viewport_height)
         total_content_height = maximum + page_step
         
         # Calculate the ideal proportional handle height
         if total_content_height > 0:
-            ideal_handle_height = int(bar_height * (page_step / total_content_height))
+            # Use proportional sizing but never go below 30%
+            proportion = page_step / total_content_height
+            ideal_handle_height = int(bar_height * proportion)
         else:
-            # If there's no content, the handle should fill the bar
-            ideal_handle_height = bar_height
+            # If there's no content, use 80% of bar
+            ideal_handle_height = int(bar_height * 0.8)
         
-        # Enforce the minimum height constant defined at the top of the file
-        final_handle_size = max(MIN_HANDLE_HEIGHT, ideal_handle_height)
+        # CRITICAL: Never allow handle to be smaller than 30% of scrollbar
+        final_handle_size = max(minimum_30_percent, ideal_handle_height)
         
-        # --- END NEW LOGIC ---
+        # Also ensure it doesn't exceed 90% of the available space
+        max_handle_size = int(bar_height * 0.9)
+        final_handle_size = min(final_handle_size, max_handle_size)
+        
+        # Double-check: Absolute minimum override
+        final_handle_size = max(final_handle_size, minimum_30_percent)
+        
+        # --- END FIXED LOGIC ---
         
         # Apply the size
         if self.vertical:

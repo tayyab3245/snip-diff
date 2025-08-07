@@ -154,6 +154,11 @@ class MainWindow(QMainWindow):
         if hasattr(self, 'preview') and hasattr(self.preview, 'set_theme'):
             theme_colors = theme_manager.get_colors()
             self.preview.set_theme(theme_colors)
+            
+        # Update file tree theme
+        if hasattr(self, 'tree') and hasattr(self.tree, 'set_theme'):
+            theme_colors = theme_manager.get_colors()
+            self.tree.set_theme(theme_colors)
 
     def _on_theme_changed(self, theme_mode: str):
         """Handle theme change using central theme system"""

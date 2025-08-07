@@ -37,8 +37,8 @@ class NipToolBar(QToolBar):
         # Create main widget container
         main_widget = QWidget()
         main_layout = QHBoxLayout(main_widget)
-        main_layout.setContentsMargins(20, 40, 20, 40)  # Even more vertical margins for better centering
-        main_layout.setSpacing(25)  # More spacing between buttons
+        main_layout.setContentsMargins(20, 10, 20, 10)  # Reduced vertical margins to move buttons up
+        main_layout.setSpacing(20)  # Slightly reduced spacing between buttons
         
         # Define neumorphic shadow styles for dark theme
         self.dark_outside = [
@@ -60,17 +60,18 @@ class NipToolBar(QToolBar):
             {"inside": True, "offset": [-4, -4], "blur": 8, "color": "#FFFFFF"}
         ]
 
-        # Button styles
+        # Button styles - balanced toolbar buttons
         self.dark_button_style = """
             QPushButton {
                 background: #232428;
                 border: none;
-                border-radius: 12px;
+                border-radius: 10px;
                 color: rgb(4, 236, 180);
-                padding: 10px 20px;
+                padding: 10px 18px;
                 font-weight: 500;
-                font-size: 11px;
+                font-size: 16px;
                 min-width: 80px;
+                min-height: 32px;
             }
             QPushButton:hover {
                 color: rgb(0, 255, 200);
@@ -84,12 +85,13 @@ class NipToolBar(QToolBar):
             QPushButton {
                 background: #E3EDF7;
                 border: none;
-                border-radius: 12px;
+                border-radius: 10px;
                 color: #979797;
-                padding: 10px 20px;
+                padding: 10px 18px;
                 font-weight: 500;
-                font-size: 11px;
+                font-size: 16px;
                 min-width: 80px;
+                min-height: 32px;
             }
             QPushButton:hover {
                 color: #666666;
@@ -98,6 +100,9 @@ class NipToolBar(QToolBar):
                 background: #d8e2ec;
             }
         """
+        # Theme button style matches other toolbar buttons
+        self.dark_theme_button_style = self.dark_button_style
+        self.light_theme_button_style = self.light_button_style
 
         # Create neumorphic buttons
         self.btn_choose = self._create_neumorphic_button("Choose Folder", self._on_choose)
@@ -125,8 +130,8 @@ class NipToolBar(QToolBar):
         spacer.setStyleSheet("background: transparent;")
         main_layout.addWidget(spacer)
         
-        # Theme Toggle Button (right-aligned)
-        self.btn_theme = self._create_neumorphic_button("Dark", self._toggle_theme)
+        # Theme Toggle Button (right-aligned) - smaller
+        self.btn_theme = self._create_neumorphic_button("Dark", self._toggle_theme, is_theme_button=True)
         main_layout.addWidget(self.btn_theme)
         
         # Add the main widget to toolbar
@@ -135,7 +140,7 @@ class NipToolBar(QToolBar):
         # Apply initial theme
         self._apply_theme()
 
-    def _create_neumorphic_button(self, text, callback):
+    def _create_neumorphic_button(self, text, callback, is_theme_button=False):
         """Create a button with neumorphic shadow effects"""
         button = QPushButton(text)
         button.clicked.connect(callback)
@@ -146,13 +151,18 @@ class NipToolBar(QToolBar):
         # Create wrapper with shadows
         wrapper = BoxShadowWrapper(button, shadows, smooth=True, disable_margins=True, margins=(16, 16))  # Increased margins for better shadow visibility
         
-        # Apply button style
-        style = self.dark_button_style if self._current_theme == 'dark' else self.light_button_style
+        # Apply button style based on type
+        if is_theme_button:
+            style = self.dark_theme_button_style if self._current_theme == 'dark' else self.light_theme_button_style
+        else:
+            style = self.dark_button_style if self._current_theme == 'dark' else self.light_button_style
+        
         button.setStyleSheet(style)
         
         # Store references for theme updates
         wrapper._button = button
         wrapper._shadows = shadows
+        wrapper._is_theme_button = is_theme_button
         
         return wrapper
 
@@ -184,10 +194,18 @@ class NipToolBar(QToolBar):
                 # Update shadows
                 if self._current_theme == 'dark':
                     wrapper.setShadowList(self.dark_outside)
-                    button.setStyleSheet(self.dark_button_style)
+                    # Use appropriate style based on button type
+                    if hasattr(wrapper, '_is_theme_button') and wrapper._is_theme_button:
+                        button.setStyleSheet(self.dark_theme_button_style)
+                    else:
+                        button.setStyleSheet(self.dark_button_style)
                 else:
                     wrapper.setShadowList(self.light_outside)
-                    button.setStyleSheet(self.light_button_style)
+                    # Use appropriate style based on button type
+                    if hasattr(wrapper, '_is_theme_button') and wrapper._is_theme_button:
+                        button.setStyleSheet(self.light_theme_button_style)
+                    else:
+                        button.setStyleSheet(self.light_button_style)
 
     # ─────────────────────────────────────────────────────────────────
     def _on_choose(self):

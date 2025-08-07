@@ -19,6 +19,7 @@ from PySide6.QtWidgets import (
     QPlainTextEdit, QWidget, QVBoxLayout, QInputDialog, QHBoxLayout,
     QLabel, QPushButton, QFrame, QScrollArea, QSplitter, QComboBox
 )
+from .neumorphism.Neumorphism import BoxShadow, BoxShadowWrapper
 
 from pygments import lex
 from pygments.lexers import get_lexer_for_filename, TextLexer
@@ -74,17 +75,36 @@ class CollapsibleSection(QWidget):
         self.title_label = QLabel(self.title)
         self.title_label.setObjectName("diffSectionTitle")
         
-        # Copy button
-        self.copy_btn = QPushButton("Copy")
-        self.copy_btn.setObjectName("copySectionButton")
-        self.copy_btn.clicked.connect(self._handle_copy_click)
+        # Copy button with proper neumorphic styling
+        copy_btn_plain = QPushButton("Copy")
+        copy_btn_plain.setObjectName("copySectionButton")
+        copy_btn_plain.setFixedHeight(36)
+        copy_btn_plain.setMinimumWidth(80)
         
+        # Store reference to the plain button for theme updates
+        self._copy_btn_plain = copy_btn_plain
+        
+        # Create neumorphic wrapper with shadows
+        from PySide6.QtGui import QColor
+        self._dark_shadows = [
+            {"outside": True, "offset": [2, 2], "blur": 4, "color": QColor(0, 0, 0, 178)},
+            {"outside": True, "offset": [-2, -2], "blur": 4, "color": QColor(58, 58, 58, 255)}
+        ]
+        self._light_shadows = [
+            {"outside": True, "offset": [2, 2], "blur": 4, "color": QColor(111, 140, 176, 105)},
+            {"outside": True, "offset": [-2, -2], "blur": 4, "color": "#FFFFFF"}
+        ]
+        
+        # Apply initial theme (dark by default) - after shadows are defined
+        self._apply_copy_button_theme('dark')
+        
+        self.copy_btn = BoxShadowWrapper(copy_btn_plain, self._dark_shadows, smooth=True, disable_margins=True, margins=(8, 8))
+        copy_btn_plain.clicked.connect(self._handle_copy_click)
+
         header_layout.addWidget(self.toggle_btn)
         header_layout.addWidget(self.title_label)
         header_layout.addStretch()
-        header_layout.addWidget(self.copy_btn)
-        
-        # Content area - with proper lazy loading
+        header_layout.addWidget(self.copy_btn)        # Content area - with proper lazy loading
         self.content_widget = None  # Lazy loading - create only when needed
         
         layout.addWidget(self.header)
@@ -196,8 +216,63 @@ class CollapsibleSection(QWidget):
     def set_content(self, content: str):
         """Update the content"""
         self.content = content
-        self.content_widget.setPlainText(content)
-        self._apply_diff_highlighting()
+        if self.content_widget:
+            self.content_widget.setPlainText(content)
+            self._apply_diff_highlighting()
+    
+    def _apply_copy_button_theme(self, theme_mode):
+        """Apply theme styling to the copy button"""
+        if not hasattr(self, '_copy_btn_plain'):
+            return  # Not initialized yet
+            
+        if theme_mode == 'dark':
+            copy_btn_style = """
+                QPushButton {
+                    background: #232428;
+                    border: none;
+                    border-radius: 8px;
+                    color: rgb(4, 236, 180);
+                    padding: 8px 16px;
+                    font-weight: 500;
+                    font-size: 14px;
+                    min-width: 80px;
+                }
+                QPushButton:hover {
+                    color: rgb(0, 255, 200);
+                }
+                QPushButton:pressed {
+                    background: #1a1d21;
+                }
+            """
+            shadows = getattr(self, '_dark_shadows', [])
+        else:  # light theme
+            copy_btn_style = """
+                QPushButton {
+                    background: #E3EDF7;
+                    border: none;
+                    border-radius: 8px;
+                    color: #979797;
+                    padding: 8px 16px;
+                    font-weight: 500;
+                    font-size: 14px;
+                    min-width: 80px;
+                }
+                QPushButton:hover {
+                    color: #666666;
+                }
+                QPushButton:pressed {
+                    background: #d8e2ec;
+                }
+            """
+            shadows = getattr(self, '_light_shadows', [])
+        
+        self._copy_btn_plain.setStyleSheet(copy_btn_style)
+        if hasattr(self, 'copy_btn') and hasattr(self.copy_btn, 'setShadowList') and shadows:
+            self.copy_btn.setShadowList(shadows)
+    
+    def set_theme(self, theme_mode):
+        """Update the section theme"""
+        self._apply_copy_button_theme(theme_mode)
 
 
 class EnhancedPreviewPanel(QWidget):
@@ -208,80 +283,178 @@ class EnhancedPreviewPanel(QWidget):
         self.sections: List[CollapsibleSection] = []
         self._current_cache_key: str = ""  # Track cache key for forced re-renders
         self._last_sections_hash: str = ""  # Track content hash to avoid unnecessary re-renders
+        
+        # Theme tracking for neumorphic buttons
+        self._current_theme = 'dark'  # Default theme
+        self._setup_shadow_styles()
+        
         self._setup_ui()
+    
+    def _setup_shadow_styles(self):
+        """Setup neumorphic shadow styles for control buttons"""
+        from PySide6.QtGui import QColor
+        
+        # Define neumorphic shadow styles for dark theme
+        self.dark_outside = [
+            {"outside": True, "offset": [2, 2], "blur": 4, "color": QColor(0, 0, 0, 178)},
+            {"outside": True, "offset": [-2, -2], "blur": 4, "color": QColor(58, 58, 58, 255)}
+        ]
+        
+        # Define neumorphic shadow styles for light theme
+        self.light_outside = [
+            {"outside": True, "offset": [2, 2], "blur": 4, "color": QColor(111, 140, 176, 105)},
+            {"outside": True, "offset": [-2, -2], "blur": 4, "color": "#FFFFFF"}
+        ]
+        
+        # Control button styles - smaller than toolbar buttons
+        self.dark_control_style = """
+            QPushButton {
+                background: #232428;
+                border: none;
+                border-radius: 8px;
+                color: rgb(4, 236, 180);
+                padding: 6px 12px;
+                font-weight: 500;
+                font-size: 10px;
+                min-width: 70px;
+            }
+            QPushButton:hover {
+                color: rgb(0, 255, 200);
+            }
+            QPushButton:pressed {
+                background: #1a1d21;
+            }
+        """
+        
+        self.light_control_style = """
+            QPushButton {
+                background: #E3EDF7;
+                border: none;
+                border-radius: 8px;
+                color: #979797;
+                padding: 6px 12px;
+                font-weight: 500;
+                font-size: 10px;
+                min-width: 70px;
+            }
+            QPushButton:hover {
+                color: #666666;
+            }
+            QPushButton:pressed {
+                background: #d8e2ec;
+            }
+        """
+        
+        # Large button styles for expand/collapse buttons
+        self.dark_button_style = """
+            QPushButton {
+                background: #232428;
+                border: none;
+                border-radius: 10px;
+                color: rgb(4, 236, 180);
+                padding: 10px 16px;
+                font-weight: 500;
+                font-size: 12px;
+                min-width: 90px;
+            }
+            QPushButton:hover {
+                color: rgb(0, 255, 200);
+            }
+            QPushButton:pressed {
+                background: #1a1d21;
+            }
+        """
+        
+        self.light_button_style = """
+            QPushButton {
+                background: #E3EDF7;
+                border: none;
+                border-radius: 10px;
+                color: #979797;
+                padding: 10px 16px;
+                font-weight: 500;
+                font-size: 12px;
+                min-width: 90px;
+            }
+            QPushButton:hover {
+                color: #666666;
+            }
+            QPushButton:pressed {
+                background: #d8e2ec;
+            }
+        """
     
     def _setup_ui(self):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(4, 4, 4, 4)
-        
-        # Instructions panel
+
+        # Instructions panel (moved up, less wasted space)
         instructions_panel = QWidget()
         instructions_layout = QVBoxLayout(instructions_panel)
-        instructions_layout.setContentsMargins(4, 4, 4, 4)
-        instructions_layout.setSpacing(4)
-        
-        # Instructions label
-        instructions_label = QLabel("Custom AI Instructions")
-        instructions_label.setObjectName("instructionsLabel")
-        instructions_layout.addWidget(instructions_label)
-        
-        # Instructions input
+        instructions_layout.setContentsMargins(0, 0, 0, 0)
+        instructions_layout.setSpacing(0)  # No extra space between elements
+
+        # Instructions input (decent size, pushed up)
         self.instructions_input = QPlainTextEdit()
         self.instructions_input.setObjectName("instructionsInput")
-        self.instructions_input.setPlaceholderText("Your custom instructions for the AI go here...")
-        self.instructions_input.setMaximumHeight(80)  # Keep it compact
+        self.instructions_input.setPlaceholderText("Add instructions")
+        self.instructions_input.setMinimumHeight(80)
+        self.instructions_input.setMaximumHeight(160)
+        # Remove bottom margin and increase font size for instructions input
+        self.instructions_input.setStyleSheet("QPlainTextEdit#instructionsInput { margin-bottom: 0px; font-size: 16px; }")
         instructions_layout.addWidget(self.instructions_input)
-        
-        # Position control
+        # Add a tiny vertical spacing between instructions and position dropdown
+        instructions_layout.addSpacing(12)
+
+        # Position control (now above expand/collapse)
         position_layout = QHBoxLayout()
+        position_layout.setSpacing(2)
         position_label = QLabel("Position:")
+        position_label.setStyleSheet("QLabel { font-size: 16px; }")
         position_layout.addWidget(position_label)
-        
+
         self.position_control = QComboBox()
         self.position_control.setObjectName("positionControl")
-        self.position_control.addItem("Prepend (Instructions at Top)")
-        self.position_control.addItem("Append (Instructions at Bottom)")
+        self.position_control.addItem("Prepend")
+        self.position_control.addItem("Append")
+        self.position_control.setStyleSheet("QComboBox#positionControl { font-size: 16px; }")
         position_layout.addWidget(self.position_control)
         position_layout.addStretch()
-        
+
         instructions_layout.addLayout(position_layout)
-        layout.addWidget(instructions_panel)
-        
-        # Control bar for expand/collapse all functionality
+
+        # Control bar for expand/collapse all functionality (flush against instructions box)
         control_bar = QWidget()
         control_layout = QHBoxLayout(control_bar)
-        control_layout.setContentsMargins(4, 4, 4, 4)
-        
-        # Expand/Collapse All buttons
-        self.expand_all_btn = QPushButton("Expand All")
-        self.expand_all_btn.clicked.connect(self._expand_all)
-        self.expand_all_btn.setObjectName("controlButton")
-        
-        self.collapse_all_btn = QPushButton("Collapse All")
-        self.collapse_all_btn.clicked.connect(self._collapse_all)
-        self.collapse_all_btn.setObjectName("controlButton")
-        
+        control_layout.setContentsMargins(0, 0, 0, 0)  # No top margin
+        control_layout.setSpacing(2)  # Minimal spacing between buttons
+        self.expand_all_btn = self._create_neumorphic_control_button("Expand All", self._expand_all, large=True)
+        self.collapse_all_btn = self._create_neumorphic_control_button("Collapse All", self._collapse_all, large=True)
+        # Increase font size for expand/collapse buttons
+        if hasattr(self.expand_all_btn, '_button'):
+            self.expand_all_btn._button.setStyleSheet(self.expand_all_btn._button.styleSheet() + " font-size: 16px;")
+        if hasattr(self.collapse_all_btn, '_button'):
+            self.collapse_all_btn._button.setStyleSheet(self.collapse_all_btn._button.styleSheet() + " font-size: 16px;")
         control_layout.addWidget(self.expand_all_btn)
         control_layout.addWidget(self.collapse_all_btn)
-        control_layout.addStretch()
-        
-        layout.addWidget(control_bar)
-        
-        # Scroll area for sections
+        # Add control bar directly below position dropdown
+        instructions_layout.addWidget(control_bar)
+        layout.addWidget(instructions_panel)
+
+        # Scroll area for sections (header min size restored)
         self.scroll_area = NeumorphicScrollArea()
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         self.scroll_area.setStyleSheet("QScrollArea { border: none; }")
-        
+
         self.scroll_widget = QWidget()
         self.scroll_layout = QVBoxLayout(self.scroll_widget)
-        self.scroll_layout.setContentsMargins(4, 4, 4, 4)  # Reduced top margin
-        self.scroll_layout.setSpacing(2)  # Reduced spacing between sections
+        self.scroll_layout.setContentsMargins(4, 4, 4, 4)
+        self.scroll_layout.setSpacing(2)
         self.scroll_widget.setStyleSheet("QWidget { border: none; }")
-        
+
         self.scroll_area.setWidget(self.scroll_widget)
-        
         layout.addWidget(self.scroll_area)
     
     def show_sections(self, sections_data: List[tuple], cache_key: str = "", is_placeholder: bool = False):
@@ -339,6 +512,10 @@ class EnhancedPreviewPanel(QWidget):
             section.setProperty("cache_key", effective_cache_key)
             section.setProperty("content_hash", content_hash)
             section.setProperty("is_placeholder", is_placeholder)
+            
+            # Apply current theme to the new section
+            if hasattr(section, 'set_theme'):
+                section.set_theme(self._current_theme)
             
             # Connect per-file copy signal to central copy handler
             section.copy_requested.connect(self._execute_copy)
@@ -434,7 +611,71 @@ class EnhancedPreviewPanel(QWidget):
             # TODO: Implement search across all sections
             pass
     
+    def _create_neumorphic_control_button(self, text, callback, large=False):
+        """Create a control button with neumorphic shadow effects"""
+        button = QPushButton(text)
+        button.clicked.connect(callback)
+
+        # Use current theme shadows
+        shadows = self.dark_outside if self._current_theme == 'dark' else self.light_outside
+
+        # Create wrapper with shadows (larger margins for large buttons)
+        margin_size = (16, 16) if large else (8, 8)
+        wrapper = BoxShadowWrapper(button, shadows, smooth=True, disable_margins=True, margins=margin_size)
+
+        # Apply control button style
+        if large:
+            style = self.dark_button_style if self._current_theme == 'dark' else self.light_button_style
+        else:
+            style = self.dark_control_style if self._current_theme == 'dark' else self.light_control_style
+        button.setStyleSheet(style)
+
+        # Store references for theme updates
+        wrapper._button = button
+        wrapper._shadows = shadows
+        wrapper._is_large = large
+
+        return wrapper
+    
+    def _apply_control_button_theme(self):
+        """Apply current theme to control buttons"""
+        control_buttons = [self.expand_all_btn, self.collapse_all_btn]
+
+        for wrapper in control_buttons:
+            if hasattr(wrapper, '_button'):
+                button = wrapper._button
+                # Update shadows
+                is_large = getattr(wrapper, '_is_large', False)
+                if is_large:
+                    if self._current_theme == 'dark':
+                        wrapper.setShadowList(self.dark_outside)
+                        button.setStyleSheet(self.dark_button_style)
+                    else:
+                        wrapper.setShadowList(self.light_outside)
+                        button.setStyleSheet(self.light_button_style)
+                else:
+                    if self._current_theme == 'dark':
+                        wrapper.setShadowList(self.dark_outside)
+                        button.setStyleSheet(self.dark_control_style)
+                    else:
+                        wrapper.setShadowList(self.light_outside)
+                        button.setStyleSheet(self.light_control_style)
+    
     def set_theme(self, theme_colors):
-        """Update the theme for neumorphic scroll bars"""
+        """Update the theme for neumorphic scroll bars and control buttons"""
+        # Determine theme mode from colors
+        bg_color = theme_colors.get('main_bg', '#232428')
+        self._current_theme = 'dark' if bg_color.startswith('#2') else 'light'
+        
+        # Update scroll area theme
         if hasattr(self, 'scroll_area') and hasattr(self.scroll_area, 'set_theme'):
             self.scroll_area.set_theme(theme_colors)
+            
+        # Update control button theme
+        if hasattr(self, 'expand_all_btn') and hasattr(self, 'collapse_all_btn'):
+            self._apply_control_button_theme()
+            
+        # Update all section copy button themes
+        for section in self.sections:
+            if hasattr(section, 'set_theme'):
+                section.set_theme(self._current_theme)
