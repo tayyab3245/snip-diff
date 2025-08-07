@@ -119,6 +119,18 @@ class CollapsibleSection(QWidget):
         if self.content_widget is None:
             self.content_widget = QPlainTextEdit()
             self.content_widget.setPlainText(self.content)
+            
+            # Calculate the required height based on the document's layout
+            doc = self.content_widget.document()
+            layout = doc.documentLayout()
+            required_height = int(layout.documentSize().height())
+            
+            # Add a small vertical padding (10px) to prevent text clipping
+            total_height = required_height + 10
+            
+            # Explicitly set the widget's fixed height
+            self.content_widget.setFixedHeight(total_height)
+            
             self.content_widget.setReadOnly(True)
             self.content_widget.setFont(QFont("Consolas, Monaco, monospace", 11))
             self.content_widget.setMinimumHeight(0)
@@ -257,9 +269,6 @@ class EnhancedPreviewPanel(QWidget):
             section.setProperty("is_placeholder", is_placeholder)
             self.sections.append(section)
             self.scroll_layout.addWidget(section)
-        
-        # Add stretch at the end
-        self.scroll_layout.addStretch()
     
     def show_text(self, text: str):
         """Show plain text (fallback for compatibility) - treated as placeholder"""
