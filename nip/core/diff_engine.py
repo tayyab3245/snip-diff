@@ -7,10 +7,15 @@ def _diff_lines(path: str, old: str, new: str) -> List[str]:
     """
     Return a unified diff for one file where *all* unchanged lines are kept.
     We do this by making the context size equal to the longer file length.
+    For very large files, we limit context to prevent memory issues.
     """
     old_lines = old.splitlines()
     new_lines = new.splitlines()
-    ctx = max(len(old_lines), len(new_lines))          # full-file context
+    max_lines = max(len(old_lines), len(new_lines))
+    
+    # Limit context for very large files to prevent memory issues
+    ctx = min(max_lines, 10000)  # Cap at 10k lines context
+    
     return list(difflib.unified_diff(
         old_lines,
         new_lines,

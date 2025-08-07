@@ -70,7 +70,7 @@ class CachedDiffEngine:
         
         # Use SHA-256 for better hash distribution
         raw = json.dumps(cache_data, sort_keys=True)
-        return hashlib.sha256(raw.encode()).hexdigest()[:8]  # Short hash
+        return hashlib.sha256(raw.encode()).hexdigest()[:16]  # 16 chars for lower collision risk
     
     def load_cache(self):
         """Load previous snapshot and file cache"""
@@ -207,8 +207,17 @@ class CachedDiffEngine:
                     
                     # Read file content if mtime changed OR cache key changed (different selection)
                     if current_mtime != last_mtime or cache_key_changed:
-                        with open(abs_path, "r", encoding="utf-8") as fh:
-                            content = fh.read()
+                        try:
+                            with open(abs_path, "r", encoding="utf-8") as fh:
+                                content = fh.read()
+                        except UnicodeDecodeError:
+                            # Try with latin-1 as fallback, or skip binary files
+                            try:
+                                with open(abs_path, "r", encoding="latin-1") as fh:
+                                    content = fh.read()
+                            except Exception:
+                                # Skip binary or unreadable files
+                                continue
                         
                         changed_files[rel_path] = {
                             "content": content,

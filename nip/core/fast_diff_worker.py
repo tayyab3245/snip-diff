@@ -43,6 +43,10 @@ class FastDiffWorker(QThread):
         self.operational_log.emit(f"FastDiffWorker created with immutable selection: {self._include_snapshot}", "debug")
         self.finished.connect(callback)
 
+    def cancel(self):
+        """Cancel the worker thread safely"""
+        self._cancelled = True
+
     def run(self):
         try:
             # Early cancellation check
@@ -159,9 +163,8 @@ class FastDiffWorker(QThread):
                 elif fc.change_type == "deleted":
                     lines.append(fc.old_content)
                 else:  # unchanged
-                    # Truncate long unchanged files to keep panel light
-                    content = fc.content[:1000] + ("..." if len(fc.content) > 1000 else "")
-                    lines.append(content)
+                    # Show full content for unchanged files (no truncation)
+                    lines.append(fc.content)
                 
                 sections_data.append((section.title, "\n".join(lines), section.collapsed))
 
