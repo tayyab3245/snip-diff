@@ -1,6 +1,6 @@
 """
 ================================================================================
-NIP-DIFF - Advanced File Difference Visualization Tool
+SNIP-DIFF - AI workflow tool for preparing code context outside agentic environments
 ================================================================================
 
 Copyright (c) 2025 Tayyab. All Rights Reserved.
