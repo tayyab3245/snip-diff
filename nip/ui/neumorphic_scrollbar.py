@@ -1,268 +1,108 @@
+"""
+================================================================================
+NIP-DIFF - Advanced File Difference Visualization Tool
+================================================================================
+
+Copyright (c) 2025 Tayyab. All Rights Reserved.
+
+PROPRIETARY AND CONFIDENTIAL
+
+This software and associated documentation files (the "Software") are the 
+exclusive property of the copyright holder. This Software contains proprietary 
+and confidential information and is protected by copyright laws and 
+international treaty provisions.
+
+RESTRICTIONS:
+- No part of this Software may be reproduced, distributed, or transmitted 
+  in any form or by any means without the prior written permission of the 
+  copyright holder.
+- This Software is not for sale, license, or distribution to third parties.
+- Reverse engineering, decompilation, or disassembly of this Software is 
+  strictly prohibited.
+- Any unauthorized use, copying, or distribution may result in severe civil 
+  and criminal penalties.
+
+This Software is provided "AS IS" without warranty of any kind, express or 
+implied, including but not limited to the warranties of merchantability, 
+fitness for a particular purpose, and non-infringement.
+
+For licensing inquiries, please contact: tayyab3245@github.com
+================================================================================
+"""
+
+
 # neumorphic_scrollbar.py
-import sys
-from PySide6.QtCore    import Qt, QRect, QSize, QPoint
-from PySide6.QtWidgets import QWidget, QScrollArea, QVBoxLayout, QHBoxLayout
-from PySide6.QtWidgets import QApplication
-from PySide6.QtGui     import QColor
-from .neumorphism.Neumorphism import BoxShadowWrapper            # your cloned file
+from PySide6.QtWidgets import QScrollBar, QStyleOptionSlider, QStyle
+from PySide6.QtGui import QPainter, QColor, QPen, QBrush
+from PySide6.QtCore import Qt
 
-# Minimum handle height to ensure usability - 30% of scrollbar minimum
-MIN_HANDLE_HEIGHT = 80
-
-
-def raised_shadow(radius=8, shadow_color=None, highlight_color=None):
-    """Create raised shadow effect using provided colors"""
-    shadow_color = shadow_color or QColor(0, 0, 0, 128)
-    highlight_color = highlight_color or QColor(255, 255, 255, 25)
+class NeumorphicScrollBar(QScrollBar):
+    """Simple custom QScrollBar with good contrast and clean design."""
     
-    return [
-        {"outside": True,  "offset": [radius,  radius],
-         "blur": radius*1.5, "color": shadow_color},
-        {"outside": True,  "offset": [-radius, -radius],
-         "blur": radius*1.5, "color": highlight_color},
-    ]
-
-
-def sunken_shadow(radius=8, shadow_color=None, highlight_color=None):
-    """Create sunken shadow effect using provided colors"""
-    shadow_color = shadow_color or QColor(0, 0, 0, 180)
-    highlight_color = highlight_color or QColor(255, 255, 255, 40)
-    
-    return [
-        {"inside": True,   "offset": [radius,  radius],
-         "blur": radius, "color": shadow_color},
-        {"inside": True,   "offset": [-radius, -radius],
-         "blur": radius, "color": highlight_color},
-    ]
-
-
-class Handle(QWidget):
-    """Draggable thumb."""
-    def __init__(self, parent=None, theme_colors=None):
+    def __init__(self, parent=None):
         super().__init__(parent)
-        self.theme_colors = theme_colors or {}
-        self.setMinimumWidth(16)
-        # Set minimum height to be 30% of a typical scrollbar (assuming ~300px height)
-        self.setMinimumHeight(90)  # 30% of ~300px
-        self.setAttribute(Qt.WA_TransparentForMouseEvents, True)  # logic in bar
+        # Store theme colors for custom painting
+        self.theme_colors = {}
         
-        # Set background color from theme
-        bg_color = QColor(self.theme_colors.get('scrollbar_handle_bg', '#2a2a2e'))
-        self.setStyleSheet(f"background-color: {bg_color.name()};")
+    def set_theme(self, theme_colors):
+        """Update theme colors and trigger repaint"""
+        self.theme_colors = theme_colors
+        self.update()  # Trigger a repaint
         
-        # wrap the handle in a shadow to get soft edges
-        shadow_color = QColor(self.theme_colors.get('scrollbar_shadow_out', 'rgba(0, 0, 0, 0.5)'))
-        highlight_color = QColor(self.theme_colors.get('scrollbar_highlight_out', 'rgba(255, 255, 255, 0.1)'))
-        self.shadow_wrapper = BoxShadowWrapper(self, raised_shadow(shadow_color=shadow_color, highlight_color=highlight_color), border=1, disable_margins=True)
+    def paintEvent(self, event):
+        """Custom paint event with simple, reliable design."""
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+        
+        # Get theme colors with safe fallbacks - check the actual main_bg color
+        main_bg = self.theme_colors.get('main_bg', '#232428')
+        is_dark = main_bg == '#232428'  # Dark theme check
+        
+        # Track background - subtle contrast with main background
+        if is_dark:
+            track_color = QColor(25, 25, 30)     # Darker than main_bg for inset look
+        else:
+            track_color = QColor(215, 225, 235)  # Lighter than main_bg for inset look
+            
+        painter.fillRect(self.rect(), track_color)
+        
+        # Draw handle - force it to be visible even when no scrollable content
+        opt = QStyleOptionSlider()
+        self.initStyleOption(opt)
+        
+        handle_rect = self.style().subControlRect(QStyle.CC_ScrollBar, opt, 
+                                                QStyle.SC_ScrollBarSlider, self)
+        
+        # If handle rect is empty or invalid, create a visible test handle
+        if handle_rect.isEmpty() or not handle_rect.isValid():
+            if self.orientation() == Qt.Vertical:
+                # Create a test vertical handle
+                handle_rect = self.rect().adjusted(2, 10, -2, -50)
+            else:
+                # Create a test horizontal handle  
+                handle_rect = self.rect().adjusted(10, 2, -50, -2)
+        
+        # Always draw the handle if we have a valid rect
+        if handle_rect.isValid() and not handle_rect.isEmpty():
+            self._draw_simple_handle(painter, handle_rect, is_dark)
+        
+        painter.end()
     
-    def set_theme(self, theme_colors):
-        """Update theme"""
-        self.theme_colors = theme_colors
-        bg_color = QColor(theme_colors.get('scrollbar_handle_bg', '#2a2a2e'))
-        self.setStyleSheet(f"background-color: {bg_color.name()};")
-        if hasattr(self, 'shadow_wrapper'):
-            shadow_color = QColor(theme_colors.get('scrollbar_shadow_out', 'rgba(0, 0, 0, 0.5)'))
-            highlight_color = QColor(theme_colors.get('scrollbar_highlight_out', 'rgba(255, 255, 255, 0.1)'))
-            self.shadow_wrapper.setShadowList(raised_shadow(shadow_color=shadow_color, highlight_color=highlight_color))
-
-
-class Track(QWidget):
-    """Concave track that hosts the handle."""
-    def __init__(self, vertical=True, parent=None, theme_colors=None):
-        super().__init__(parent)
-        self.vertical = vertical
-        self.theme_colors = theme_colors or {}
+    def _draw_simple_handle(self, painter, rect, is_dark):
+        """Draw a simple, clean handle with subtle but visible contrast."""
+        # Don't adjust the handle rect at all - use full width
+        handle_rect = rect  # Use the full rect for maximum visibility
         
-        # Set background color from theme
-        bg_color = QColor(self.theme_colors.get('scrollbar_track_bg', '#232428'))
-        self.setStyleSheet(f"background-color: {bg_color.name()};")
-        
-        # inner (concave) shadow
-        shadow_color = QColor(self.theme_colors.get('scrollbar_shadow_in', 'rgba(0, 0, 0, 0.7)'))
-        highlight_color = QColor(self.theme_colors.get('scrollbar_highlight_in', 'rgba(58, 58, 58, 0.8)'))
-        self.shadow_wrapper = BoxShadowWrapper(self, sunken_shadow(shadow_color=shadow_color, highlight_color=highlight_color), border=2, disable_margins=True)
-        # handle
-        self.handle = Handle(self, theme_colors)
-
-    def set_theme(self, theme_colors):
-        """Update theme"""
-        self.theme_colors = theme_colors
-        bg_color = QColor(theme_colors.get('scrollbar_track_bg', '#232428'))
-        self.setStyleSheet(f"background-color: {bg_color.name()};")
-        if hasattr(self, 'shadow_wrapper'):
-            shadow_color = QColor(theme_colors.get('scrollbar_shadow_in', 'rgba(0, 0, 0, 0.7)'))
-            highlight_color = QColor(theme_colors.get('scrollbar_highlight_in', 'rgba(58, 58, 58, 0.8)'))
-            self.shadow_wrapper.setShadowList(sunken_shadow(shadow_color=shadow_color, highlight_color=highlight_color))
-        self.handle.set_theme(theme_colors)
-
-    # Update handle geometry when the bar value changes ----------------
-    def update_position(self, value, maximum, page_step=10):
-        bar_height = self.height() if self.vertical else self.width()
-        
-        # --- FIXED: ENFORCE 30% MINIMUM RULE ---
-        
-        # Calculate 30% of the scrollbar height as absolute minimum
-        minimum_30_percent = int(bar_height * 0.30)
-        
-        # Calculate the total content height (maximum is content_height - viewport_height)
-        total_content_height = maximum + page_step
-        
-        # Calculate the ideal proportional handle height
-        if total_content_height > 0:
-            # Use proportional sizing but never go below 30%
-            proportion = page_step / total_content_height
-            ideal_handle_height = int(bar_height * proportion)
+        if is_dark:
+            # Subtle light gray - visible but not distracting on dark background
+            fill_color = QColor(100, 100, 105)    # Subtle light gray
+            border_color = QColor(120, 120, 125)  # Slightly lighter border
         else:
-            # If there's no content, use 80% of bar
-            ideal_handle_height = int(bar_height * 0.8)
+            # Subtle dark gray - visible but not distracting on light background
+            fill_color = QColor(130, 130, 135)    # Subtle dark gray
+            border_color = QColor(110, 110, 115)  # Slightly darker border
         
-        # CRITICAL: Never allow handle to be smaller than 30% of scrollbar
-        final_handle_size = max(minimum_30_percent, ideal_handle_height)
-        
-        # Also ensure it doesn't exceed 90% of the available space
-        max_handle_size = int(bar_height * 0.9)
-        final_handle_size = min(final_handle_size, max_handle_size)
-        
-        # Double-check: Absolute minimum override
-        final_handle_size = max(final_handle_size, minimum_30_percent)
-        
-        # --- END FIXED LOGIC ---
-        
-        # Apply the size
-        if self.vertical:
-            self.handle.setFixedHeight(final_handle_size)
-        else:
-            self.handle.setFixedWidth(final_handle_size)
-
-        # Calculate position using the final handle size
-        available_space = bar_height - final_handle_size
-        if maximum > 0:
-            pos = int((value / maximum) * available_space)
-        else:
-            pos = 0
-        
-        # Clamp position to valid range
-        pos = max(0, min(pos, available_space))
-        
-        if self.vertical:
-            self.handle.move(0, pos)
-        else:
-            self.handle.move(pos, 0)
-
-    # let the parent QScrollArea size‑hint drive dimensions
-    def sizeHint(self):
-        return QSize(14, 200) if self.vertical else QSize(200, 14)
-
-
-class NeoScrollBar(QWidget):
-    """Scrollbar made of real widgets, so BoxShadow works."""
-    def __init__(self, orientation=Qt.Vertical, parent=None, theme_colors=None):
-        super().__init__(parent)
-        self.vertical = orientation == Qt.Vertical
-        self.theme_colors = theme_colors or {}
-        layout_cls = QVBoxLayout if self.vertical else QHBoxLayout
-        lay = layout_cls(self)
-        lay.setContentsMargins(8, 8, 8, 8)
-        lay.setSpacing(0)
-
-        self.track = Track(self.vertical, theme_colors=theme_colors)
-        lay.addWidget(self.track, 1)
-
-        self._maximum = 1
-        self._value   = 0
-        self._page_step = 10  # Default page step
-
-    def set_theme(self, theme_colors):
-        """Update theme"""
-        self.theme_colors = theme_colors
-        self.track.set_theme(theme_colors)
-
-    # API compatible with QScrollBar subset ----------------------------
-    def set_range(self, maximum):
-        self._maximum = max(1, maximum)
-        self.track.update_position(self._value, self._maximum, self._page_step)
-
-    def set_value(self, value):
-        self._value = max(0, min(value, self._maximum))
-        self.track.update_position(self._value, self._maximum, self._page_step)
-    
-    def set_page_step(self, page_step):
-        self._page_step = max(1, page_step)
-        self.track.update_position(self._value, self._maximum, self._page_step)
-
-    def sizeHint(self):
-        return self.track.sizeHint()
-
-
-class NeumorphicScrollArea(QScrollArea):
-    """Drop‑in replacement that wires its own NeoScrollBars."""
-    def __init__(self, *args, **kw):
-        super().__init__(*args, **kw)
-        self.theme_colors = {}  # Default empty theme colors
-        self.vbar = NeoScrollBar(Qt.Vertical, self, theme_colors=self.theme_colors)
-        self.hbar = NeoScrollBar(Qt.Horizontal, self, theme_colors=self.theme_colors)
-        self.setViewportMargins(0, 0, 22, 22)  # room for bars
-        self.vbar.move(self.width() - 22, 0)
-        self.hbar.move(0, self.height() - 22)
-        self.vbar.resize(22, self.height() - 22)
-        self.hbar.resize(self.width() - 22, 22)
-        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.viewport().installEventFilter(self)
-
-        # sync positions ------------------------------------------------
-        self.verticalScrollBar().valueChanged.connect(
-            lambda v: self.vbar.set_value(v))
-        self.horizontalScrollBar().valueChanged.connect(
-            lambda v: self.hbar.set_value(v))
-        self.verticalScrollBar().rangeChanged.connect(
-            lambda _, m: self.vbar.set_range(m))
-        self.horizontalScrollBar().rangeChanged.connect(
-            lambda _, m: self.hbar.set_range(m))
-        
-        # sync page step for proper handle sizing
-        def update_v_page_step():
-            page_step = self.verticalScrollBar().pageStep()
-            self.vbar.set_page_step(page_step)
-        
-        def update_h_page_step():
-            page_step = self.horizontalScrollBar().pageStep()
-            self.hbar.set_page_step(page_step)
-        
-        # Update page step whenever scrollbar properties change
-        self.verticalScrollBar().rangeChanged.connect(lambda _, __: update_v_page_step())
-        self.horizontalScrollBar().rangeChanged.connect(lambda _, __: update_h_page_step())
-        
-        # Initial page step sync
-        update_v_page_step()
-        update_h_page_step()
-
-    def set_theme(self, theme_colors):
-        """Update the theme for the scroll area and scroll bars"""
-        self.theme_colors = theme_colors
-        self.vbar.set_theme(theme_colors)
-        self.hbar.set_theme(theme_colors)
-
-    # keep bars stuck to the edges after resize ------------------------
-    def resizeEvent(self, ev):
-        super().resizeEvent(ev)
-        self.vbar.move(self.width() - 22, 0)
-        self.hbar.move(0, self.height() - 22)
-        self.vbar.resize(22, self.height() - 22)
-        self.hbar.resize(self.width() - 22, 22)
-
-
-# ----------------------------- demo -----------------------------------
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    from PySide6.QtWidgets import QLabel
-
-    lorem = QLabel("\n".join("Lorem ipsum " * 20 for _ in range(100)))
-    lorem.setWordWrap(True)
-
-    area = NeumorphicScrollArea()
-    area.setWidget(lorem)
-    area.resize(420, 260)
-    area.show()
-
-    sys.exit(app.exec())
+        # Draw handle with subtle visibility
+        painter.setBrush(QBrush(fill_color))
+        painter.setPen(QPen(border_color, 1))
+        painter.drawRect(handle_rect)

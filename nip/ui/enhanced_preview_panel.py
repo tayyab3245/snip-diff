@@ -1,4 +1,37 @@
 """
+================================================================================
+NIP-DIFF - Advanced File Difference Visualization Tool
+================================================================================
+
+Copyright (c) 2025 Tayyab. All Rights Reserved.
+
+PROPRIETARY AND CONFIDENTIAL
+
+This software and associated documentation files (the "Software") are the 
+exclusive property of the copyright holder. This Software contains proprietary 
+and confidential information and is protected by copyright laws and 
+international treaty provisions.
+
+RESTRICTIONS:
+- No part of this Software may be reproduced, distributed, or transmitted 
+  in any form or by any means without the prior written permission of the 
+  copyright holder.
+- This Software is not for sale, license, or distribution to third parties.
+- Reverse engineering, decompilation, or disassembly of this Software is 
+  strictly prohibited.
+- Any unauthorized use, copying, or distribution may result in severe civil 
+  and criminal penalties.
+
+This Software is provided "AS IS" without warranty of any kind, express or 
+implied, including but not limited to the warranties of merchantability, 
+fitness for a particular purpose, and non-infringement.
+
+For licensing inquiries, please contact: tayyab3245@github.com
+================================================================================
+"""
+
+
+"""
 Enhanced preview panel with visual separation and collapsible sections
 ──────────────────────────────────────────────────────────────────────────
 • Collapsible sections for different folders/file types
@@ -26,7 +59,7 @@ from pygments.lexers import get_lexer_for_filename, TextLexer
 from pygments.token import Token
 
 # Import neumorphic scroll bar
-from .neumorphic_scrollbar import NeumorphicScrollArea
+from .neumorphic_scrollbar import NeumorphicScrollBar
 
 
 def _fmt(col: str) -> QTextCharFormat:
@@ -442,11 +475,15 @@ class EnhancedPreviewPanel(QWidget):
         layout.addWidget(instructions_panel)
 
         # Scroll area for sections (header min size restored)
-        self.scroll_area = NeumorphicScrollArea()
+        self.scroll_area = QScrollArea()
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         self.scroll_area.setStyleSheet("QScrollArea { border: none; }")
+        
+        # Set custom neumorphic scrollbars
+        self.scroll_area.setVerticalScrollBar(NeumorphicScrollBar(self))
+        self.scroll_area.setHorizontalScrollBar(NeumorphicScrollBar(self))
 
         self.scroll_widget = QWidget()
         self.scroll_layout = QVBoxLayout(self.scroll_widget)
@@ -668,8 +705,14 @@ class EnhancedPreviewPanel(QWidget):
         self._current_theme = 'dark' if bg_color.startswith('#2') else 'light'
         
         # Update scroll area theme
-        if hasattr(self, 'scroll_area') and hasattr(self.scroll_area, 'set_theme'):
-            self.scroll_area.set_theme(theme_colors)
+        if hasattr(self, 'scroll_area'):
+            # Set theme for custom scrollbars
+            v_scrollbar = self.scroll_area.verticalScrollBar()
+            h_scrollbar = self.scroll_area.horizontalScrollBar()
+            if hasattr(v_scrollbar, 'set_theme'):
+                v_scrollbar.set_theme(theme_colors)
+            if hasattr(h_scrollbar, 'set_theme'):
+                h_scrollbar.set_theme(theme_colors)
             
         # Update control button theme
         if hasattr(self, 'expand_all_btn') and hasattr(self, 'collapse_all_btn'):

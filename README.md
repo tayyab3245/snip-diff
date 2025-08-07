@@ -32,15 +32,23 @@ Snip-Diff bridges the gap between your codebase and AI language models. It aggre
 **Core Functionality**
 - Multi-file selection with visual tree interface
 - Unified diff generation preserving file relationships
-- Syntax highlighting optimized for AI consumption
+- Advanced syntax highlighting optimized for AI consumption
 - One-click copy for seamless LLM integration
 - Live file watching with automatic updates
+- Fast cached diff engine with intelligent change detection
 
-**User Experience**
-- Neumorphic design with light/dark themes
-- Nintendo 3DS-inspired glass transparency
-- Keyboard shortcuts for productivity
-- Search functionality with wraparound
+**Enhanced User Experience**
+- **Interactive Instructions Panel** - Built-in guidance system with step-by-step instructions
+- **Professional Neumorphic Design** - Sophisticated UI with custom shadows and smooth animations
+- **Dual Theme Support** - Light and dark themes with seamless switching
+- **Custom Scrollbars** - Elegant, theme-aware scrollbars that blend with the interface
+- **Responsive Layout** - Professional file tree with proper selection feedback
+
+**Developer Features**
+- Robust caching system for performance optimization
+- Error handling and status reporting
+- Extensible architecture with modular components
+- Cross-platform compatibility (Windows, macOS, Linux)
 
 ## Installation
 
@@ -57,24 +65,42 @@ python main.py
 
 ## Usage
 
-1. Open project folder (Ctrl+O)
-2. Select relevant files in tree
-3. Generate context (F5)
-4. Copy output (Ctrl+C)
-5. Paste into your LLM
+**Quick Start**
+1. **Open Project** - Launch app and select your project folder (Ctrl+O)
+2. **Follow Instructions** - Use the built-in instructions panel for guided setup
+3. **Select Files** - Choose relevant files from the file tree
+4. **Generate Context** - Create optimized diff output 
+5. **Copy & Use** - One-click copy (Ctrl+C) and paste into your favorite LLM
+6. **Add instructions** - Append custom instructions on top or bottom of your prompt
+
+**Pro Tips**
+- Use theme switching (Ctrl+T) for optimal viewing in different environments
+- The instructions panel provides real-time guidance for complex workflows
+- Custom scrollbars and neumorphic design enhance long coding sessions
+- File selection state is preserved between sessions for consistent workflows
 
 ## Upcoming Updates
 
-**Smart Chunking**
-- Platform-specific token limits for GPT-4, Claude, Gemini
-- Context size optimization algorithms
-- Export presets for different AI providers
+**Smart Token Management** (In Development)
+- **Platform-specific Token Limits** - Automatic optimization for GPT-4, Claude, Gemini, and other LLMs
+- **Intelligent File Tokenizing** - Advanced algorithms to chunk large codebases efficiently
+- **Context Size Optimization** - Smart splitting to maximize information density within token limits
+- **Export Presets** - One-click exports tailored for different AI providers and use cases
 
-**Intelligence Features**
-- File relevance scoring and auto-prioritization
-- Smart diff algorithms for changed-only contexts
-- Integration with popular AI coding assistants
+**Intelligence Features** (Planned)
+- **File Relevance Scoring** - AI-powered prioritization of most important files for context
+- **Smart Change Detection** - Focus on meaningful changes while filtering noise
+- **Dependency Graph Analysis** - Understand file relationships for better context inclusion
+- **Integration Hub** - Direct connections with popular AI coding assistants and IDEs
+
+**Advanced Workflow Features** (Planned)
+- **Project Templates** - Pre-configured setups for common frameworks and languages
+- **Collaborative Context Sharing** - Team-friendly context sharing and versioning
+- **Advanced Search & Filter** - Regex support, content-based filtering, and smart suggestions
+- **Performance Analytics** - Track context effectiveness and optimization suggestions
 
 ---
 
-MIT License - Built for the AI development community
+**Copyright © 2025 Tayyab. All Rights Reserved.**
+
+*This software is proprietary and confidential. Built for the AI development community with professional-grade features and design.*
