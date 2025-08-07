@@ -16,7 +16,7 @@ from nip.ui.toolbar_neumorphic import NipToolBar
 from nip.ui.status_overlay import StatusOverlay, StatusManager
 from nip.core.worker      import DiffWorker
 from nip.core.fast_diff_worker import FastDiffWorker
-from nip.config           import theme_manager, get_theme, apply_theme_to_widget
+from nip.config           import theme_manager
 
 
 def snapshot_selection(sel_set: Set[str]) -> Tuple[str, ...]:
@@ -75,32 +75,9 @@ class MainWindow(QMainWindow):
         splitter.setStretchFactor(1, 2)
         self.setCentralWidget(splitter)
         
-        # Apply initial theme (but we'll override with neumorphic colors)
-        from nip.config import get_theme, theme_manager
-        theme = get_theme(theme_manager.mode)
-        from PySide6.QtWidgets import QApplication
-        app = QApplication.instance()
-        
-        # DON'T apply the global theme stylesheet - we'll use neumorphic colors instead
-        # if app:
-        #     app.setStyleSheet(theme['qss'])
-        
-        # Apply our neumorphic styling instead
-        self._apply_neumorphic_theme()
-        
-        # Use a timer to reapply styling after the window is fully initialized
-        from PySide6.QtCore import QTimer
-        self.style_timer = QTimer()
-        self.style_timer.singleShot(100, self._apply_neumorphic_theme)  # Use neumorphic theme
-
-        # connections
-        self.toolbar.choose_folder.connect(self._on_folder_selected)
-        self.toolbar.run.connect(lambda: self._start_fast_diff(is_user_action=True))  # Explicit user action
-        self.toolbar.copy.connect(self.preview.copy_all)
-        self.toolbar.theme_changed.connect(self._on_theme_changed)  # Connect theme toggle
-        # Connect file tree selection changes to immediate scan triggering
-        self.tree.selection_changed.connect(self._on_selection_changed)
-        # Undo / Export buttons were removed
+        # Set up central theme system and apply initial theme
+        self._setup_connections()
+        self._apply_theme()
 
         self._worker: FastDiffWorker | None = None   # Use fast worker
         self._watcher = None               # LiveWatcher after first Run
@@ -138,226 +115,40 @@ class MainWindow(QMainWindow):
         else:
             logger.debug("Skipping auto-scan - no folder or empty selection")
 
-    def _apply_neumorphic_theme(self):
-        """Apply complete neumorphic theme with proper colors"""
-        from nip.config import theme_manager
+    def _setup_connections(self):
+        """Set up all signal connections"""
+        # Connect toolbar signals
+        self.toolbar.choose_folder.connect(self._on_folder_selected)
+        self.toolbar.run.connect(lambda: self._start_fast_diff(is_user_action=True))  # Explicit user action
+        self.toolbar.copy.connect(self.preview.copy_all)
+        self.toolbar.theme_changed.connect(self._on_theme_changed)  # Connect theme toggle
         
-        # Get current theme
-        current_mode = theme_manager.mode
-        
-        # Define neumorphic colors (same as calculator example)
-        if current_mode == 'dark':
-            main_bg = "#232428"  # Dark neumorphic background
-            inner_bg = "#232428"  # Same for consistency
-            text_color = "rgb(4, 236, 180)"  # Teal text
-            inner_shadow = "rgba(0, 0, 0, 0.8)"
-            inner_highlight = "rgba(58, 58, 58, 1.0)"
-        else:
-            main_bg = "#E3EDF7"  # Light neumorphic background
-            inner_bg = "#E3EDF7"  # Same for consistency
-            text_color = "#979797"  # Gray text
-            inner_shadow = "rgba(111, 140, 176, 0.4)"
-            inner_highlight = "rgba(255, 255, 255, 0.8)"
-        
-        print(f"\n=== APPLYING NEUMORPHIC THEME ({current_mode}) ===")
-        print(f"Main background: {main_bg}")
-        print(f"Text color: {text_color}")
-        
-        # Apply global neumorphic theme
-        global_style = f"""
-            QMainWindow {{
-                background-color: {main_bg};
-                color: {text_color};
-            }}
-            
-            QWidget {{
-                background-color: {main_bg};
-                color: {text_color};
-            }}
-            
-            QSplitter {{
-                background-color: {main_bg};
-                border: none;
-            }}
-            
-            QSplitter::handle {{
-                background-color: {main_bg};
-            }}
-            
-            QTreeView {{
-                background-color: {inner_bg};
-                color: {text_color};
-                border: none;
-                margin: 8px;
-                border-top: 2px solid {inner_shadow};
-                border-left: 2px solid {inner_shadow};
-                border-right: 2px solid {inner_highlight};
-                border-bottom: 2px solid {inner_highlight};
-                border-radius: 4px;
-            }}
-            
-            QScrollArea {{
-                background-color: {inner_bg};
-                color: {text_color};
-                border: none;
-                margin: 8px;
-                border-top: 2px solid {inner_shadow};
-                border-left: 2px solid {inner_shadow};
-                border-right: 2px solid {inner_highlight};
-                border-bottom: 2px solid {inner_highlight};
-                border-radius: 4px;
-            }}
-            
-            QTextEdit {{
-                background-color: {inner_bg};
-                color: {text_color};
-                border: none;
-                margin: 8px;
-                border-top: 2px solid {inner_shadow};
-                border-left: 2px solid {inner_shadow};
-                border-right: 2px solid {inner_highlight};
-                border-bottom: 2px solid {inner_highlight};
-                border-radius: 4px;
-            }}
-            
-            QWidget[objectName="rightPanel"], QWidget#rightPanel {{
-                background-color: {inner_bg} !important;
-                color: {text_color} !important;
-                border: none;
-                margin: 8px;
-                border-top: 2px solid {inner_shadow};
-                border-left: 2px solid {inner_shadow};
-                border-right: 2px solid {inner_highlight};
-                border-bottom: 2px solid {inner_highlight};
-                border-radius: 4px;
-            }}
-        """
-        
-        # Apply to the application
+        # Connect file tree selection changes to immediate scan triggering
+        self.tree.selection_changed.connect(self._on_selection_changed)
+
+    def _apply_theme(self):
+        """Apply the current theme using the central theme system"""
         from PySide6.QtWidgets import QApplication
         app = QApplication.instance()
         if app:
-            app.setStyleSheet(global_style)
-        
+            # Get the current theme's QSS and apply it globally
+            qss = theme_manager.get_qss()
+            app.setStyleSheet(qss)
+            print(f"✓ Applied central theme: {theme_manager.mode} mode")
+            
         # Update neumorphic scroll bars in preview panel
         if hasattr(self, 'preview') and hasattr(self.preview, 'set_theme'):
-            self.preview.set_theme(current_mode)
-        
-        print("✓ Applied neumorphic theme globally")
-        print("✓ Updated neumorphic scroll bars")
-        print("=== NEUMORPHIC THEME COMPLETE ===")
-
-    def _apply_carved_styling(self):
-        """Apply subtle inner carved effects with background blending"""
-        from nip.config import get_theme, theme_manager
-        from PySide6.QtGui import QPalette, QColor
-        
-        # Get current theme
-        current_mode = theme_manager.mode
-        theme_data = get_theme(current_mode)
-        
-        # Get the background colors from theme
-        if current_mode == 'dark':
-            # Use the same colors as the calculator example
-            main_bg = "#232428"  # Dark neumorphic background
-            inner_bg = "#232428"  # Same for consistency
-            inner_shadow = "rgba(0, 0, 0, 0.8)"  # Dark inner shadow
-            inner_highlight = "rgba(58, 58, 58, 1.0)"  # Subtle highlight
-        else:
-            # Use the same colors as the calculator example
-            main_bg = "#E3EDF7"  # Light neumorphic background
-            inner_bg = "#E3EDF7"  # Same for consistency
-            inner_shadow = "rgba(111, 140, 176, 0.4)"  # Light inner shadow
-            inner_highlight = "rgba(255, 255, 255, 0.8)"  # Bright highlight
-        
-        print(f"\n=== APPLYING CARVED INNER EFFECTS ({current_mode}) ===")
-        print(f"Main background: {main_bg}")
-        print(f"Inner background: {inner_bg}")
-        
-        # 1. Apply carved styling to the preview wrapper with inner effects only
-        target_widget = self.preview_wrapper
-        target_widget.setStyleSheet(f"""
-            QWidget[objectName="rightPanel"], QWidget#rightPanel {{
-                background-color: {inner_bg};
-                border: none;
-                margin: 8px;
-                /* Traditional QSS inset border effect */
-                border-top: 2px solid {inner_shadow};
-                border-left: 2px solid {inner_shadow};
-                border-right: 2px solid {inner_highlight};
-                border-bottom: 2px solid {inner_highlight};
-                border-radius: 4px;
-            }}
-        """)
-        
-        # Set palette to match inner background
-        palette = target_widget.palette()
-        palette.setColor(QPalette.Window, QColor(inner_bg))
-        target_widget.setPalette(palette)
-        target_widget.setAutoFillBackground(True)
-        
-        # 2. Set preview panel to transparent so wrapper shows through
-        preview_panel = self.preview
-        preview_panel.setStyleSheet("QWidget { background: transparent; border: none; }")
-        
-        # 3. Make child widgets transparent to show wrapper background
-        children = target_widget.findChildren(QWidget)
-        for child in children:
-            if hasattr(child, 'setStyleSheet'):
-                if 'ScrollArea' in child.__class__.__name__:
-                    child.setStyleSheet("QScrollArea { background: transparent; border: none; }")
-                elif 'QWidget' == child.__class__.__name__:
-                    child.setStyleSheet("QWidget { background: transparent; border: none; }")
-        
-        # 4. Apply carved effect to file tree as well
-        self.tree.setStyleSheet(f"""
-            QTreeView {{
-                background-color: {inner_bg};
-                border: none;
-                margin: 8px;
-                /* Traditional QSS inset border effect */
-                border-top: 2px solid {inner_shadow};
-                border-left: 2px solid {inner_shadow};
-                border-right: 2px solid {inner_highlight};
-                border-bottom: 2px solid {inner_highlight};
-                border-radius: 4px;
-            }}
-        """)
-        
-        # 5. Blend the splitter and main window to main background
-        splitter = target_widget.parent()
-        if splitter:
-            splitter.setStyleSheet(f"QSplitter {{ background-color: {main_bg}; border: none; }}")
-        
-        # 6. Set main window background to match neumorphic theme
-        self.setStyleSheet(f"""
-            QMainWindow {{
-                background-color: {main_bg};
-            }}
-        """)
-        
-        # 6. Blend the central widget to main background
-        central = self.centralWidget()
-        if central:
-            central.setStyleSheet(f"QWidget {{ background-color: {main_bg}; }}")
-            
-        # 7. Keep small margins to show the carved effect
-        wrapper_layout = target_widget.layout()
-        if wrapper_layout:
-            wrapper_layout.setContentsMargins(8, 8, 8, 8)
-        
-        print(f"✓ Applied carved inner effects - Main: {main_bg}, Inner: {inner_bg}")
-        print("=== CARVED INNER EFFECTS COMPLETE ===\n")
+            self.preview.set_theme(theme_manager.mode)
 
     def _on_theme_changed(self, theme_mode: str):
-        """Handle theme change - apply new neumorphic theme"""
+        """Handle theme change using central theme system"""
         logger.debug(f"Theme changed to: {theme_mode}")
         
         # Update theme manager
         theme_manager.set_mode(theme_mode)
         
-        # Apply neumorphic theme instead of original theme
-        self._apply_neumorphic_theme()
+        # Apply the new theme using central system
+        self._apply_theme()
             
         # Show status message
         theme_name = "Dark" if theme_mode == 'dark' else "Light"
@@ -540,19 +331,20 @@ class MainWindow(QMainWindow):
             self.status_overlay._position_overlay()
 
     def showEvent(self, event):
-        """Handle window show event to ensure neumorphic styling is applied"""
+        """Handle window show event to ensure proper styling is applied"""
         super().showEvent(event)
-        # Reapply neumorphic styling when window becomes visible
+        # Reapply theme when window becomes visible
         if hasattr(self, 'preview_wrapper'):
-            self._apply_neumorphic_theme()
+            self._apply_theme()
 
 # ----------------------------------------------------------------------
 def run_app() -> None:
     app = QApplication(sys.argv)
     
-    # Apply unified theme system - default to dark theme
-    theme = get_theme('dark')
-    app.setStyleSheet(theme['qss'])
+    # Initialize theme manager and apply default theme
+    theme_manager.set_mode('dark')  # Default to dark theme
+    qss = theme_manager.get_qss()
+    app.setStyleSheet(qss)
 
     win = MainWindow()
     # centre on primary screen
