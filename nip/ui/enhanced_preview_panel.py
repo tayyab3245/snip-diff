@@ -30,6 +30,7 @@ For licensing inquiries, please contact: tayyab3245@github.com
 ================================================================================
 """
 
+from __future__ import annotations
 
 """
 Enhanced preview panel with visual separation and collapsible sections
@@ -39,8 +40,6 @@ Enhanced preview panel with visual separation and collapsible sections
 • Maintains full copy functionality
 • Progressive loading for better performance
 """
-
-from __future__ import annotations
 from typing import List, Optional
 
 from PySide6.QtCore import Qt, Signal

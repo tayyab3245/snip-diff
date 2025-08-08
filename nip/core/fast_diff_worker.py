@@ -30,12 +30,11 @@ For licensing inquiries, please contact: tayyab3245@github.com
 ================================================================================
 """
 
+from __future__ import annotations
 
 """
 Enhanced worker with intelligent caching for faster diff updates
 """
-
-from __future__ import annotations
 from typing import Set, Callable, Optional, Dict, List, Tuple
 import os
 import time

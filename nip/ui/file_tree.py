@@ -30,6 +30,7 @@ For licensing inquiries, please contact: tayyab3245@github.com
 ================================================================================
 """
 
+from __future__ import annotations
 
 """
 Checkable file-system tree view
@@ -38,8 +39,6 @@ Checkable file-system tree view
 • No longer relies on Qt.ItemIsTristate (removed in Qt 6.6+)
 • The check-state is handled in Python so it works on all PySide6 builds.
 """
-
-from __future__ import annotations
 
 import os
 from typing import Dict, Set

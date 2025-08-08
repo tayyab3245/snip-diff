@@ -30,6 +30,7 @@ For licensing inquiries, please contact: tayyab3245@github.com
 ================================================================================
 """
 
+from __future__ import annotations
 
 """
 Runs the diff in a background thread   +   optional live filesystem watcher
@@ -38,8 +39,6 @@ Runs the diff in a background thread   +   optional live filesystem watcher
 • LiveWatcher – QObject wrapper around QFileSystemWatcher that emits a
                 callback every time *anything* under the chosen root updates.
 """
-
-from __future__ import annotations
 from typing import Set, Callable, List, Optional
 import os
 
