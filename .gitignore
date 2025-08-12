@@ -1,8 +1,8 @@
-# NIP-Diff specific files
-.nip_snapshot.json
-.nip_snapshot_cache.json
+# SNIP-DIFF Project - Full-Stack Application
+# Updated for FastAPI + Electron architecture
 
-# Python cache files
+# ===== Python Backend =====
+# Cache files
 __pycache__/
 *.py[cod]
 *$py.class
@@ -17,20 +17,41 @@ ENV/
 env.bak/
 venv.bak/
 
-# PyInstaller
+# Legacy PyInstaller builds
 *.manifest
 *.spec
 build/
 dist/
 
-# IDE files
+# Python packages
+*.egg-info/
+.eggs/
+
+# ===== Node.js Frontend =====
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build outputs
+/snip-diff-electron/dist/
+/snip-diff-electron/out/
+
+# Environment files
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# ===== IDE & Editor Files =====
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
 
-# OS files
+# ===== OS Files =====
 .DS_Store
 .DS_Store?
 ._*
@@ -39,6 +60,13 @@ dist/
 ehthumbs.db
 Thumbs.db
 
+# ===== Application Data =====
+# SNIP-DIFF snapshots and cache
+.nip_snapshot.json
+.nip_snapshot_cache.json
+*.snapshot
+*.cache
+
 # Logs
 *.log
 logs/
@@ -46,3 +74,11 @@ logs/
 # Temporary files
 *.tmp
 *.temp
+
+# ===== Legacy Files =====
+# Keep legacy folder but ignore cache/build artifacts within it
+legacy/__pycache__/
+legacy/build/
+legacy/dist/
+legacy/.venv/
+legacy/venv/

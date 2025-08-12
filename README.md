@@ -1,4 +1,4 @@
-# Snip-Diff
+# SNIP-DIFF
 
 ```
 ███████╗███╗   ██╗██╗██████╗       ██████╗ ██╗███████╗███████╗
@@ -8,96 +8,144 @@
 ███████║██║ ╚████║██║██║           ██████╔╝██║██║     ██║     
 ╚══════╝╚═╝  ╚═══╝╚═╝╚═╝           ╚═════╝ ╚═╝╚═╝     ╚═╝     
                                                               
-    ⚡ Powers AI Workflows - No More Manual File Copying ⚡
+    ⚡ Modern Full-Stack AI Workflow Tool ⚡
 ```
 
-**AI workflow tool for preparing code context outside agentic environments**
+**Next-generation full-stack application for AI-assisted development workflows**
 
 ![License: CC BY-NC 4.0](https://img.shields.io/badge/License-CC%20BY--NC%204.0-lightgrey.svg)
+![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=flat&logo=fastapi)
+![Electron](https://img.shields.io/badge/Electron-191970?style=flat&logo=Electron&logoColor=white)
+![React](https://img.shields.io/badge/React-20232A?style=flat&logo=react&logoColor=61DAFB)
+![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=flat&logo=typescript&logoColor=white)
 
-## Screenshots
+## 🚀 Architecture Overview
 
-### Light Theme
-![Light Theme](screenshots/light.png)
+SNIP-DIFF has been completely transformed into a modern full-stack application:
 
-### Dark Theme  
-![Dark Theme](screenshots/dark.png)
+### **🔧 Backend: FastAPI API Server**
+- **Modern Python API**: High-performance async FastAPI backend
+- **RESTful Endpoints**: Clean API design for file operations and diff processing
+- **Extracted Core Logic**: Reusable business logic decoupled from UI
+- **CORS Enabled**: Ready for cross-origin requests from Electron frontend
 
-## Mission
+### **💻 Frontend: Electron + React + TypeScript**
+- **Cross-Platform Desktop**: Native desktop experience with web technologies
+- **Modern React 18**: Component-based UI with hooks and functional components
+- **TypeScript**: Full type safety and enhanced developer experience
+- **Neumorphic Design**: Sophisticated UI with custom styling and animations
 
-Snip-Diff bridges the gap between your codebase and AI language models. It aggregates multiple files into AI-ready formats with visual selection, unified diff generation, and one-click copying. Built for developers who need to efficiently provide code context to GPT, Claude, Gemini, and other LLMs.
-
-## Features
-
-**Core Functionality**
-- Multi-file selection with visual tree interface
-- Unified diff generation preserving file relationships
-- Advanced syntax highlighting optimized for AI consumption
-- One-click copy for seamless LLM integration
-- Live file watching with automatic updates
-- Fast cached diff engine with intelligent change detection
-
-**Enhanced User Experience**
-- **Interactive Instructions Panel** - Built-in guidance system with step-by-step instructions
-- **Professional Neumorphic Design** - Sophisticated UI with custom shadows and smooth animations
-- **Dual Theme Support** - Light and dark themes with seamless switching
-- **Custom Scrollbars** - Elegant, theme-aware scrollbars that blend with the interface
-- **Responsive Layout** - Professional file tree with proper selection feedback
-
-**Developer Features**
-- Robust caching system for performance optimization
-- Error handling and status reporting
-- Extensible architecture with modular components
-- Cross-platform compatibility (Windows, macOS, Linux)
-
-## Installation
-
-```bash
-git clone https://github.com/tayyab3245/snip-diff.git
-cd snip-diff
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-pip install -r requirements.txt
-python main.py
+### **📁 Project Structure**
+```
+snip-diff/
+├── snip-diff-api/          # FastAPI Backend
+│   ├── app/
+│   │   ├── api/routes/     # API endpoints
+│   │   ├── core/           # Business logic
+│   │   └── main.py         # FastAPI application
+│   └── requirements.txt
+├── snip-diff-electron/     # Electron Frontend
+│   ├── src/
+│   │   ├── main/           # Electron main process
+│   │   ├── preload/        # IPC bridge
+│   │   └── renderer/       # React UI components
+│   ├── package.json
+│   └── tsconfig.json
+├── legacy/                 # Original PySide6 implementation
+└── docs/                   # Documentation and planning
 ```
 
-**Requirements:** Python 3.9+, PySide6, Pygments
+## 🚀 Quick Start
 
-## Usage
+### Prerequisites
+- **Python 3.10+** with pip
+- **Node.js 18+** with npm
+- **Git** for version control
 
-**Quick Start**
-1. **Open Project** - Launch app and select your project folder (Ctrl+O)
-2. **Follow Instructions** - Use the built-in instructions panel for guided setup
-3. **Select Files** - Choose relevant files from the file tree
-4. **Generate Context** - Create optimized diff output 
-5. **Copy & Use** - One-click copy (Ctrl+C) and paste into your favorite LLM
-6. **Add instructions** - Append custom instructions on top or bottom of your prompt
+### 🔧 Backend Setup (FastAPI)
+```bash
+cd snip-diff-api
+pip install -r requirements.txt
+python app/main.py
+```
+Server runs on `http://localhost:8000` with API docs at `/docs`
 
-**Pro Tips**
-- Use theme switching (Ctrl+T) for optimal viewing in different environments
-- The instructions panel provides real-time guidance for complex workflows
-- Custom scrollbars and neumorphic design enhance long coding sessions
-- File selection state is preserved between sessions for consistent workflows
+### 💻 Frontend Setup (Electron)
+```bash
+cd snip-diff-electron
+npm install
+npm start
+```
 
-## Upcoming Updates
+### 🎯 Development Workflow
+1. Start FastAPI backend server
+2. Launch Electron frontend in development mode
+3. Both services auto-reload on file changes
+4. Access API documentation for endpoint testing
 
-**Smart Token Management** (In Development)
-- **Platform-specific Token Limits** - Automatic optimization for GPT-4, Claude, Gemini, and other LLMs
-- **Intelligent File Tokenizing** - Advanced algorithms to chunk large codebases efficiently
-- **Context Size Optimization** - Smart splitting to maximize information density within token limits
-- **Export Presets** - One-click exports tailored for different AI providers and use cases
+## 🌟 Current Features
 
-**Intelligence Features** (Planned)
-- **File Relevance Scoring** - AI-powered prioritization of most important files for context
-- **Smart Change Detection** - Focus on meaningful changes while filtering noise
-- **Dependency Graph Analysis** - Understand file relationships for better context inclusion
-- **Integration Hub** - Direct connections with popular AI coding assistants and IDEs
+### **Core Functionality** ✅
+- **File Tree Browsing**: Interactive directory navigation via API
+- **Diff Processing**: Advanced file comparison and change detection
+- **REST API**: Clean endpoints for file operations and diff processing
+- **Cross-Platform Desktop**: Native desktop experience with Electron
 
-**Advanced Workflow Features** (Planned)
-- **Project Templates** - Pre-configured setups for common frameworks and languages
-- **Collaborative Context Sharing** - Team-friendly context sharing and versioning
-- **Advanced Search & Filter** - Regex support, content-based filtering, and smart suggestions
-- **Performance Analytics** - Track context effectiveness and optimization suggestions
+### **Modern Architecture** ✅
+- **Async FastAPI Backend**: High-performance Python API server
+- **React + TypeScript Frontend**: Type-safe component-based UI
+- **IPC Communication**: Seamless frontend-backend integration
+- **Modular Design**: Separated concerns for maintainability
+
+## 🗺️ Development Roadmap
+
+### **Phase 1: Foundation** ✅ *COMPLETED*
+- [x] FastAPI backend with core file operations
+- [x] Electron + React frontend scaffold
+- [x] Basic API endpoints (`/api/files/tree`, `/api/diff/scan`)
+- [x] Project structure and development environment
+
+### **Phase 2: Core Features** 🔄 *IN PROGRESS*
+- [ ] File selection and management UI
+- [ ] Real-time diff processing and display
+- [ ] Copy-to-clipboard functionality
+- [ ] Theme system (light/dark mode)
+- [ ] Basic error handling and user feedback
+
+### **Phase 3: Enhanced UX** 📋 *PLANNED*
+- [ ] Neumorphic design system implementation
+- [ ] Advanced file filtering and search
+- [ ] Keyboard shortcuts and accessibility
+- [ ] Performance optimizations
+- [ ] User preferences and settings
+
+### **Phase 4: AI Integration** 🎯 *PLANNED*
+- [ ] Token counting and LLM optimization
+- [ ] Context size management
+- [ ] AI provider-specific formatting
+- [ ] Smart file relevance scoring
+- [ ] Export presets for different AI models
+
+## 🧪 API Documentation
+
+The FastAPI backend provides comprehensive API documentation:
+- **Interactive Docs**: http://localhost:8000/docs (Swagger UI)
+- **ReDoc**: http://localhost:8000/redoc (Alternative documentation)
+- **OpenAPI Schema**: http://localhost:8000/openapi.json
+
+### Key Endpoints
+- `GET /api/files/tree?path={directory}` - Browse file system
+- `POST /api/diff/scan` - Process directory for changes
+- `GET /health` - Service health check
+
+## 🏗️ Legacy Support
+
+The original PySide6 implementation has been preserved in the `legacy/` directory for reference and fallback purposes. The new full-stack architecture provides:
+
+- **Better Performance**: Async backend with optimized API calls
+- **Enhanced Maintainability**: Separated frontend and backend concerns
+- **Modern Development**: React ecosystem and TypeScript safety
+- **Future Scalability**: API-first design for potential web version
 
 ---
 
