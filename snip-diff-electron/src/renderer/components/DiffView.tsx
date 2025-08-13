@@ -209,7 +209,8 @@ export const DiffView: React.FC = () => {
         const statusResponse = await getScanStatus(scanId);
         
         if (statusResponse.success && statusResponse.data) {
-          const status = statusResponse.data.status;
+          const statusRaw = statusResponse.data.status;
+          const status = (statusRaw || '').toLowerCase();
           setScanStatus(status);
           
           if (status === 'completed') {
@@ -219,7 +220,7 @@ export const DiffView: React.FC = () => {
             if (resultsResponse.success && resultsResponse.data) {
               setDiffSections(resultsResponse.data.sections || []);
             }
-          } else if (status === 'running') {
+          } else if (status === 'running' || status === 'pending' || status === 'started') {
             // Continue polling
             setTimeout(poll, 1000);
           }

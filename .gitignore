@@ -8,6 +8,10 @@ __pycache__/
 *$py.class
 *.so
 
+# Testing
+.pytest_cache/
+.coverage
+
 # Virtual environments
 .env
 .venv
@@ -74,11 +78,3 @@ logs/
 # Temporary files
 *.tmp
 *.temp
-
-# ===== Legacy Files =====
-# Keep legacy folder but ignore cache/build artifacts within it
-legacy/__pycache__/
-legacy/build/
-legacy/dist/
-legacy/.venv/
-legacy/venv/

@@ -74,3 +74,62 @@ def format_output(old_snap: Dict[str, str], new_snap: Dict[str, dict]) -> str:
         output.extend(_diff_lines(path, old_content, new_content))
 
     return "\n".join(output)
+
+
+class DiffEngine:
+    """Simple wrapper class for the diff functionality"""
+    
+    def format_output(self, base_path: str, include_paths: List[str]) -> Dict[str, any]:
+        """
+        Format output in the expected snapshot format for the API.
+        This method creates a snapshot of files for diff processing.
+        """
+        import time
+        
+        snapshot = {
+            "files": [],
+            "timestamp": time.time(),
+            "base_path": base_path,
+            "include_paths": include_paths
+        }
+        
+        for rel_path in include_paths:
+            file_path = os.path.join(base_path, rel_path)
+            
+            if os.path.isfile(file_path):
+                try:
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        content = f.read()
+                    
+                    file_info = {
+                        "path": rel_path,
+                        "content": content,
+                        "size": len(content),
+                        "mtime": os.path.getmtime(file_path),
+                        "type": "file"
+                    }
+                    snapshot["files"].append(file_info)
+                    
+                except (UnicodeDecodeError, IOError):
+                    # Handle binary or unreadable files
+                    file_info = {
+                        "path": rel_path,
+                        "content": None,
+                        "size": os.path.getsize(file_path),
+                        "mtime": os.path.getmtime(file_path),
+                        "type": "binary"
+                    }
+                    snapshot["files"].append(file_info)
+            
+            elif os.path.isdir(file_path):
+                # Handle directories
+                file_info = {
+                    "path": rel_path,
+                    "content": None,
+                    "size": 0,
+                    "mtime": os.path.getmtime(file_path),
+                    "type": "directory"
+                }
+                snapshot["files"].append(file_info)
+        
+        return snapshot

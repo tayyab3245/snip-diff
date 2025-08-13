@@ -32,14 +32,18 @@ class SnipDiffApp {
   private async startApiServer() {
     try {
       console.log('Starting FastAPI backend server...');
-      
-      // Path to the API directory
-      const apiPath = this.isDev 
+
+      // Dev: run uvicorn against app.main:app with CWD at snip-diff-api
+      // Prod: keep using packaged path if needed later
+      const apiPath = this.isDev
         ? path.join(__dirname, '../../../snip-diff-api')
         : path.join(process.resourcesPath, 'api');
-      
-      // Start Python FastAPI server
-      this.apiProcess = spawn('python', ['-m', 'uvicorn', 'app.main:app', '--port', '8000', '--host', '127.0.0.1'], {
+
+      const args = this.isDev
+        ? ['-m', 'uvicorn', 'app.main:app', '--host', '127.0.0.1', '--port', '8000']
+        : ['-m', 'uvicorn', 'app.main:app', '--host', '127.0.0.1', '--port', '8000'];
+
+      this.apiProcess = spawn('python', args, {
         cwd: apiPath,
         stdio: this.isDev ? 'inherit' : 'pipe'
       });
@@ -73,7 +77,7 @@ class SnipDiffApp {
     for (let i = 0; i < maxRetries; i++) {
       try {
         // Try to connect to the API server
-        const response = await fetch('http://127.0.0.1:8000/health');
+        const response = await fetch('http://127.0.0.1:8000/api/health');
         if (response.ok) {
           return;
         }
