@@ -72,11 +72,28 @@ export const useApiClient = () => {
     });
   }, [apiRequest]);
 
+  const cancelScan = useCallback(async (scanId: string) => {
+    return apiRequest({
+      method: 'DELETE',
+      endpoint: `/api/diff/scan/${scanId}`
+    });
+  }, [apiRequest]);
+
+  const listScans = useCallback(async (limit: number = 50) => {
+    return apiRequest({
+      method: 'GET',
+      endpoint: `/api/diff/scans`,
+      params: { limit: String(limit) }
+    });
+  }, [apiRequest]);
+
   return {
     apiRequest,
     getFileTree,
     startScan,
     getScanStatus,
-    getScanResults
+    getScanResults,
+    cancelScan,
+    listScans
   };
 };

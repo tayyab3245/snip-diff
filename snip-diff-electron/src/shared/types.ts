@@ -40,3 +40,28 @@ export interface ApiResponse<T = any> {
   data?: T;
   error?: string;
 }
+
+export interface ElectronAPI {
+  getAppVersion: () => Promise<string>;
+  selectFolder: () => Promise<string | null>;
+  windowMinimize: () => Promise<void>;
+  windowMaximize: () => Promise<void>;
+  windowClose: () => Promise<void>;
+  apiRequest: (options: {
+    method: string;
+    endpoint: string;
+    data?: any;
+    params?: Record<string, string>;
+  }) => Promise<{
+    success: boolean;
+    status?: number;
+    data?: any;
+    error?: string;
+  }>;
+}
+
+declare global {
+  interface Window {
+    electronAPI: ElectronAPI;
+  }
+}

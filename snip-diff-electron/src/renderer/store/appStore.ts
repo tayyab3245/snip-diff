@@ -33,6 +33,7 @@ interface AppState {
   // Diff state
   currentScanId: string | null;
   scanStatus: string | null;
+  scanProgress: number | null;
   diffSections: DiffSection[];
   unifiedDiff: string | null;
   
@@ -47,6 +48,7 @@ interface AppState {
   toggleFileSelection: (filePath: string) => void;
   clearFileSelection: () => void;
   setScanStatus: (status: string | null) => void;
+  setScanProgress: (progress: number | null) => void;
   setCurrentScanId: (scanId: string | null) => void;
   setDiffSections: (sections: DiffSection[]) => void;
   setUnifiedDiff: (diff: string | null) => void;
@@ -55,13 +57,14 @@ interface AppState {
   toggleDarkMode: () => void;
 }
 
-export const useAppStore = create<AppState>((set, get) => ({
+export const useAppStore = create<AppState>((set) => ({
   // Initial state
   selectedPath: null,
   fileTree: [],
   selectedFiles: new Set(),
   currentScanId: null,
   scanStatus: null,
+  scanProgress: null,
   diffSections: [],
   unifiedDiff: null,
   isLoading: false,
@@ -86,6 +89,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   clearFileSelection: () => set({ selectedFiles: new Set() }),
   
   setScanStatus: (status) => set({ scanStatus: status }),
+  
+  setScanProgress: (progress) => set({ scanProgress: progress }),
   
   setCurrentScanId: (scanId) => set({ currentScanId: scanId }),
   

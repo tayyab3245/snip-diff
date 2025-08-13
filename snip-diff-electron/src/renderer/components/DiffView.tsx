@@ -3,7 +3,7 @@
  * Displays diff results and provides scan controls
  */
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import styled from 'styled-components';
 import { useApiClient } from '../hooks/useApiClient';
 import { useAppStore } from '../store/appStore';
@@ -82,6 +82,40 @@ const StatusIndicator = styled.div<{ status: string }>`
   }};
 `;
 
+const ProgressBar = styled.div`
+  height: 8px;
+  background: #e0e5ec;
+  border-radius: 999px;
+  box-shadow: inset 2px 2px 4px #bebebe, inset -2px -2px 4px #ffffff;
+  overflow: hidden;
+  width: 220px;
+`;
+
+const ProgressFill = styled.div<{ pct: number }>`
+  height: 100%;
+  width: ${props => Math.max(0, Math.min(100, props.pct))}%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  transition: width 0.2s ease;
+`;
+
+const ToolbarSpacer = styled.div`
+  flex: 1;
+`;
+
+const SecondaryButton = styled.button`
+  padding: 8px 12px;
+  background: #e0e5ec;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #333;
+  box-shadow: 2px 2px 5px #bebebe, -2px -2px 5px #ffffff;
+  transition: all 0.2s ease;
+  &:hover:not(:disabled) { transform: translateY(-1px); }
+  &:disabled { opacity: 0.6; cursor: not-allowed; }
+`;
+
 const DiffContent = styled.div`
   flex: 1;
   overflow-y: auto;
@@ -154,17 +188,21 @@ const LoadingSpinner = styled.div`
 export const DiffView: React.FC = () => {
   const [isScanning, setIsScanning] = useState(false);
   const [expandedSections, setExpandedSections] = useState<Set<number>>(new Set());
+  const [showUnified, setShowUnified] = useState(false);
   
-  const { startScan, getScanStatus, getScanResults } = useApiClient();
+  const { startScan, getScanStatus, getScanResults, cancelScan } = useApiClient();
   const { 
     selectedPath, 
     selectedFiles, 
     currentScanId, 
     scanStatus,
+    scanProgress,
     diffSections,
     setCurrentScanId,
     setScanStatus,
-    setDiffSections 
+    setDiffSections,
+    setUnifiedDiff,
+    setScanProgress
   } = useAppStore();
 
   const handleStartScan = async () => {
@@ -209,9 +247,10 @@ export const DiffView: React.FC = () => {
         const statusResponse = await getScanStatus(scanId);
         
         if (statusResponse.success && statusResponse.data) {
-          const statusRaw = statusResponse.data.status;
-          const status = (statusRaw || '').toLowerCase();
+          const status = (statusResponse.data.status || '').toLowerCase();
           setScanStatus(status);
+          const p = statusResponse.data.progress;
+          if (typeof p === 'number') setScanProgress(p);
           
           if (status === 'completed') {
             // Get scan results
@@ -219,15 +258,21 @@ export const DiffView: React.FC = () => {
             
             if (resultsResponse.success && resultsResponse.data) {
               setDiffSections(resultsResponse.data.sections || []);
+              setUnifiedDiff(resultsResponse.data.unified_diff || '');
             }
-          } else if (status === 'running' || status === 'pending' || status === 'started') {
+            setScanProgress(1.0);
+          } else if (status === 'running') {
             // Continue polling
             setTimeout(poll, 1000);
+          } else if (status === 'failed' || status === 'cancelled') {
+            // terminal states
+            setScanProgress(null);
           }
         }
       } catch (error) {
         console.error('Error polling scan status:', error);
         setScanStatus('failed');
+        setScanProgress(null);
       }
     };
 
@@ -246,6 +291,11 @@ export const DiffView: React.FC = () => {
 
   const hasSelection = selectedFiles.size > 0;
   const canScan = selectedPath && hasSelection && !isScanning;
+  const canCancel = !!currentScanId && (scanStatus === 'running' || scanStatus === 'started');
+  const pct = useMemo(() => {
+    if (typeof scanProgress !== 'number') return null;
+    return Math.round(Math.min(100, Math.max(0, scanProgress * 100)));
+  }, [scanProgress]);
 
   return (
     <DiffViewContainer>
@@ -271,16 +321,55 @@ export const DiffView: React.FC = () => {
               {scanStatus.toUpperCase()}
             </StatusIndicator>
           )}
+          {pct !== null && (
+            <ProgressBar title={`Progress: ${pct}%`}>
+              <ProgressFill pct={pct} />
+            </ProgressBar>
+          )}
+
+          <ToolbarSpacer />
+
+          <SecondaryButton
+            onClick={async () => {
+              if (!currentScanId) return;
+              try {
+                const res = await cancelScan(currentScanId);
+                if (!res.success) {
+                  alert(res.error || 'Failed to cancel scan');
+                }
+              } catch (e) {
+                console.error(e);
+              }
+            }}
+            disabled={!canCancel}
+            title="Cancel current scan"
+          >
+            ✖ Cancel
+          </SecondaryButton>
+
+          <SecondaryButton
+            onClick={() => setShowUnified(s => !s)}
+            disabled={!diffSections.length}
+            title="Toggle unified diff view"
+            style={{ marginLeft: 8 }}
+          >
+            📄 {showUnified ? 'Hide' : 'Show'} Unified Diff
+          </SecondaryButton>
           
-          <div style={{ flex: 1 }} />
-          
-          <span style={{ fontSize: '14px', color: '#666' }}>
+          <span style={{ marginLeft: 12, fontSize: '14px', color: '#666' }}>
             {selectedFiles.size} file{selectedFiles.size !== 1 ? 's' : ''} selected
           </span>
         </ControlsRow>
       </ControlsPanel>
 
       <DiffContent>
+        {/* Unified diff (raw) */}
+        {showUnified && (
+          <div style={{ margin: 16, padding: 16, background: '#fff', borderRadius: 8, boxShadow: '2px 2px 5px #bebebe, -2px -2px 5px #ffffff', fontFamily: 'Monaco, Menlo, Ubuntu Mono, monospace', whiteSpace: 'pre-wrap' }}>
+            {useAppStore.getState().unifiedDiff || 'No diff available.'}
+          </div>
+        )}
+
         {!selectedPath && (
           <PlaceholderMessage>
             👋 Welcome to SNIP-DIFF!<br /><br />

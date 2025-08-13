@@ -11,7 +11,7 @@ import * as os from 'os';
 class SnipDiffApp {
   private mainWindow: BrowserWindow | null = null;
   private apiProcess: ChildProcess | null = null;
-  private readonly isDev = process.env.NODE_ENV === 'development';
+  private readonly isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
 
   async initialize() {
     await app.whenReady();
@@ -30,22 +30,27 @@ class SnipDiffApp {
   }
 
   private async startApiServer() {
+    if (this.isDev) {
+      // Development mode: connect to external API server
+      console.log('Development mode: connecting to external API server...');
+      try {
+        await this.waitForApiServer();
+        console.log('Connected to external FastAPI server');
+      } catch (error) {
+        console.log('Could not connect to external API server, will continue without it');
+      }
+      return;
+    }
+
+    // Production mode: start the API server
     try {
       console.log('Starting FastAPI backend server...');
+      const apiPath = path.join(process.resourcesPath, 'api');
+      const pythonPath = process.platform === 'win32' ? 'python.exe' : 'python3';
 
-      // Dev: run uvicorn against app.main:app with CWD at snip-diff-api
-      // Prod: keep using packaged path if needed later
-      const apiPath = this.isDev
-        ? path.join(__dirname, '../../../snip-diff-api')
-        : path.join(process.resourcesPath, 'api');
-
-      const args = this.isDev
-        ? ['-m', 'uvicorn', 'app.main:app', '--host', '127.0.0.1', '--port', '8000']
-        : ['-m', 'uvicorn', 'app.main:app', '--host', '127.0.0.1', '--port', '8000'];
-
-      this.apiProcess = spawn('python', args, {
+      this.apiProcess = spawn(pythonPath, ['-m', 'uvicorn', 'app.main:app', '--host', '127.0.0.1', '--port', '8000'], {
         cwd: apiPath,
-        stdio: this.isDev ? 'inherit' : 'pipe'
+        stdio: 'pipe'
       });
 
       if (this.apiProcess.stderr) {
@@ -92,6 +97,8 @@ class SnipDiffApp {
   }
 
   private createMainWindow() {
+    console.log('isDev:', this.isDev, 'NODE_ENV:', process.env.NODE_ENV, 'isPackaged:', app.isPackaged);
+    
     this.mainWindow = new BrowserWindow({
       width: 1400,
       height: 900,

@@ -3,7 +3,7 @@
  * Renders file tree structure with selection capabilities
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 import { useApiClient } from '../hooks/useApiClient';
 import { useAppStore } from '../store/appStore';
