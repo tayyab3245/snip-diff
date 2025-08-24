@@ -15,7 +15,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 # Import routes
-from app.api.routes import files, diff
+from app.api.routes import files, diff, live_diff, websocket_diff
 
 # Cleanup function for thread pools
 def cleanup_resources():
@@ -66,6 +66,8 @@ app.add_middleware(
 # Include routers with /api prefix for unified base path
 app.include_router(files.router, prefix="/api/files", tags=["files"])
 app.include_router(diff.router, prefix="/api/diff", tags=["diff"])
+app.include_router(live_diff.router, prefix="/api", tags=["live"])
+app.include_router(websocket_diff.router, prefix="/api", tags=["websocket"])
 
 @app.get("/")
 async def root():

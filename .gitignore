@@ -78,3 +78,5 @@ logs/
 # Temporary files
 *.tmp
 *.temp
+DIFF_SYSTEM_REWRITE_TICKETS.md
+snip-diff-electron/src/renderer/ui-final-example.html
