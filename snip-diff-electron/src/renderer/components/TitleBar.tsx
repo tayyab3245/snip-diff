@@ -4,91 +4,11 @@
  */
 
 import React from 'react';
-import styled from 'styled-components';
-
-const TitleBarContainer = styled.div`
-  height: 32px;
-  background: #e0e5ec;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 16px;
-  border-bottom: 1px solid #c5c5c5;
-  -webkit-app-region: drag;
-  user-select: none;
-  box-shadow: inset 2px 2px 5px #bebebe, inset -2px -2px 5px #ffffff;
-`;
-
-const TitleSection = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 12px;
-`;
-
-const AppIcon = styled.div`
-  width: 20px;
-  height: 20px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-weight: bold;
-  font-size: 12px;
-  box-shadow: 2px 2px 5px #bebebe, -2px -2px 5px #ffffff;
-`;
-
-const AppTitle = styled.span`
-  font-size: 14px;
-  font-weight: 500;
-  color: #333;
-`;
-
-const WindowControls = styled.div`
-  display: flex;
-  gap: 8px;
-  -webkit-app-region: no-drag;
-`;
-
-const ControlButton = styled.button`
-  width: 20px;
-  height: 20px;
-  border: none;
-  border-radius: 50%;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  transition: all 0.2s ease;
-  background: #e0e5ec;
-  box-shadow: 2px 2px 5px #bebebe, -2px -2px 5px #ffffff;
-
-  &:hover {
-    transform: translateY(-1px);
-    box-shadow: 3px 3px 8px #bebebe, -3px -3px 8px #ffffff;
-  }
-
-  &:active {
-    transform: translateY(0);
-    box-shadow: inset 2px 2px 5px #bebebe, inset -2px -2px 5px #ffffff;
-  }
-
-  &.minimize {
-    color: #f39c12;
-  }
-
-  &.maximize {
-    color: #27ae60;
-  }
-
-  &.close {
-    color: #e74c3c;
-  }
-`;
+import { useTheme } from '../theme';
 
 export const TitleBar: React.FC = () => {
+  const { theme } = useTheme();
+
   const handleMinimize = async () => {
     try {
       await window.electronAPI.windowMinimize();
@@ -113,24 +33,101 @@ export const TitleBar: React.FC = () => {
     }
   };
 
-  return (
-    <TitleBarContainer>
-      <TitleSection>
-        <AppIcon>S</AppIcon>
-        <AppTitle>SNIP-DIFF</AppTitle>
-      </TitleSection>
+  const titleBarStyle: React.CSSProperties = {
+    height: '32px',
+    background: theme.colors.background.secondary,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '0 16px',
+    borderBottom: `1px solid ${theme.colors.border.secondary}`,
+    userSelect: 'none',
+    boxShadow: theme.colors.shadows.neumorphic.raised,
+    // @ts-ignore - Electron specific property
+    WebkitAppRegion: 'drag',
+  };
 
-      <WindowControls>
-        <ControlButton className="minimize" onClick={handleMinimize} title="Minimize">
+  const titleSectionStyle: React.CSSProperties = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+  };
+
+  const appIconStyle: React.CSSProperties = {
+    width: '20px',
+    height: '20px',
+    background: theme.colors.gradients.primary,
+    borderRadius: '4px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: '12px',
+    boxShadow: theme.colors.shadows.neumorphic.raised,
+  };
+
+  const appTitleStyle: React.CSSProperties = {
+    fontSize: '14px',
+    fontWeight: 500,
+    color: theme.colors.text.primary,
+  };
+
+  const windowControlsStyle: React.CSSProperties = {
+    display: 'flex',
+    gap: '8px',
+    // @ts-ignore - Electron specific property
+    WebkitAppRegion: 'no-drag',
+  };
+
+  const controlButtonBaseStyle: React.CSSProperties = {
+    width: '20px',
+    height: '20px',
+    border: 'none',
+    borderRadius: '50%',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '12px',
+    transition: 'all 0.2s ease',
+    background: theme.colors.background.secondary,
+    boxShadow: theme.colors.shadows.neumorphic.raised,
+  };
+
+  const minimizeButtonStyle: React.CSSProperties = {
+    ...controlButtonBaseStyle,
+    color: theme.colors.semantic.warning,
+  };
+
+  const maximizeButtonStyle: React.CSSProperties = {
+    ...controlButtonBaseStyle,
+    color: theme.colors.semantic.success,
+  };
+
+  const closeButtonStyle: React.CSSProperties = {
+    ...controlButtonBaseStyle,
+    color: theme.colors.semantic.error,
+  };
+
+  return (
+    <div style={titleBarStyle}>
+      <div style={titleSectionStyle}>
+        <div style={appIconStyle}>S</div>
+        <span style={appTitleStyle}>SNIP-DIFF</span>
+      </div>
+
+      <div style={windowControlsStyle}>
+        <button style={minimizeButtonStyle} onClick={handleMinimize} title="Minimize">
           −
-        </ControlButton>
-        <ControlButton className="maximize" onClick={handleMaximize} title="Maximize">
+        </button>
+        <button style={maximizeButtonStyle} onClick={handleMaximize} title="Maximize">
           □
-        </ControlButton>
-        <ControlButton className="close" onClick={handleClose} title="Close">
+        </button>
+        <button style={closeButtonStyle} onClick={handleClose} title="Close">
           ×
-        </ControlButton>
-      </WindowControls>
-    </TitleBarContainer>
+        </button>
+      </div>
+    </div>
   );
 };

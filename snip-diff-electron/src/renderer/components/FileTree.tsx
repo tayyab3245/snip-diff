@@ -4,105 +4,9 @@
  */
 
 import React, { useState } from 'react';
-import styled from 'styled-components';
 import { useApiClient } from '../hooks/useApiClient';
 import { useAppStore } from '../store/appStore';
-
-const FileTreeContainer = styled.div`
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  background: #e0e5ec;
-`;
-
-const FileTreeHeader = styled.div`
-  padding: 16px;
-  border-bottom: 1px solid #c5c5c5;
-  box-shadow: inset 2px 2px 5px #bebebe, inset -2px -2px 5px #ffffff;
-`;
-
-const HeaderTitle = styled.h3`
-  margin: 0 0 12px 0;
-  font-size: 16px;
-  font-weight: 600;
-  color: #333;
-`;
-
-const SelectFolderButton = styled.button`
-  padding: 8px 16px;
-  background: #e0e5ec;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 14px;
-  color: #333;
-  box-shadow: 2px 2px 5px #bebebe, -2px -2px 5px #ffffff;
-  transition: all 0.2s ease;
-
-  &:hover {
-    transform: translateY(-1px);
-    box-shadow: 3px 3px 8px #bebebe, -3px -3px 8px #ffffff;
-  }
-
-  &:active {
-    transform: translateY(0);
-    box-shadow: inset 2px 2px 5px #bebebe, inset -2px -2px 5px #ffffff;
-  }
-`;
-
-const FileTreeContent = styled.div`
-  flex: 1;
-  overflow-y: auto;
-  padding: 8px;
-`;
-
-const FileNode = styled.div<{ depth: number; selected: boolean }>`
-  padding: 4px 8px;
-  margin-left: ${props => props.depth * 16}px;
-  cursor: pointer;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  color: #333;
-  user-select: none;
-  background: ${props => props.selected ? '#d0d7de' : 'transparent'};
-
-  &:hover {
-    background: #d5dae1;
-  }
-`;
-
-const FileIcon = styled.span`
-  font-size: 16px;
-  width: 16px;
-  text-align: center;
-`;
-
-const FileName = styled.span`
-  flex: 1;
-  truncate: true;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-`;
-
-const LoadingIndicator = styled.div`
-  padding: 16px;
-  text-align: center;
-  color: #666;
-  font-style: italic;
-`;
-
-const ErrorMessage = styled.div`
-  padding: 16px;
-  color: #e74c3c;
-  font-size: 14px;
-  background: #fdf2f2;
-  border-radius: 4px;
-  margin: 8px;
-`;
+import { useTheme } from '../theme';
 
 interface FileTreeNodeProps {
   node: any;
@@ -113,6 +17,7 @@ interface FileTreeNodeProps {
 const FileTreeNode: React.FC<FileTreeNodeProps> = ({ node, depth, onFileSelect }) => {
   const [isExpanded, setIsExpanded] = useState(depth < 2);
   const { selectedFiles, toggleFileSelection } = useAppStore();
+  const { theme } = useTheme();
   const isSelected = selectedFiles.has(node.path);
 
   const handleClick = () => {
@@ -151,17 +56,56 @@ const FileTreeNode: React.FC<FileTreeNodeProps> = ({ node, depth, onFileSelect }
     }
   };
 
+  const nodeStyle: React.CSSProperties = {
+    padding: '4px 8px',
+    marginLeft: `${depth * 16}px`,
+    cursor: 'pointer',
+    borderRadius: '4px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    fontSize: '14px',
+    color: theme.colors.components.fileTree.text,
+    userSelect: 'none',
+    background: isSelected ? theme.colors.components.fileTree.selected : 'transparent',
+    transition: 'background-color 0.2s ease',
+  };
+
+  const iconStyle: React.CSSProperties = {
+    fontSize: '16px',
+    width: '16px',
+    textAlign: 'center',
+  };
+
+  const nameStyle: React.CSSProperties = {
+    fontSize: '14px',
+    fontWeight: node.type === 'directory' ? 500 : 400,
+  };
+
   return (
     <>
-      <FileNode depth={depth} selected={isSelected} onClick={handleClick}>
-        <FileIcon>{getFileIcon(node.type, node.name)}</FileIcon>
-        <FileName>{node.name}</FileName>
+      <div 
+        style={nodeStyle} 
+        onClick={handleClick}
+        onMouseEnter={(e) => {
+          if (!isSelected) {
+            e.currentTarget.style.background = theme.colors.components.fileTree.hover;
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (!isSelected) {
+            e.currentTarget.style.background = 'transparent';
+          }
+        }}
+      >
+        <span style={iconStyle}>{getFileIcon(node.type, node.name)}</span>
+        <span style={nameStyle}>{node.name}</span>
         {node.type === 'file' && node.size && (
-          <span style={{ fontSize: '12px', color: '#666' }}>
+          <span style={{ fontSize: '12px', color: theme.colors.text.tertiary, marginLeft: 'auto' }}>
             {formatFileSize(node.size)}
           </span>
         )}
-      </FileNode>
+      </div>
       
       {node.type === 'directory' && isExpanded && node.children && (
         <div>
@@ -188,6 +132,7 @@ const formatFileSize = (bytes: number): string => {
 export const FileTree: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { theme } = useTheme();
   
   const { getFileTree } = useApiClient();
   const { 
@@ -232,35 +177,100 @@ export const FileTree: React.FC = () => {
   };
 
   const handleFileSelect = (path: string) => {
-    // Could trigger additional actions when files are selected
     console.log('File selected:', path);
   };
 
+  const containerStyle: React.CSSProperties = {
+    height: '100%',
+    display: 'flex',
+    flexDirection: 'column',
+    background: theme.colors.components.fileTree.background,
+  };
+
+  const headerStyle: React.CSSProperties = {
+    padding: '16px',
+    borderBottom: `1px solid ${theme.colors.border.secondary}`,
+    boxShadow: theme.colors.shadows.neumorphic.pressed,
+  };
+
+  const titleStyle: React.CSSProperties = {
+    margin: '0 0 12px 0',
+    fontSize: '16px',
+    fontWeight: 600,
+    color: theme.colors.text.primary,
+  };
+
+  const selectButtonStyle: React.CSSProperties = {
+    padding: '8px 16px',
+    background: theme.colors.components.toolbar.button,
+    border: 'none',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    fontSize: '14px',
+    color: theme.colors.text.primary,
+    boxShadow: theme.colors.shadows.neumorphic.raised,
+    transition: 'all 0.2s ease',
+  };
+
+  const contentStyle: React.CSSProperties = {
+    flex: 1,
+    overflowY: 'auto',
+    padding: '8px',
+  };
+
+  const loadingStyle: React.CSSProperties = {
+    padding: '16px',
+    textAlign: 'center',
+    color: theme.colors.text.secondary,
+    fontSize: '14px',
+  };
+
+  const errorStyle: React.CSSProperties = {
+    padding: '16px',
+    textAlign: 'center',
+    color: theme.colors.semantic.error,
+    fontSize: '14px',
+    background: theme.colors.background.tertiary,
+    borderRadius: '4px',
+    margin: '8px',
+  };
+
   return (
-    <FileTreeContainer>
-      <FileTreeHeader>
-        <HeaderTitle>Project Files</HeaderTitle>
-        <SelectFolderButton onClick={handleSelectFolder}>
+    <div style={containerStyle}>
+      <div style={headerStyle}>
+        <h3 style={titleStyle}>Project Files</h3>
+        <button 
+          style={selectButtonStyle}
+          onClick={handleSelectFolder}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'translateY(-1px)';
+            e.currentTarget.style.boxShadow = theme.colors.shadows.neumorphic.float;
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = theme.colors.shadows.neumorphic.raised;
+          }}
+        >
           📁 Choose Folder
-        </SelectFolderButton>
+        </button>
         {selectedFiles.size > 0 && (
-          <div style={{ marginTop: '8px', fontSize: '12px', color: '#666' }}>
+          <div style={{ marginTop: '8px', fontSize: '12px', color: theme.colors.text.tertiary }}>
             {selectedFiles.size} file{selectedFiles.size !== 1 ? 's' : ''} selected
           </div>
         )}
-      </FileTreeHeader>
+      </div>
 
-      <FileTreeContent>
-        {isLoading && <LoadingIndicator>Loading files...</LoadingIndicator>}
+      <div style={contentStyle}>
+        {isLoading && <div style={loadingStyle}>Loading files...</div>}
         
-        {error && <ErrorMessage>{error}</ErrorMessage>}
+        {error && <div style={errorStyle}>{error}</div>}
         
         {!isLoading && !error && fileTree.length === 0 && selectedPath && (
-          <LoadingIndicator>No files found in selected directory</LoadingIndicator>
+          <div style={loadingStyle}>No files found in selected directory</div>
         )}
         
         {!isLoading && !error && fileTree.length === 0 && !selectedPath && (
-          <LoadingIndicator>Select a folder to browse files</LoadingIndicator>
+          <div style={loadingStyle}>Select a folder to browse files</div>
         )}
         
         {fileTree.map((node) => (
@@ -271,7 +281,7 @@ export const FileTree: React.FC = () => {
             onFileSelect={handleFileSelect}
           />
         ))}
-      </FileTreeContent>
-    </FileTreeContainer>
+      </div>
+    </div>
   );
 };

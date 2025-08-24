@@ -8,7 +8,7 @@
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:renderer\" \"npm run dev:main\"",
     "dev:backend": "cd ../snip-diff-api && python app/main.py",
     "dev:renderer": "vite",
-    "dev:main": "delay 8s && tsc -p src/main && electron .",
+    "dev:main": "delay 8s && electron .",
     "dev:frontend-only": "concurrently \"npm run dev:renderer\" \"npm run dev:main-no-wait\"",
     "dev:main-no-wait": "tsc -p src/main && electron .",
     "build": "npm run build:renderer && npm run build:main",
@@ -51,11 +51,9 @@
     "wait-on": "^8.0.4"
   },
   "dependencies": {
-    "@types/styled-components": "^5.1.34",
     "framer-motion": "^10.16.16",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "styled-components": "^6.1.6",
     "zustand": "^4.4.7"
   },
   "build": {
