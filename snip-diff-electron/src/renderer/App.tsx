@@ -16,14 +16,14 @@ import { ThemeProvider } from './theme';
 
 // Main App Content Component (wrapped in theme provider)
 const AppContent: React.FC = () => {
-  const [isScanning, setIsScanning] = useState(false);
-  const { apiRequest, startScan, getScanResults } = useApiClient();
+  const [isWatching, setIsWatching] = useState(false);
+  const { apiRequest } = useApiClient();
   const { 
     selectedFiles, 
     selectedPath, 
     setScanStatus, 
-    setScanProgress,
-    setDiffSections 
+    setDiffSections,
+    openFiles
   } = useAppStore();
   
   // Test API connection on startup
@@ -43,74 +43,152 @@ const AppContent: React.FC = () => {
     checkConnection();
   }, [apiRequest]);
 
-  const handleScan = async () => {
+  // Listen for file changes from Chokidar
+  useEffect(() => {
+    console.log('[Renderer] Setting up file change listener. isWatching:', isWatching, 'selectedFiles:', Array.from(selectedFiles));
+    
+    const handleFileChange = async (filePath: string) => {
+      console.log('[Renderer] File changed:', filePath);
+      console.log('[Renderer] Current state - isWatching:', isWatching, 'selectedPath:', selectedPath);
+      
+      if (!selectedPath || !isWatching) {
+        console.log('[Renderer] Skipping diff - not watching or no path selected');
+        return;
+      }
+      
+      // Trigger a diff scan for the changed file
+      try {
+        console.log('[Renderer] Starting diff scan...');
+        setScanStatus('running');
+        
+        // Start a scan with the selected files
+        const selectedFilesArray = Array.from(selectedFiles);
+        console.log('[Renderer] Scanning files:', selectedFilesArray);
+        
+        const scanResponse = await apiRequest({
+          method: 'POST',
+          endpoint: '/api/diff/scan',
+          data: {
+            directory: selectedPath,
+            include_paths: selectedFilesArray,
+            scan_mode: 'visual'
+          }
+        });
+        
+        if (scanResponse.success && scanResponse.data) {
+          const scanId = scanResponse.data.scan_id;
+          console.log('[Renderer] Scan started:', scanId);
+          
+          // Poll for scan completion
+          const pollInterval = setInterval(async () => {
+            const statusResponse = await apiRequest({
+              method: 'GET',
+              endpoint: `/api/diff/status/${scanId}`
+            });
+            
+            if (statusResponse.success && statusResponse.data) {
+              const status = statusResponse.data.status;
+              
+              if (status === 'completed') {
+                clearInterval(pollInterval);
+                
+                // Get results
+                const resultsResponse = await apiRequest({
+                  method: 'GET',
+                  endpoint: `/api/diff/results/${scanId}`
+                });
+                
+                if (resultsResponse.success && resultsResponse.data) {
+                  const sections = resultsResponse.data.sections || [];
+                  console.log('[Renderer] Diff detected:', sections);
+                  setDiffSections(sections);
+                  setScanStatus('completed');
+                }
+              } else if (status === 'failed') {
+                clearInterval(pollInterval);
+                console.error('[Renderer] Scan failed');
+                setScanStatus('failed');
+              }
+            }
+          }, 500);
+        }
+      } catch (error) {
+        console.error('[Renderer] Error fetching diff:', error);
+        setScanStatus('failed');
+      }
+    };
+
+    window.electronAPI.onFileChanged(handleFileChange);
+  }, [apiRequest, setScanStatus, selectedPath, selectedFiles, isWatching, setDiffSections]);
+
+  const handleWatch = async () => {
     if (!selectedPath || selectedFiles.size === 0) return;
 
-    setIsScanning(true);
+    if (isWatching) {
+      // Stop watching
+      try {
+        const response = await window.electronAPI.stopWatch();
+        if (response.success) {
+          console.log('Stopped watching files');
+          setIsWatching(false);
+          setScanStatus(null);
+          setDiffSections([]);
+        }
+      } catch (error) {
+        console.error('Error stopping watch:', error);
+      }
+      return;
+    }
+
+    // Start watching
+    setIsWatching(true);
     setScanStatus('running');
-    setScanProgress(0);
 
     try {
-      // Convert Set to Array for API
+      // Convert Set to Array for watching
       const selectedFilesArray = Array.from(selectedFiles);
       
-      const response = await startScan(selectedPath, selectedFilesArray);
-      console.log('Scan response:', response);
+      const response = await window.electronAPI.startWatch(selectedFilesArray);
+      console.log('Watch started:', response);
 
-      if (response.success && response.data?.scan_id) {
-        const scanId = response.data.scan_id;
-        setDiffSections([]); // Clear previous results
-        
-        // Poll for results
-        let attempts = 0;
-        const maxAttempts = 30;
-        
-        const pollInterval = setInterval(async () => {
-          attempts++;
-          const progress = (attempts / maxAttempts) * 100;
-          setScanProgress(Math.min(progress, 95));
-          
-          try {
-            const resultsResponse = await getScanResults(scanId);
-            console.log('Results response:', resultsResponse);
-            
-            if (resultsResponse.success && resultsResponse.data) {
-              clearInterval(pollInterval);
-              setScanStatus('completed');
-              setIsScanning(false);
-              setScanProgress(100);
-              
-              // Set the diff sections
-              const sections = resultsResponse.data.sections || [];
-              console.log('Setting diff sections:', sections);
-              setDiffSections(sections);
-            }
-          } catch (error) {
-            console.log('Polling for results, attempt:', attempts);
-            // Continue polling
-          }
-          
-          if (attempts >= maxAttempts) {
-            clearInterval(pollInterval);
-            setScanStatus('failed');
-            setIsScanning(false);
-            console.error('Scan timeout - results not available');
-          }
-        }, 1000);
-      } else {
+      if (!response.success) {
         setScanStatus('failed');
-        setIsScanning(false);
-        console.error('Scan failed:', response);
+        setIsWatching(false);
+        console.error('Watch failed:', response);
       }
     } catch (error) {
-      console.error('Diff scan failed:', error);
+      console.error('Watch failed:', error);
       setScanStatus('failed');
-      setIsScanning(false);
+      setIsWatching(false);
     }
   };
 
-  const handleCopyAll = () => {
-    console.log('Copy all to clipboard');
+  const handleCopyAll = async () => {
+    if (openFiles.length === 0) {
+      console.log('No files to copy');
+      return;
+    }
+
+    try {
+      const fileContents: string[] = [];
+
+      // Collect content from all open files
+      for (const file of openFiles) {
+        fileContents.push(`// File: ${file.path}\n${file.content}`);
+      }
+
+      const combinedContent = fileContents.join('\n\n' + '='.repeat(80) + '\n\n');
+      
+      // Copy to clipboard
+      await navigator.clipboard.writeText(combinedContent);
+      console.log(`Copied ${openFiles.length} file(s) to clipboard`);
+      
+      // Optional: Show visual feedback
+      // You could add a toast notification here
+    } catch (error) {
+      console.error('Failed to copy files:', error);
+      alert('Failed to copy to clipboard');
+    }
   };
 
   const handlePrompts = () => {
@@ -129,12 +207,12 @@ const AppContent: React.FC = () => {
       mainContent={<DiffView />}
       statusBar={
         <ActionBar 
-          onScan={handleScan}
+          onWatch={handleWatch}
           onCopyAll={handleCopyAll}
           onPrompts={handlePrompts}
           onSummarize={handleSummarize}
-          isScanning={isScanning}
-          scanDisabled={!selectedPath || selectedFiles.size === 0}
+          isWatching={isWatching}
+          watchDisabled={!selectedPath || selectedFiles.size === 0}
         />
       }
     />

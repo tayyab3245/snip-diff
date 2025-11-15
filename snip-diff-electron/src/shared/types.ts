@@ -58,6 +58,9 @@ export interface ElectronAPI {
     data?: any;
     error?: string;
   }>;
+  startWatch: (filePaths: string[]) => Promise<{ success: boolean; error?: string }>;
+  stopWatch: () => Promise<{ success: boolean; error?: string }>;
+  onFileChanged: (callback: (filePath: string) => void) => void;
 }
 
 declare global {

@@ -13,6 +13,7 @@ interface FileTreeNodeProps {
   node: any;
   depth: number;
   onFileSelect: (path: string) => void;
+  isSelected: boolean;
 }
 
 // Lucide-style SVG Icons
@@ -106,50 +107,51 @@ const ChevronIcon: React.FC<{ isOpen: boolean }> = ({ isOpen }) => (
   </svg>
 );
 
-const FileTreeNode: React.FC<FileTreeNodeProps> = ({ node, depth, onFileSelect }) => {
+const FileTreeNode: React.FC<FileTreeNodeProps> = ({ node, depth, onFileSelect, isSelected }) => {
   const [isExpanded, setIsExpanded] = useState(depth < 2);
-  const { selectedPath, openFile, activeFilePath } = useAppStore();
+  const { activeFilePath, selectedFiles, selectedPath, openFile, closeFile } = useAppStore();
   const { getFileContent } = useApiClient();
   const { theme } = useTheme();
-  const isSelected = activeFilePath === node.path;
+  const isActive = activeFilePath === node.path;
 
   const handleClick = async () => {
     if (node.type === 'file') {
-      // Open file in editor mode
-      if (selectedPath) {
-        try {
-          console.log('Opening file:', node.path, 'from base:', selectedPath);
-          const response = await getFileContent(selectedPath, node.path);
-          console.log('File content response:', response);
-          console.log('Response data:', response.data);
-          
-          // The backend returns: { success, status, data: { success, path, content, size, encoding } }
-          // So we need to check both response.success and response.data
-          if (response.success && response.data && response.data.content !== undefined) {
-            openFile({
-              path: node.path,
-              content: response.data.content,
-              language: getFileExtension(node.name)
-            });
-            console.log('File opened successfully:', node.path);
-          } else {
-            const errorMsg = response.error || response.data?.error || 'Unknown error - check console for details';
-            console.error('Failed to get file content:', errorMsg);
-            console.error('Full response:', JSON.stringify(response, null, 2));
-            alert(`Failed to open file: ${errorMsg}`);
+      // Check if file is currently selected (before toggle)
+      const wasSelected = selectedFiles.has(node.path);
+      
+      // Toggle selection
+      onFileSelect(node.path);
+      
+      if (!wasSelected) {
+        // File is being selected - open it
+        if (selectedPath) {
+          try {
+            console.log('Opening file:', node.path, 'from base:', selectedPath);
+            const response = await getFileContent(selectedPath, node.path);
+            
+            if (response.success && response.data && response.data.content !== undefined) {
+              openFile({
+                path: node.path,
+                content: response.data.content,
+                language: getFileExtension(node.name)
+              });
+              console.log('File opened successfully:', node.path);
+            } else {
+              const errorMsg = response.error || response.data?.error || 'Failed to open file';
+              console.error('Failed to get file content:', errorMsg);
+            }
+          } catch (error) {
+            console.error('Exception opening file:', error);
           }
-        } catch (error) {
-          console.error('Exception opening file:', error);
-          alert(`Error opening file: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
       } else {
-        console.warn('No selectedPath available');
-        alert('Please select a folder first');
+        // File is being deselected - close it
+        closeFile(node.path);
+        console.log('File closed:', node.path);
       }
     } else {
       setIsExpanded(!isExpanded);
     }
-    onFileSelect(node.path);
   };
 
   const getFileExtension = (name: string) => {
@@ -166,8 +168,9 @@ const FileTreeNode: React.FC<FileTreeNodeProps> = ({ node, depth, onFileSelect }
     fontSize: '13px',
     color: theme.colors.components.fileTree.text,
     userSelect: 'none',
-    background: isSelected ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
-    transition: 'background 0.15s',
+    background: isSelected ? 'rgba(56, 189, 248, 0.15)' : (isActive ? 'rgba(255, 255, 255, 0.08)' : 'transparent'),
+    borderLeft: isSelected ? '3px solid #38bdf8' : '3px solid transparent',
+    transition: 'background 0.15s, border-left 0.15s',
   };
 
   const iconContainerStyle: React.CSSProperties = {
@@ -226,6 +229,7 @@ const FileTreeNode: React.FC<FileTreeNodeProps> = ({ node, depth, onFileSelect }
               node={child}
               depth={depth + 1}
               onFileSelect={onFileSelect}
+              isSelected={selectedFiles.has(child.path)}
             />
           ))}
         </div>
@@ -244,7 +248,10 @@ export const FileTree: React.FC = () => {
     selectedPath, 
     fileTree, 
     setSelectedPath, 
-    setFileTree
+    setFileTree,
+    selectedFiles,
+    toggleFileSelection,
+    clearFileSelection
   } = useAppStore();
 
   const handleSelectFolder = async () => {
@@ -281,7 +288,12 @@ export const FileTree: React.FC = () => {
   };
 
   const handleFileSelect = (path: string) => {
-    console.log('File selected:', path);
+    console.log('File clicked:', path);
+    toggleFileSelection(path);
+  };
+
+  const handleClearSelection = () => {
+    clearFileSelection();
   };
 
   // Button styles (non-layout)
@@ -302,6 +314,19 @@ export const FileTree: React.FC = () => {
     gap: '8px',
   };
 
+  const clearButtonStyle: React.CSSProperties = {
+    width: '100%',
+    padding: '8px 16px',
+    background: 'transparent',
+    border: `1px solid ${theme.colors.border.secondary}`,
+    borderRadius: '6px',
+    cursor: 'pointer',
+    fontSize: '12px',
+    fontWeight: 500,
+    color: theme.colors.text.secondary,
+    textAlign: 'center',
+  };
+
   const loadingStyle: React.CSSProperties = {
     padding: '16px',
     textAlign: 'center',
@@ -319,16 +344,27 @@ export const FileTree: React.FC = () => {
     margin: '8px',
   };
 
-  // TOP BAR: Just the folder selection button
+  // TOP BAR: Folder selection and clear button
   const topBar = (
-    <>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
       <button 
         style={selectButtonStyle}
         onClick={handleSelectFolder}
       >
         Choose Folder
       </button>
-    </>
+      
+      <div style={{ minHeight: '36px' }}>
+        {selectedFiles.size > 0 && (
+          <button 
+            style={clearButtonStyle}
+            onClick={handleClearSelection}
+          >
+            Clear Selection
+          </button>
+        )}
+      </div>
+    </div>
   );
 
   // CONTENT: File tree (edge-to-edge with padding)
@@ -352,6 +388,7 @@ export const FileTree: React.FC = () => {
           node={node}
           depth={0}
           onFileSelect={handleFileSelect}
+          isSelected={selectedFiles.has(node.path)}
         />
       ))}
     </div>

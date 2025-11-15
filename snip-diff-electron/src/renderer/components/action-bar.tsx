@@ -7,21 +7,21 @@ import React from 'react';
 import { useTheme } from '../theme';
 
 interface ActionBarProps {
-  onScan: () => void;
+  onWatch: () => void;
   onPrompts: () => void;
   onCopyAll: () => void;
   onSummarize: () => void;
-  isScanning: boolean;
-  scanDisabled: boolean;
+  isWatching: boolean;
+  watchDisabled: boolean;
 }
 
 export const ActionBar: React.FC<ActionBarProps> = ({ 
-  onScan, 
+  onWatch, 
   onPrompts, 
   onCopyAll, 
   onSummarize,
-  isScanning, 
-  scanDisabled 
+  isWatching, 
+  watchDisabled 
 }) => {
   const { theme } = useTheme();
 
@@ -52,20 +52,21 @@ export const ActionBar: React.FC<ActionBarProps> = ({
 
   const primaryButtonStyle: React.CSSProperties = {
     ...actionButtonStyle,
-    backgroundColor: scanDisabled ? theme.colors.background.tertiary : 'transparent',
-    cursor: scanDisabled ? 'not-allowed' : 'pointer',
-    opacity: scanDisabled ? 0.5 : 1,
+    backgroundColor: watchDisabled ? theme.colors.background.tertiary : (isWatching ? '#38bdf8' : 'transparent'),
+    cursor: watchDisabled ? 'not-allowed' : 'pointer',
+    opacity: watchDisabled ? 0.5 : 1,
+    border: isWatching ? '1px solid #38bdf8' : `1px solid ${theme.colors.border.secondary}`,
   };
 
   return (
     <div style={containerStyle}>
       <button
         style={primaryButtonStyle}
-        onClick={onScan}
-        disabled={scanDisabled}
+        onClick={onWatch}
+        disabled={watchDisabled}
       >
-        <span>▶</span>
-        <span>{isScanning ? 'Scanning...' : 'Scan'}</span>
+        <span>{isWatching ? '⏸' : '▶'}</span>
+        <span>{isWatching ? 'Stop Watch' : 'Watch'}</span>
       </button>
 
       <button

@@ -98,6 +98,46 @@ export const useApiClient = () => {
     });
   }, [apiRequest]);
 
+  const startLiveWatch = useCallback(async (directory: string, includePaths: string[]) => {
+    return apiRequest({
+      method: 'POST',
+      endpoint: '/api/live/start',
+      data: {
+        directory,
+        include_paths: includePaths
+      }
+    });
+  }, [apiRequest]);
+
+  const stopLiveWatch = useCallback(async () => {
+    return apiRequest({
+      method: 'POST',
+      endpoint: '/api/live/stop'
+    });
+  }, [apiRequest]);
+
+  const getLiveStatus = useCallback(async () => {
+    return apiRequest({
+      method: 'GET',
+      endpoint: '/api/live/status'
+    });
+  }, [apiRequest]);
+
+  const getLiveFiles = useCallback(async () => {
+    return apiRequest({
+      method: 'GET',
+      endpoint: '/api/live/files'
+    });
+  }, [apiRequest]);
+
+  const getLiveAggregate = useCallback(async (format: 'unified' | 'sections' = 'sections') => {
+    return apiRequest({
+      method: 'GET',
+      endpoint: '/api/live/aggregate',
+      params: { format }
+    });
+  }, [apiRequest]);
+
   return {
     apiRequest,
     getFileTree,
@@ -106,6 +146,11 @@ export const useApiClient = () => {
     getScanResults,
     cancelScan,
     listScans,
-    getFileContent
+    getFileContent,
+    startLiveWatch,
+    stopLiveWatch,
+    getLiveStatus,
+    getLiveFiles,
+    getLiveAggregate
   };
 };

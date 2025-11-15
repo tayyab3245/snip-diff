@@ -24,6 +24,11 @@ interface ElectronAPI {
   selectFolder: () => Promise<string | null>;
   selectFiles: () => Promise<string[] | null>;
 
+  // File watching
+  startWatch: (filePaths: string[]) => Promise<{ success: boolean; error?: string }>;
+  stopWatch: () => Promise<{ success: boolean; error?: string }>;
+  onFileChanged: (callback: (filePath: string) => void) => void;
+
   // Window controls
   windowMinimize: () => Promise<void>;
   windowMaximize: () => Promise<void>;
@@ -47,6 +52,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // File dialog operations
   selectFolder: () => ipcRenderer.invoke('select-folder'),
   selectFiles: () => ipcRenderer.invoke('select-files'),
+
+  // File watching
+  startWatch: (filePaths: string[]) => ipcRenderer.invoke('start-watch', filePaths),
+  stopWatch: () => ipcRenderer.invoke('stop-watch'),
+  onFileChanged: (callback: (filePath: string) => void) => {
+    ipcRenderer.on('file-changed', (_, filePath) => callback(filePath));
+  },
 
   // Window controls for frameless window
   windowMinimize: () => ipcRenderer.invoke('window-minimize'),
