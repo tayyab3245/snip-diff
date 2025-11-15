@@ -13,7 +13,22 @@ class SnipDiffApp {
   private apiProcess: ChildProcess | null = null;
   private readonly isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
 
+  constructor() {
+    // Enable verbose logging in development
+    if (this.isDev) {
+      app.commandLine.appendSwitch('enable-logging');
+      app.commandLine.appendSwitch('v', '1');
+    }
+  }
+
   async initialize() {
+    console.log('=== SNIP-DIFF Application Starting ===');
+    console.log(`Mode: ${this.isDev ? 'DEVELOPMENT' : 'PRODUCTION'}`);
+    console.log(`Platform: ${process.platform}`);
+    console.log(`Electron: ${process.versions.electron}`);
+    console.log(`Chrome: ${process.versions.chrome}`);
+    console.log(`Node: ${process.versions.node}`);
+    
     await app.whenReady();
     
     // Start FastAPI backend
@@ -129,11 +144,32 @@ class SnipDiffApp {
 
     // Show window when ready
     this.mainWindow.once('ready-to-show', () => {
+      console.log('Window ready to show');
       this.mainWindow?.show();
+    });
+
+    // Forward renderer console logs to main process
+    this.mainWindow.webContents.on('console-message', (event, level, message, line, sourceId) => {
+      const logLevel = ['LOG', 'WARNING', 'ERROR'][level] || 'LOG';
+      console.log(`[RENDERER ${logLevel}] ${message} (${sourceId}:${line})`);
+    });
+
+    // Log navigation events
+    this.mainWindow.webContents.on('did-start-loading', () => {
+      console.log('Renderer: Started loading');
+    });
+
+    this.mainWindow.webContents.on('did-finish-load', () => {
+      console.log('Renderer: Finished loading');
+    });
+
+    this.mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {
+      console.error(`Renderer: Failed to load - ${errorCode}: ${errorDescription}`);
     });
 
     // Handle window closed
     this.mainWindow.on('closed', () => {
+      console.log('Main window closed');
       this.mainWindow = null;
     });
   }
@@ -157,6 +193,11 @@ class SnipDiffApp {
           });
         }
 
+        console.log(`[API Request] ${method} ${url.toString()}`);
+        if (params) {
+          console.log('[API Request] Params:', params);
+        }
+
         const fetchOptions: RequestInit = {
           method: method.toUpperCase(),
           headers: {
@@ -170,6 +211,9 @@ class SnipDiffApp {
 
         const response = await fetch(url.toString(), fetchOptions);
         const responseData = await response.json();
+
+        console.log(`[API Response] Status: ${response.status}, OK: ${response.ok}`);
+        console.log('[API Response] Data:', responseData);
 
         return {
           success: response.ok,
@@ -268,4 +312,7 @@ class SnipDiffApp {
 
 // Initialize the app
 const snipDiffApp = new SnipDiffApp();
-snipDiffApp.initialize().catch(console.error);
+snipDiffApp.initialize().catch((error) => {
+  console.error('Fatal error during initialization:', error);
+  app.quit();
+});
