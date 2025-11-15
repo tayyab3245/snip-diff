@@ -53,24 +53,11 @@ export const TitleBar: React.FC = () => {
     gap: '12px',
   };
 
-  const appIconStyle: React.CSSProperties = {
-    width: '20px',
-    height: '20px',
-    background: theme.colors.gradients.primary,
-    borderRadius: '4px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: '12px',
-    boxShadow: theme.colors.shadows.neumorphic.raised,
-  };
-
   const appTitleStyle: React.CSSProperties = {
-    fontSize: '14px',
-    fontWeight: 500,
+    fontSize: '13px',
+    fontWeight: 600,
     color: theme.colors.text.primary,
+    letterSpacing: '0.3px',
   };
 
   const windowControlsStyle: React.CSSProperties = {
@@ -81,50 +68,57 @@ export const TitleBar: React.FC = () => {
   };
 
   const controlButtonBaseStyle: React.CSSProperties = {
-    width: '20px',
-    height: '20px',
+    width: '32px',
+    height: '24px',
     border: 'none',
-    borderRadius: '50%',
+    borderRadius: '0',
     cursor: 'pointer',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    fontSize: '12px',
-    transition: 'all 0.2s ease',
-    background: theme.colors.background.secondary,
-    boxShadow: theme.colors.shadows.neumorphic.raised,
+    fontSize: '14px',
+    background: 'transparent',
+    color: theme.colors.text.secondary,
   };
 
   const minimizeButtonStyle: React.CSSProperties = {
     ...controlButtonBaseStyle,
-    color: theme.colors.semantic.warning,
   };
 
   const maximizeButtonStyle: React.CSSProperties = {
     ...controlButtonBaseStyle,
-    color: theme.colors.semantic.success,
   };
 
   const closeButtonStyle: React.CSSProperties = {
     ...controlButtonBaseStyle,
-    color: theme.colors.semantic.error,
   };
 
   return (
     <div style={titleBarStyle}>
       <div style={titleSectionStyle}>
-        <div style={appIconStyle}>S</div>
         <span style={appTitleStyle}>SNIP-DIFF</span>
       </div>
 
       <div style={windowControlsStyle}>
-        <button style={minimizeButtonStyle} onClick={handleMinimize} title="Minimize">
+        <button 
+          style={minimizeButtonStyle} 
+          onClick={handleMinimize} 
+          title="Minimize"
+        >
           −
         </button>
-        <button style={maximizeButtonStyle} onClick={handleMaximize} title="Maximize">
+        <button 
+          style={maximizeButtonStyle} 
+          onClick={handleMaximize} 
+          title="Maximize"
+        >
           □
         </button>
-        <button style={closeButtonStyle} onClick={handleClose} title="Close">
+        <button 
+          style={closeButtonStyle} 
+          onClick={handleClose} 
+          title="Close"
+        >
           ×
         </button>
       </div>

@@ -4,22 +4,31 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { FileTree } from './components/FileTree';
-import { DiffView } from './components/DiffView';
-import { TitleBar } from './components/TitleBar';
-import { useApiClient } from './hooks/useApiClient';
-import { ThemeProvider, useTheme } from './theme';
+import { Layout } from './components/layout';
+import { ActionBar } from './components/action-bar';
+import { FileTree } from './components/file-tree';
+import { DiffView } from './components/diff-view';
+import { TitleBar } from './components/title-bar';
+import { ContextBar } from './components/context-bar';
+import { useApiClient } from './hooks/use-api-client';
+import { useAppStore } from './store/app-store';
+import { ThemeProvider } from './theme';
 
 // Main App Content Component (wrapped in theme provider)
 const AppContent: React.FC = () => {
-  const [isLoading, setIsLoading] = useState(false);
-  const { theme, toggleTheme, isDark } = useTheme();
-  const { apiRequest } = useApiClient();
+  const [isScanning, setIsScanning] = useState(false);
+  const { apiRequest, startScan, getScanResults } = useApiClient();
+  const { 
+    selectedFiles, 
+    selectedPath, 
+    setScanStatus, 
+    setScanProgress,
+    setDiffSections 
+  } = useAppStore();
   
   // Test API connection on startup
   useEffect(() => {
     const checkConnection = async () => {
-      setIsLoading(true);
       try {
         const response = await apiRequest({
           method: 'GET',
@@ -28,153 +37,114 @@ const AppContent: React.FC = () => {
         console.log('API connection test:', response.success ? 'OK' : 'Failed');
       } catch (error) {
         console.error('Failed to connect to API:', error);
-      } finally {
-        setIsLoading(false);
       }
     };
     
     checkConnection();
   }, [apiRequest]);
 
-  const appContainerStyle: React.CSSProperties = {
-    display: 'flex',
-    flexDirection: 'column',
-    height: '100vh',
-    backgroundColor: theme.colors.background.primary,
-    color: theme.colors.text.primary,
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif',
-    WebkitFontSmoothing: 'antialiased',
-    MozOsxFontSmoothing: 'grayscale',
-    transition: 'background-color 0.3s ease, color 0.3s ease',
+  const handleScan = async () => {
+    if (!selectedPath || selectedFiles.size === 0) return;
+
+    setIsScanning(true);
+    setScanStatus('running');
+    setScanProgress(0);
+
+    try {
+      // Convert Set to Array for API
+      const selectedFilesArray = Array.from(selectedFiles);
+      
+      const response = await startScan(selectedPath, selectedFilesArray);
+      console.log('Scan response:', response);
+
+      if (response.success && response.data?.scan_id) {
+        const scanId = response.data.scan_id;
+        setDiffSections([]); // Clear previous results
+        
+        // Poll for results
+        let attempts = 0;
+        const maxAttempts = 30;
+        
+        const pollInterval = setInterval(async () => {
+          attempts++;
+          const progress = (attempts / maxAttempts) * 100;
+          setScanProgress(Math.min(progress, 95));
+          
+          try {
+            const resultsResponse = await getScanResults(scanId);
+            console.log('Results response:', resultsResponse);
+            
+            if (resultsResponse.success && resultsResponse.data) {
+              clearInterval(pollInterval);
+              setScanStatus('completed');
+              setIsScanning(false);
+              setScanProgress(100);
+              
+              // Set the diff sections
+              const sections = resultsResponse.data.sections || [];
+              console.log('Setting diff sections:', sections);
+              setDiffSections(sections);
+            }
+          } catch (error) {
+            console.log('Polling for results, attempt:', attempts);
+            // Continue polling
+          }
+          
+          if (attempts >= maxAttempts) {
+            clearInterval(pollInterval);
+            setScanStatus('failed');
+            setIsScanning(false);
+            console.error('Scan timeout - results not available');
+          }
+        }, 1000);
+      } else {
+        setScanStatus('failed');
+        setIsScanning(false);
+        console.error('Scan failed:', response);
+      }
+    } catch (error) {
+      console.error('Diff scan failed:', error);
+      setScanStatus('failed');
+      setIsScanning(false);
+    }
   };
 
-  const mainContentStyle: React.CSSProperties = {
-    display: 'flex',
-    flex: 1,
-    overflow: 'hidden',
+  const handleCopyAll = () => {
+    console.log('Copy all to clipboard');
   };
 
-  const sidebarStyle: React.CSSProperties = {
-    width: '350px',
-    minWidth: '300px',
-    backgroundColor: theme.colors.background.secondary,
-    borderRight: `1px solid ${theme.colors.border.primary}`,
-    display: 'flex',
-    flexDirection: 'column',
-    overflow: 'hidden',
+  const handlePrompts = () => {
+    console.log('Open prompts');
   };
 
-  const contentAreaStyle: React.CSSProperties = {
-    flex: 1,
-    display: 'flex',
-    flexDirection: 'column',
-    overflow: 'hidden',
-  };
-
-  const statusBarStyle: React.CSSProperties = {
-    height: '24px',
-    backgroundColor: theme.colors.background.secondary,
-    borderTop: `1px solid ${theme.colors.border.primary}`,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: '0 12px',
-    fontSize: '12px',
-    color: theme.colors.text.secondary,
-  };
-
-  const loadingOverlayStyle: React.CSSProperties = {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: theme.colors.background.primary + 'ee',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 1000,
-  };
-
-  const loadingSpinnerStyle: React.CSSProperties = {
-    width: '32px',
-    height: '32px',
-    border: `4px solid ${theme.colors.surface.base}`,
-    borderTop: `4px solid ${theme.colors.primary[500]}`,
-    borderRadius: '50%',
-    animation: 'spin 1s linear infinite',
-  };
-
-  const themeToggleButtonStyle: React.CSSProperties = {
-    padding: '4px 8px',
-    backgroundColor: 'transparent',
-    border: `1px solid ${theme.colors.border.secondary}`,
-    borderRadius: '4px',
-    cursor: 'pointer',
-    fontSize: '12px',
-    color: theme.colors.text.secondary,
-    transition: 'all 0.2s ease',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '4px',
+  const handleSummarize = () => {
+    console.log('Smart summarize');
   };
 
   return (
-    <>
-      <style>
-        {`
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-          }
-        `}
-      </style>
-      <div style={appContainerStyle}>
-        <TitleBar />
-        
-        <div style={mainContentStyle}>
-          <div style={sidebarStyle}>
-            <FileTree />
-          </div>
-          
-          <div style={contentAreaStyle}>
-            <DiffView />
-          </div>
-        </div>
-        
-        <div style={statusBarStyle}>
-          <span>Ready</span>
-          <button
-            style={themeToggleButtonStyle}
-            onClick={toggleTheme}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = theme.colors.surface.hover;
-              e.currentTarget.style.borderColor = theme.colors.border.focus;
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent';
-              e.currentTarget.style.borderColor = theme.colors.border.secondary;
-            }}
-            title={`Switch to ${isDark ? 'light' : 'dark'} theme`}
-          >
-            {isDark ? '☀️' : '🌙'} {isDark ? 'Light' : 'Dark'}
-          </button>
-        </div>
-        
-        {isLoading && (
-          <div style={loadingOverlayStyle}>
-            <div style={loadingSpinnerStyle} />
-          </div>
-        )}
-      </div>
-    </>
+    <Layout
+      titleBar={<TitleBar />}
+      toolbar={<ContextBar />}
+      sidebar={<FileTree />}
+      mainContent={<DiffView />}
+      statusBar={
+        <ActionBar 
+          onScan={handleScan}
+          onCopyAll={handleCopyAll}
+          onPrompts={handlePrompts}
+          onSummarize={handleSummarize}
+          isScanning={isScanning}
+          scanDisabled={!selectedPath || selectedFiles.size === 0}
+        />
+      }
+    />
   );
 };
 
-// Main App Component with Theme Provider
+// Main App Component with Dark Theme Only
 export const App: React.FC = () => {
   return (
-    <ThemeProvider defaultTheme="light">
+    <ThemeProvider defaultTheme="dark">
       <AppContent />
     </ThemeProvider>
   );

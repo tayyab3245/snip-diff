@@ -4,13 +4,11 @@
  */
 
 import { designTokens, type DesignTokens } from './tokens';
-import { darkTheme, type DarkTheme } from './dark.theme';
-import { lightTheme, type LightTheme } from './light.theme';
+import { darkTheme, type DarkTheme } from './dark-theme';
 
 // Re-export everything for easy access
 export { designTokens } from './tokens';
-export { darkTheme } from './dark.theme';
-export { lightTheme } from './light.theme';
+export { darkTheme } from './dark-theme';
 export { 
   ThemeProvider, 
   useTheme, 
@@ -19,11 +17,11 @@ export {
   useSystemTheme,
   withTheme,
   themes as prebuiltThemes
-} from './ThemeProvider';
+} from './theme-provider';
 
 // Union type for both themes
-export type Theme = DarkTheme | LightTheme;
-export type ThemeMode = 'light' | 'dark';
+export type Theme = DarkTheme;
+export type ThemeMode = 'dark';
 
 // Enhanced theme interface with tokens and utilities
 export interface EnhancedTheme {
@@ -95,7 +93,7 @@ const createThemeUtils = (theme: Theme): ThemeUtils => ({
 
 // Theme factory function
 export const createTheme = (mode: ThemeMode): EnhancedTheme => {
-  const colors = mode === 'dark' ? darkTheme : lightTheme;
+  const colors = darkTheme;
   
   return {
     mode,
@@ -107,16 +105,14 @@ export const createTheme = (mode: ThemeMode): EnhancedTheme => {
 
 // Pre-built themes
 export const themes = {
-  light: createTheme('light'),
   dark: createTheme('dark'),
 } as const;
 
 // Default theme
-export const defaultTheme = themes.light;
+export const defaultTheme = themes.dark;
 
 // Theme type guards
 export const isDarkTheme = (theme: Theme): theme is DarkTheme => theme.mode === 'dark';
-export const isLightTheme = (theme: Theme): theme is LightTheme => theme.mode === 'light';
 
 // CSS custom properties generator
 export const generateCSSVariables = (theme: EnhancedTheme): Record<string, string> => {

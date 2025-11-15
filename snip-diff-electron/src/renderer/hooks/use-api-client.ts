@@ -87,6 +87,17 @@ export const useApiClient = () => {
     });
   }, [apiRequest]);
 
+  const getFileContent = useCallback(async (basePath: string, filePath: string) => {
+    return apiRequest({
+      method: 'GET',
+      endpoint: '/api/files/content',
+      params: { 
+        base_path: basePath,
+        path: filePath 
+      }
+    });
+  }, [apiRequest]);
+
   return {
     apiRequest,
     getFileTree,
@@ -94,6 +105,7 @@ export const useApiClient = () => {
     getScanStatus,
     getScanResults,
     cancelScan,
-    listScans
+    listScans,
+    getFileContent
   };
 };

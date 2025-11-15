@@ -27,23 +27,27 @@
         box-sizing: border-box;
       }
       
-      /* Custom scrollbar for neumorphic design */
+      /* Custom scrollbar for minimal design */
       ::-webkit-scrollbar {
-        width: 12px;
+        width: 8px;
+        height: 8px;
       }
       
       ::-webkit-scrollbar-track {
-        background: #e0e5ec;
+        background: transparent;
       }
       
       ::-webkit-scrollbar-thumb {
-        background: #c5c5c5;
-        border-radius: 6px;
-        border: 2px solid #e0e5ec;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 4px;
       }
       
       ::-webkit-scrollbar-thumb:hover {
-        background: #b0b0b0;
+        background: rgba(255, 255, 255, 0.3);
+      }
+      
+      ::-webkit-scrollbar-corner {
+        background: transparent;
       }
     </style>
   </head>

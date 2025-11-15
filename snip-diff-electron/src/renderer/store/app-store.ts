@@ -24,6 +24,12 @@ interface DiffSection {
   collapsed: boolean;
 }
 
+interface OpenFile {
+  path: string;
+  content: string;
+  language?: string;
+}
+
 interface AppState {
   // File tree state
   selectedPath: string | null;
@@ -37,24 +43,36 @@ interface AppState {
   diffSections: DiffSection[];
   unifiedDiff: string | null;
   
+  // Open files state (editor mode)
+  openFiles: OpenFile[];
+  activeFilePath: string | null;
+  
   // UI state
   isLoading: boolean;
   sidebarWidth: number;
   isDarkMode: boolean;
+  viewMode: 'incremental' | 'full';
+  diffMode: 'unified' | 'side-by-side';
   
   // Actions
   setSelectedPath: (path: string | null) => void;
   setFileTree: (tree: FileNode[]) => void;
   toggleFileSelection: (filePath: string) => void;
   clearFileSelection: () => void;
+  clearDiffResults: () => void;
   setScanStatus: (status: string | null) => void;
   setScanProgress: (progress: number | null) => void;
   setCurrentScanId: (scanId: string | null) => void;
   setDiffSections: (sections: DiffSection[]) => void;
   setUnifiedDiff: (diff: string | null) => void;
+  openFile: (file: OpenFile) => void;
+  closeFile: (path: string) => void;
+  setActiveFile: (path: string) => void;
   setIsLoading: (loading: boolean) => void;
   setSidebarWidth: (width: number) => void;
   toggleDarkMode: () => void;
+  setViewMode: (mode: 'incremental' | 'full') => void;
+  setDiffMode: (mode: 'unified' | 'side-by-side') => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -67,9 +85,13 @@ export const useAppStore = create<AppState>((set) => ({
   scanProgress: null,
   diffSections: [],
   unifiedDiff: null,
+  openFiles: [],
+  activeFilePath: null,
   isLoading: false,
   sidebarWidth: 350,
   isDarkMode: false,
+  viewMode: 'full',
+  diffMode: 'side-by-side',
 
   // Actions
   setSelectedPath: (path) => set({ selectedPath: path }),
@@ -88,6 +110,13 @@ export const useAppStore = create<AppState>((set) => ({
   
   clearFileSelection: () => set({ selectedFiles: new Set() }),
   
+  clearDiffResults: () => set({ 
+    diffSections: [], 
+    scanStatus: null, 
+    scanProgress: null,
+    currentScanId: null 
+  }),
+  
   setScanStatus: (status) => set({ scanStatus: status }),
   
   setScanProgress: (progress) => set({ scanProgress: progress }),
@@ -98,9 +127,34 @@ export const useAppStore = create<AppState>((set) => ({
   
   setUnifiedDiff: (diff) => set({ unifiedDiff: diff }),
   
+  openFile: (file) => set((state) => {
+    const exists = state.openFiles.some(f => f.path === file.path);
+    if (exists) {
+      return { activeFilePath: file.path };
+    }
+    return { 
+      openFiles: [...state.openFiles, file],
+      activeFilePath: file.path 
+    };
+  }),
+  
+  closeFile: (path) => set((state) => {
+    const newFiles = state.openFiles.filter(f => f.path !== path);
+    const newActive = state.activeFilePath === path 
+      ? (newFiles.length > 0 ? newFiles[newFiles.length - 1].path : null)
+      : state.activeFilePath;
+    return { openFiles: newFiles, activeFilePath: newActive };
+  }),
+  
+  setActiveFile: (path) => set({ activeFilePath: path }),
+  
   setIsLoading: (loading) => set({ isLoading: loading }),
   
   setSidebarWidth: (width) => set({ sidebarWidth: Math.max(250, Math.min(500, width)) }),
   
   toggleDarkMode: () => set((state) => ({ isDarkMode: !state.isDarkMode })),
+  
+  setViewMode: (mode) => set({ viewMode: mode }),
+  
+  setDiffMode: (mode) => set({ diffMode: mode }),
 }));

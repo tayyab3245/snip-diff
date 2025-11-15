@@ -3,7 +3,7 @@
  * React context provider for theme management
  */
 
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, ReactNode } from 'react';
 import { createTheme, type EnhancedTheme, type ThemeMode, themes, generateCSSVariables } from './index';
 
 // Theme context interface
@@ -32,36 +32,19 @@ const DEFAULT_STORAGE_KEY = 'snip-diff-theme-mode';
 // Theme provider component
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({
   children,
-  defaultTheme = 'light',
   storageKey = DEFAULT_STORAGE_KEY,
 }) => {
-  // Initialize theme from localStorage or default
-  const [themeMode, setThemeModeState] = useState<ThemeMode>(() => {
-    if (typeof window === 'undefined') return defaultTheme;
-    
-    try {
-      const stored = localStorage.getItem(storageKey);
-      if (stored && (stored === 'light' || stored === 'dark')) {
-        return stored as ThemeMode;
-      }
-    } catch (error) {
-      console.warn('Failed to read theme from localStorage:', error);
-    }
-    
-    return defaultTheme;
-  });
+  // Create current theme (always dark)
+  const theme = createTheme('dark');
 
-  // Create current theme
-  const theme = createTheme(themeMode);
-
-  // Update localStorage when theme changes
+  // Update localStorage when theme changes (always dark)
   useEffect(() => {
     try {
-      localStorage.setItem(storageKey, themeMode);
+      localStorage.setItem(storageKey, 'dark');
     } catch (error) {
       console.warn('Failed to save theme to localStorage:', error);
     }
-  }, [themeMode, storageKey]);
+  }, [storageKey]);
 
   // Apply CSS variables to document root
   useEffect(() => {
@@ -74,11 +57,11 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
     });
     
     // Set theme mode as data attribute for CSS selectors
-    root.setAttribute('data-theme', themeMode);
+    root.setAttribute('data-theme', 'dark');
     
     // Add theme class for backward compatibility
     root.classList.remove('theme-light', 'theme-dark');
-    root.classList.add(`theme-${themeMode}`);
+    root.classList.add('theme-dark');
     
     return () => {
       // Cleanup on unmount
@@ -86,27 +69,27 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
         root.style.removeProperty(property);
       });
       root.removeAttribute('data-theme');
-      root.classList.remove('theme-light', 'theme-dark');
+      root.classList.remove('theme-dark');
     };
-  }, [theme, themeMode]);
+  }, [theme]);
 
-  // Theme management functions
-  const setThemeMode = (mode: ThemeMode) => {
-    setThemeModeState(mode);
+  // Theme management functions (no-op now, always dark)
+  const setThemeMode = (_mode: ThemeMode) => {
+    // Always dark mode, do nothing
   };
 
   const toggleTheme = () => {
-    setThemeModeState(prev => prev === 'light' ? 'dark' : 'light');
+    // Always dark mode, do nothing
   };
 
   // Context value
   const contextValue: ThemeContextType = {
     theme,
-    themeMode,
+    themeMode: 'dark',
     toggleTheme,
     setThemeMode,
-    isDark: themeMode === 'dark',
-    isLight: themeMode === 'light',
+    isDark: true,
+    isLight: false,
   };
 
   return (
@@ -154,29 +137,9 @@ export function useThemeValue<T>(lightValue: T, darkValue: T): T {
   return isDark ? darkValue : lightValue;
 }
 
-// System theme detection hook
+// System theme detection hook (always returns dark)
 export function useSystemTheme(): ThemeMode {
-  const [systemTheme, setSystemTheme] = useState<ThemeMode>('light');
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    
-    const updateTheme = (e: MediaQueryListEvent) => {
-      setSystemTheme(e.matches ? 'dark' : 'light');
-    };
-
-    // Set initial value
-    setSystemTheme(mediaQuery.matches ? 'dark' : 'light');
-
-    // Listen for changes
-    mediaQuery.addEventListener('change', updateTheme);
-
-    return () => {
-      mediaQuery.removeEventListener('change', updateTheme);
-    };
-  }, []);
-
-  return systemTheme;
+  return 'dark';
 }
 
 // Export pre-configured themes for direct use

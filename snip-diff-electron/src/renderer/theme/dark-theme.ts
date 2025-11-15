@@ -22,11 +22,11 @@ export const darkTheme = {
 
   // === SURFACES & BACKGROUNDS ===
   background: {
-    primary: '#0f0f23',      // Main app background
-    secondary: '#1a1a2e',    // Secondary background
-    tertiary: '#16213e',     // Elevated surfaces
-    card: '#1e1e2e',         // Card backgrounds
-    modal: '#16213e',        // Modal backgrounds
+    primary: '#2b303b',      // Main app background - matching mockup
+    secondary: '#343941',    // Secondary background
+    tertiary: '#3c424e',     // Elevated surfaces
+    card: '#343941',         // Card backgrounds
+    modal: '#2b303b',        // Modal backgrounds
   },
 
   // === NEUMORPHIC SURFACES ===
@@ -39,10 +39,10 @@ export const darkTheme = {
 
   // === TEXT COLORS ===
   text: {
-    primary: '#f8fafc',      // Primary text (high contrast)
-    secondary: '#cbd5e1',    // Secondary text
-    tertiary: '#94a3b8',     // Tertiary text (muted)
-    disabled: '#64748b',     // Disabled text
+    primary: '#e5e7eb',      // Primary text - softer white
+    secondary: '#adb5bd',    // Secondary text
+    tertiary: '#6c7a89',     // Tertiary text (muted)
+    disabled: '#545d6d',     // Disabled text
     inverse: '#1e293b',      // Text on light backgrounds
   },
 
@@ -56,9 +56,9 @@ export const darkTheme = {
 
   // === BORDERS ===
   border: {
-    primary: '#334155',      // Primary borders
-    secondary: '#475569',    // Secondary borders
-    light: '#64748b',        // Light borders
+    primary: '#1e2229',      // Primary borders - darker
+    secondary: '#3c424e',    // Secondary borders
+    light: '#4a5261',        // Light borders
     focus: '#0ea5e9',        // Focus rings
   },
 
@@ -90,52 +90,52 @@ export const darkTheme = {
   components: {
     // File tree
     fileTree: {
-      background: '#1a1a2e',
-      hover: '#252545',
-      selected: '#0ea5e9',
-      text: '#cbd5e1',
-      icon: '#94a3b8',
+      background: '#2b303b',
+      hover: '#3c424e',
+      selected: '#3c424e',
+      text: '#adb5bd',
+      icon: '#6c7a89',
     },
     
     // Diff viewer
     diffViewer: {
-      background: '#16213e',
-      added: '#10b981',
+      background: '#343941',
+      added: '#22c55e',
       removed: '#ef4444',
       modified: '#f59e0b',
-      lineNumber: '#64748b',
-      gutter: '#1e293b',
+      lineNumber: '#6c7a89',
+      gutter: '#2b303b',
     },
 
     // Title bar
     titleBar: {
-      background: '#0f0f23',
-      text: '#f8fafc',
-      controls: '#94a3b8',
-      controlsHover: '#cbd5e1',
+      background: '#2b303b',
+      text: '#e5e7eb',
+      controls: '#6c7a89',
+      controlsHover: '#adb5bd',
     },
 
     // Toolbar
     toolbar: {
-      background: '#1a1a2e',
-      button: '#334155',
-      buttonHover: '#475569',
+      background: '#343941',
+      button: '#4a5261',
+      buttonHover: '#545d6d',
       buttonActive: '#0ea5e9',
-      text: '#cbd5e1',
+      text: '#adb5bd',
     },
 
     // Status overlay
     statusOverlay: {
-      background: 'rgba(15, 15, 35, 0.9)',
-      text: '#f8fafc',
+      background: 'rgba(43, 48, 59, 0.95)',
+      text: '#e5e7eb',
       accent: '#0ea5e9',
     },
 
     // Progress indicators
     progress: {
-      background: '#334155',
+      background: '#3c424e',
       fill: '#0ea5e9',
-      text: '#f8fafc',
+      text: '#e5e7eb',
     },
   },
 

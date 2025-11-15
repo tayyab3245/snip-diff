@@ -318,5 +318,63 @@ async def files_health():
     """Health check"""
     return {"status": "healthy", "module": "files"}
 
+class FileContentResponse(BaseModel):
+    """Response for file content endpoint"""
+    success: bool
+    path: str
+    content: str
+    size: int
+    encoding: str
+
+@router.get("/content", response_model=FileContentResponse)
+async def get_file_content(
+    base_path: str = Query(..., description="Base directory path"),
+    path: str = Query(..., description="Relative file path")
+):
+    """Get full content of a text file"""
+    try:
+        abs_path = os.path.join(base_path, path)
+        
+        # Normalize path to prevent directory traversal
+        abs_path = os.path.abspath(abs_path)
+        base_abs = os.path.abspath(base_path)
+        
+        if not abs_path.startswith(base_abs):
+            raise HTTPException(status_code=422, detail="Invalid path")
+        
+        if not os.path.exists(abs_path):
+            raise HTTPException(status_code=404, detail="File not found")
+        
+        if not os.path.isfile(abs_path):
+            raise HTTPException(status_code=422, detail="Path is not a file")
+        
+        stat = os.stat(abs_path)
+        
+        # Try to read with UTF-8 first
+        encoding = 'utf-8'
+        try:
+            with open(abs_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+        except UnicodeDecodeError:
+            # Fallback to latin-1
+            encoding = 'latin-1'
+            with open(abs_path, 'r', encoding='latin-1') as f:
+                content = f.read()
+        
+        return FileContentResponse(
+            success=True,
+            path=path,
+            content=content,
+            size=stat.st_size,
+            encoding=encoding
+        )
+        
+    except HTTPException:
+        raise
+    except PermissionError:
+        raise HTTPException(status_code=403, detail="Permission denied")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error reading file: {str(e)}")
+
 # Allow forward references
 FileNode.model_rebuild()
