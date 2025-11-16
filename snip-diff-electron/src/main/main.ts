@@ -8,6 +8,7 @@ import { spawn, ChildProcess } from 'child_process';
 import * as path from 'path';
 import * as os from 'os';
 import chokidar, { FSWatcher } from 'chokidar';
+import { gitService } from './git-service';
 
 class SnipDiffApp {
   private mainWindow: BrowserWindow | null = null;
@@ -178,6 +179,46 @@ class SnipDiffApp {
   }
 
   private setupIpcHandlers() {
+    // Get Git diff for files
+    ipcMain.handle('get-git-diff', async (event, directory: string, filePaths?: string[]) => {
+      try {
+        console.log('[Git] Getting diff for:', directory, filePaths);
+        const result = await gitService.getDiff(directory, filePaths);
+        console.log('[Git] Diff result:', result);
+        return result;
+      } catch (error) {
+        console.error('[Git] Error getting diff:', error);
+        return {
+          success: false,
+          files: [],
+          error: error instanceof Error ? error.message : 'Unknown error'
+        };
+      }
+    });
+
+    // Get file content from Git
+    ipcMain.handle('get-git-file-content', async (event, directory: string, filePath: string, ref?: string) => {
+      try {
+        const content = await gitService.getFileContent(directory, filePath, ref);
+        return { success: true, content };
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        };
+      }
+    });
+
+    // Check if directory is a Git repo
+    ipcMain.handle('is-git-repo', async (event, directory: string) => {
+      try {
+        const isRepo = await gitService.isGitRepo(directory);
+        return { success: true, isRepo };
+      } catch (error) {
+        return { success: false, isRepo: false };
+      }
+    });
+
     // Start watching files
     ipcMain.handle('start-watch', async (event, filePaths: string[]) => {
       try {

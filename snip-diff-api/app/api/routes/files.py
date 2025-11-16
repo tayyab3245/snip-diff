@@ -1,11 +1,14 @@
 """
-File operations API endpoints - Complete implementation for SNIP-DIFF
+File operations API endpoints - Git-integrated implementation
 """
 
 import os
+import subprocess
 from typing import List, Optional
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
+
+from app.core.git_diff_engine import git_diff_engine
 
 router = APIRouter()
 

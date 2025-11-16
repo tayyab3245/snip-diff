@@ -20,6 +20,19 @@ interface ElectronAPI {
     error?: string;
   }>;
 
+  // Git operations
+  getGitDiff: (directory: string, filePaths?: string[]) => Promise<{
+    success: boolean;
+    files: Array<{ path: string; status: string; diff: string }>;
+    error?: string;
+  }>;
+  getGitFileContent: (directory: string, filePath: string, ref?: string) => Promise<{
+    success: boolean;
+    content?: string;
+    error?: string;
+  }>;
+  isGitRepo: (directory: string) => Promise<{ success: boolean; isRepo: boolean }>;
+
   // File system operations
   selectFolder: () => Promise<string | null>;
   selectFiles: () => Promise<string[] | null>;
@@ -48,6 +61,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
     data?: any;
     params?: Record<string, string>;
   }) => ipcRenderer.invoke('api-request', options),
+
+  // Git operations
+  getGitDiff: (directory: string, filePaths?: string[]) => 
+    ipcRenderer.invoke('get-git-diff', directory, filePaths),
+  getGitFileContent: (directory: string, filePath: string, ref?: string) => 
+    ipcRenderer.invoke('get-git-file-content', directory, filePath, ref),
+  isGitRepo: (directory: string) => 
+    ipcRenderer.invoke('is-git-repo', directory),
 
   // File dialog operations
   selectFolder: () => ipcRenderer.invoke('select-folder'),

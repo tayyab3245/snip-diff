@@ -56,61 +56,36 @@ const AppContent: React.FC = () => {
         return;
       }
       
-      // Trigger a diff scan for the changed file
+      // Get Git diff directly from main process (no API needed!)
       try {
-        console.log('[Renderer] Starting diff scan...');
+        console.log('[Renderer] Getting Git diff...');
         setScanStatus('running');
         
-        // Start a scan with the selected files
         const selectedFilesArray = Array.from(selectedFiles);
         console.log('[Renderer] Scanning files:', selectedFilesArray);
         
-        const scanResponse = await apiRequest({
-          method: 'POST',
-          endpoint: '/api/diff/scan',
-          data: {
-            directory: selectedPath,
-            include_paths: selectedFilesArray,
-            scan_mode: 'visual'
-          }
-        });
+        const diffResult = await window.electronAPI.getGitDiff(selectedPath, selectedFilesArray);
         
-        if (scanResponse.success && scanResponse.data) {
-          const scanId = scanResponse.data.scan_id;
-          console.log('[Renderer] Scan started:', scanId);
+        console.log('[Renderer] Git diff result:', diffResult);
+        
+        if (diffResult.success && diffResult.files) {
+          // Convert Git diff format to sections format
+          const sections = diffResult.files.map((file: { path: string; status: string; diff: string }) => ({
+            title: `${file.status}: ${file.path}`,
+            files: [{
+              path: file.path,
+              change_type: file.status,
+              content: file.diff
+            }],
+            collapsed: false
+          }));
           
-          // Poll for scan completion
-          const pollInterval = setInterval(async () => {
-            const statusResponse = await apiRequest({
-              method: 'GET',
-              endpoint: `/api/diff/status/${scanId}`
-            });
-            
-            if (statusResponse.success && statusResponse.data) {
-              const status = statusResponse.data.status;
-              
-              if (status === 'completed') {
-                clearInterval(pollInterval);
-                
-                // Get results
-                const resultsResponse = await apiRequest({
-                  method: 'GET',
-                  endpoint: `/api/diff/results/${scanId}`
-                });
-                
-                if (resultsResponse.success && resultsResponse.data) {
-                  const sections = resultsResponse.data.sections || [];
-                  console.log('[Renderer] Diff detected:', sections);
-                  setDiffSections(sections);
-                  setScanStatus('completed');
-                }
-              } else if (status === 'failed') {
-                clearInterval(pollInterval);
-                console.error('[Renderer] Scan failed');
-                setScanStatus('failed');
-              }
-            }
-          }, 500);
+          console.log('[Renderer] Diff sections:', sections);
+          setDiffSections(sections);
+          setScanStatus(sections.length > 0 ? 'completed' : null);
+        } else {
+          console.error('[Renderer] Git diff failed:', diffResult.error);
+          setScanStatus('failed');
         }
       } catch (error) {
         console.error('[Renderer] Error fetching diff:', error);
@@ -119,7 +94,7 @@ const AppContent: React.FC = () => {
     };
 
     window.electronAPI.onFileChanged(handleFileChange);
-  }, [apiRequest, setScanStatus, selectedPath, selectedFiles, isWatching, setDiffSections]);
+  }, [setScanStatus, selectedPath, selectedFiles, isWatching, setDiffSections]);
 
   const handleWatch = async () => {
     if (!selectedPath || selectedFiles.size === 0) return;

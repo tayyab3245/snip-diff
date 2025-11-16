@@ -58,6 +58,17 @@ export interface ElectronAPI {
     data?: any;
     error?: string;
   }>;
+  getGitDiff: (directory: string, filePaths?: string[]) => Promise<{
+    success: boolean;
+    files: Array<{ path: string; status: string; diff: string }>;
+    error?: string;
+  }>;
+  getGitFileContent: (directory: string, filePath: string, ref?: string) => Promise<{
+    success: boolean;
+    content?: string;
+    error?: string;
+  }>;
+  isGitRepo: (directory: string) => Promise<{ success: boolean; isRepo: boolean }>;
   startWatch: (filePaths: string[]) => Promise<{ success: boolean; error?: string }>;
   stopWatch: () => Promise<{ success: boolean; error?: string }>;
   onFileChanged: (callback: (filePath: string) => void) => void;
