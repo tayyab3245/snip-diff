@@ -31,6 +31,13 @@ interface OpenFile {
   gitStatus?: string; // Git status: Modified, Added, Deleted, Untracked, etc.
 }
 
+interface ChatMessage {
+  id: string;
+  type: 'ai' | 'system';
+  content: string;
+  timestamp: Date;
+}
+
 interface AppState {
   // File tree state
   selectedPath: string | null;
@@ -57,6 +64,11 @@ interface AppState {
   viewMode: 'incremental' | 'full';
   diffMode: 'unified' | 'side-by-side';
   
+  // AI Chat state
+  chatMessages: ChatMessage[];
+  isChatLoading: boolean;
+  chatPanelWidth: number;
+  
   // Actions
   setSelectedPath: (path: string | null) => void;
   setFileTree: (tree: FileNode[]) => void;
@@ -78,7 +90,13 @@ interface AppState {
   toggleDarkMode: () => void;
   setViewMode: (mode: 'incremental' | 'full') => void;
   setDiffMode: (mode: 'unified' | 'side-by-side') => void;
+  addChatMessage: (message: Omit<ChatMessage, 'id' | 'timestamp'>) => void;
+  clearChatMessages: () => void;
+  setIsChatLoading: (loading: boolean) => void;
+  setChatPanelWidth: (width: number) => void;
 }
+
+export type { ChatMessage };
 
 export const useAppStore = create<AppState>((set) => ({
   // Initial state
@@ -99,6 +117,9 @@ export const useAppStore = create<AppState>((set) => ({
   isDarkMode: false,
   viewMode: 'incremental',
   diffMode: 'unified',
+  chatMessages: [],
+  isChatLoading: false,
+  chatPanelWidth: 400,
 
   // Actions
   setSelectedPath: (path) => set({ selectedPath: path }),
@@ -182,4 +203,21 @@ export const useAppStore = create<AppState>((set) => ({
   setViewMode: (mode) => set({ viewMode: mode }),
   
   setDiffMode: (mode) => set({ diffMode: mode }),
+  
+  addChatMessage: (message) => set((state) => ({
+    chatMessages: [
+      ...state.chatMessages,
+      {
+        ...message,
+        id: `msg-${Date.now()}-${Math.random()}`,
+        timestamp: new Date(),
+      },
+    ],
+  })),
+  
+  clearChatMessages: () => set({ chatMessages: [] }),
+  
+  setIsChatLoading: (loading) => set({ isChatLoading: loading }),
+  
+  setChatPanelWidth: (width) => set({ chatPanelWidth: Math.max(300, Math.min(800, width)) }),
 }));

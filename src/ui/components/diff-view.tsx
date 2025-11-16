@@ -186,8 +186,10 @@ export const DiffView: React.FC = () => {
     alignItems: 'center',
     background: theme.colors.background.secondary,
     borderBottom: `1px solid ${theme.colors.border.primary}`,
-    overflow: 'auto',
+    overflowX: 'hidden',
+    overflowY: 'visible',
     height: '35px',
+    flexShrink: 0,
   };
 
   const tabStyle = (isActive: boolean): React.CSSProperties => ({
@@ -409,7 +411,7 @@ export const DiffView: React.FC = () => {
 
   // CONTENT: Open file content
   const content = (
-    <>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
       {openFiles.length > 0 && (
         <div style={tabBarStyle}>
           {openFiles.map((file) => (
@@ -443,48 +445,50 @@ export const DiffView: React.FC = () => {
         </div>
       )}
 
-      {!activeFile && (
-        <div style={emptyStateStyle}>
-          Click on a file to open it in the editor
-        </div>
-      )}
+      <div style={{ flex: 1, overflow: 'auto' }}>
+        {!activeFile && (
+          <div style={emptyStateStyle}>
+            Click on a file to open it in the editor
+          </div>
+        )}
 
-      {activeFile && (
-        <div>
-          <div style={filePathStyle}>
-            <span>{activeFile.path}</span>
-            {activeFile.gitStatus && (
-              <span style={statusBadgeStyle(activeFile.gitStatus)}>
-                {activeFile.gitStatus}
-              </span>
+        {activeFile && (
+          <div>
+            <div style={filePathStyle}>
+              <span>{activeFile.path}</span>
+              {activeFile.gitStatus && (
+                <span style={statusBadgeStyle(activeFile.gitStatus)}>
+                  {activeFile.gitStatus}
+                </span>
+              )}
+            </div>
+            
+            {lastUpdate && (
+              <div style={timestampStyle}>
+                Last updated: {lastUpdate.toLocaleTimeString()}
+              </div>
+            )}
+            
+            {activeFile.language === 'diff' ? (
+              // Render Git diff - viewMode controls context, diffMode controls format
+              diffMode === 'side-by-side'
+                ? renderSideBySideDiff(parseDiff(diffContent || activeFile.content))
+                : renderUnifiedDiff(parseDiff(diffContent || activeFile.content))
+            ) : (
+              // Render regular file content
+              <div style={contentStyle}>
+                {activeFile.content.split('\n').map((line: string, lineIndex: number) => (
+                  <div key={lineIndex}>
+                    <span style={lineNumberStyle}>{lineIndex + 1}</span>
+                    <span>{line || ' '}</span>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
-          
-          {lastUpdate && (
-            <div style={timestampStyle}>
-              Last updated: {lastUpdate.toLocaleTimeString()}
-            </div>
-          )}
-          
-          {activeFile.language === 'diff' ? (
-            // Render Git diff - viewMode controls context, diffMode controls format
-            diffMode === 'side-by-side'
-              ? renderSideBySideDiff(parseDiff(diffContent || activeFile.content))
-              : renderUnifiedDiff(parseDiff(diffContent || activeFile.content))
-          ) : (
-            // Render regular file content
-            <div style={contentStyle}>
-              {activeFile.content.split('\n').map((line: string, lineIndex: number) => (
-                <div key={lineIndex}>
-                  <span style={lineNumberStyle}>{lineIndex + 1}</span>
-                  <span>{line || ' '}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-    </>
+        )}
+      </div>
+    </div>
   );
 
   return (

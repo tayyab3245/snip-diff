@@ -11,11 +11,50 @@ interface LayoutProps {
   toolbar: React.ReactNode;
   sidebar: React.ReactNode;
   mainContent: React.ReactNode;
+  chatPanel?: React.ReactNode;
+  chatPanelWidth?: number;
+  onChatPanelResize?: (width: number) => void;
   statusBar?: React.ReactNode;
 }
 
-export const Layout: React.FC<LayoutProps> = ({ titleBar, toolbar, sidebar, mainContent, statusBar }) => {
+export const Layout: React.FC<LayoutProps> = ({ 
+  titleBar, 
+  toolbar, 
+  sidebar, 
+  mainContent, 
+  chatPanel,
+  chatPanelWidth = 400,
+  onChatPanelResize,
+  statusBar 
+}) => {
   const { theme } = useTheme();
+  const [isDragging, setIsDragging] = React.useState(false);
+  const [dragStartX, setDragStartX] = React.useState(0);
+  const [dragStartWidth, setDragStartWidth] = React.useState(chatPanelWidth);
+
+  React.useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (isDragging && onChatPanelResize) {
+        const deltaX = dragStartX - e.clientX;
+        const newWidth = Math.max(300, Math.min(800, dragStartWidth + deltaX));
+        onChatPanelResize(newWidth);
+      }
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+    };
+
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging, dragStartX, dragStartWidth, onChatPanelResize]);
 
   const containerStyle: React.CSSProperties = {
     height: '100vh',
@@ -43,8 +82,47 @@ export const Layout: React.FC<LayoutProps> = ({ titleBar, toolbar, sidebar, main
   const contentStyle: React.CSSProperties = {
     flex: 1,
     display: 'flex',
-    flexDirection: 'column',
+    flexDirection: 'row',
     overflow: 'hidden',
+  };
+
+  const contentAreaStyle: React.CSSProperties = {
+    flex: 1,
+    overflow: 'hidden',
+    minWidth: 0,
+    display: 'flex',
+    flexDirection: 'column',
+  };
+
+  const chatPanelContainerStyle: React.CSSProperties = {
+    width: `${chatPanelWidth}px`,
+    borderLeft: `1px solid ${theme.colors.border.primary}`,
+    overflow: 'hidden',
+    position: 'relative',
+    flexShrink: 0,
+  };
+
+  const resizerStyle: React.CSSProperties = {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    bottom: 0,
+    width: '4px',
+    cursor: 'ew-resize',
+    backgroundColor: 'transparent',
+    zIndex: 10,
+  };
+
+  const resizerActiveStyle: React.CSSProperties = {
+    ...resizerStyle,
+    backgroundColor: theme.colors.primary[500],
+  };
+
+  const handleResizerMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+    setDragStartX(e.clientX);
+    setDragStartWidth(chatPanelWidth);
   };
 
   return (
@@ -64,7 +142,20 @@ export const Layout: React.FC<LayoutProps> = ({ titleBar, toolbar, sidebar, main
 
         {/* Main Content - Flexible, takes remaining space */}
         <div style={contentStyle}>
-          {mainContent}
+          <div style={contentAreaStyle}>
+            {mainContent}
+          </div>
+
+          {/* Chat Panel - Resizable on right */}
+          {chatPanel && (
+            <div style={chatPanelContainerStyle}>
+              <div
+                style={isDragging ? resizerActiveStyle : resizerStyle}
+                onMouseDown={handleResizerMouseDown}
+              />
+              {chatPanel}
+            </div>
+          )}
         </div>
       </div>
 
