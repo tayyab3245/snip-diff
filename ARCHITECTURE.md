@@ -63,7 +63,7 @@ snip-diff-electron/
 │                    Electron App                         │
 ├─────────────────────────────────────────────────────────┤
 │                                                          │
-│  ┌──────────────┐     ┌──────────────┐     ┌─────────┐ │
+│  ┌──────────────┐      ┌──────────────┐     ┌─────────┐ │
 │  │ Main Process │────▶│   Preload    │────▶│Renderer │ │
 │  │  (Backend)   │     │   (Bridge)   │     │(Frontend)│ │
 │  │   Node.js    │     │   Security   │     │  React  │ │

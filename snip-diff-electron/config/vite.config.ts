@@ -4,14 +4,14 @@ import { resolve } from 'path';
 
 export default defineConfig({
   plugins: [react()],
-  root: './src/renderer',
+  root: '../src/renderer',
   base: './',
   build: {
-    outDir: '../../dist/renderer',
+    outDir: '../dist/renderer',
     emptyOutDir: true,
     rollupOptions: {
       input: {
-        main: resolve(__dirname, 'src/renderer/index.html'),
+        main: resolve(__dirname, '../src/renderer/index.html'),
       },
     },
   },
@@ -21,8 +21,8 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@': resolve(__dirname, 'src/renderer'),
-      '@shared': resolve(__dirname, 'src/shared'),
+      '@': resolve(__dirname, '../src/renderer'),
+      '@shared': resolve(__dirname, '../src/shared'),
     },
   },
 });
