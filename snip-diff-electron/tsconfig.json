@@ -3,15 +3,12 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/renderer/*"],
+      "@/*": ["src/ui/*"],
       "@shared/*": ["src/shared/*"]
     }
   },
   "include": [
-    "src/renderer",
+    "src/ui",
     "src/shared"
-  ],
-  "references": [
-    { "path": "./config/tsconfig.node.json" }
   ]
 }

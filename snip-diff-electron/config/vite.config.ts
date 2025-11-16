@@ -5,14 +5,11 @@ import { resolve } from 'path';
 export default defineConfig({
   plugins: [react()],
   base: './',
+  root: resolve(__dirname, '../src/ui'),
+  publicDir: resolve(__dirname, '../public'),
   build: {
-    outDir: '../dist/renderer',
+    outDir: resolve(__dirname, '../dist/ui'),
     emptyOutDir: true,
-    rollupOptions: {
-      input: {
-        main: resolve(__dirname, '../src/renderer/index.html'),
-      },
-    },
   },
   server: {
     port: 5173,
@@ -20,7 +17,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@': resolve(__dirname, '../src/renderer'),
+      '@': resolve(__dirname, '../src/ui'),
       '@shared': resolve(__dirname, '../src/shared'),
     },
   },

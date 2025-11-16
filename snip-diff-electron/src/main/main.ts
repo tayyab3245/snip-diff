@@ -66,7 +66,7 @@ class SnipDiffApp {
       show: false, // Don't show until ready
       icon: this.isDev 
         ? path.join(__dirname, '../../../assets/icon.png')
-        : path.join(process.resourcesPath, 'icon.png')
+        : path.join((process as any).resourcesPath, 'icon.png')
     });
 
     // Load the React app
@@ -74,7 +74,7 @@ class SnipDiffApp {
       this.mainWindow.loadURL('http://localhost:5173');
       this.mainWindow.webContents.openDevTools();
     } else {
-      this.mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
+      this.mainWindow.loadFile(path.join(__dirname, '../ui/index.html'));
     }
 
     // Show window when ready
@@ -84,7 +84,7 @@ class SnipDiffApp {
     });
 
     // Forward renderer console logs to main process
-    this.mainWindow.webContents.on('console-message', (event, level, message, line, sourceId) => {
+    this.mainWindow.webContents.on('console-message', (_event: Electron.Event, level: number, message: string, line: number, sourceId: string) => {
       const logLevel = ['LOG', 'WARNING', 'ERROR'][level] || 'LOG';
       console.log(`[RENDERER ${logLevel}] ${message} (${sourceId}:${line})`);
     });
@@ -98,7 +98,7 @@ class SnipDiffApp {
       console.log('Renderer: Finished loading');
     });
 
-    this.mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {
+    this.mainWindow.webContents.on('did-fail-load', (_event: Electron.Event, errorCode: number, errorDescription: string) => {
       console.error(`Renderer: Failed to load - ${errorCode}: ${errorDescription}`);
     });
 
@@ -111,7 +111,7 @@ class SnipDiffApp {
 
   private setupIpcHandlers() {
     // Get Git diff for files
-    ipcMain.handle('get-git-diff', async (event, directory: string, filePaths?: string[]) => {
+    ipcMain.handle('get-git-diff', async (_event: Electron.IpcMainInvokeEvent, directory: string, filePaths?: string[]) => {
       try {
         console.log('[Git] Getting diff for:', directory, filePaths);
         const result = await gitService.getDiff(directory, filePaths);
@@ -128,7 +128,7 @@ class SnipDiffApp {
     });
 
     // Get file content from Git
-    ipcMain.handle('get-git-file-content', async (event, directory: string, filePath: string, ref?: string) => {
+    ipcMain.handle('get-git-file-content', async (_event: Electron.IpcMainInvokeEvent, directory: string, filePath: string, ref?: string) => {
       try {
         const content = await gitService.getFileContent(directory, filePath, ref);
         return { success: true, content };
@@ -141,7 +141,7 @@ class SnipDiffApp {
     });
 
     // Check if directory is a Git repo
-    ipcMain.handle('is-git-repo', async (event, directory: string) => {
+    ipcMain.handle('is-git-repo', async (_event: Electron.IpcMainInvokeEvent, directory: string) => {
       try {
         const isRepo = await gitService.isGitRepo(directory);
         return { success: true, isRepo };
@@ -151,7 +151,7 @@ class SnipDiffApp {
     });
 
     // LLM Summarization handlers
-    ipcMain.handle('llm-summarize-file', async (event, content: string, filePath: string) => {
+    ipcMain.handle('llm-summarize-file', async (_event: Electron.IpcMainInvokeEvent, content: string, filePath: string) => {
       try {
         console.log('[LLM] Summarizing file:', filePath);
         const result = await llmService.summarizeFile(content, filePath);
@@ -166,7 +166,7 @@ class SnipDiffApp {
       }
     });
 
-    ipcMain.handle('llm-summarize-diff', async (event, diffContent: string, files: string[]) => {
+    ipcMain.handle('llm-summarize-diff', async (_event: Electron.IpcMainInvokeEvent, diffContent: string, files: string[]) => {
       try {
         console.log('[LLM] Summarizing diff for files:', files);
         const result = await llmService.summarizeDiff(diffContent, files);
@@ -181,7 +181,7 @@ class SnipDiffApp {
       }
     });
 
-    ipcMain.handle('llm-summarize-multiple-files', async (event, files: Array<{ path: string; content: string }>) => {
+    ipcMain.handle('llm-summarize-multiple-files', async (_event: Electron.IpcMainInvokeEvent, files: Array<{ path: string; content: string }>) => {
       try {
         console.log('[LLM] Summarizing multiple files:', files.length);
         const result = await llmService.summarizeMultipleFiles(files);
@@ -201,7 +201,7 @@ class SnipDiffApp {
     });
 
     // Start watching files
-    ipcMain.handle('start-watch', async (event, filePaths: string[]) => {
+    ipcMain.handle('start-watch', async (_event: Electron.IpcMainInvokeEvent, filePaths: string[]) => {
       try {
         console.log('[Watch] Starting watch for files:', filePaths);
         
@@ -276,7 +276,7 @@ class SnipDiffApp {
     });
 
     // API request handler - proxy requests to FastAPI backend
-    ipcMain.handle('api-request', async (event, options: {
+    ipcMain.handle('api-request', async (_event: Electron.IpcMainInvokeEvent, options: {
       method: string;
       endpoint: string;
       data?: any;

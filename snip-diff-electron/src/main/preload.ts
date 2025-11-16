@@ -33,7 +33,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   startWatch: (filePaths: string[]) => ipcRenderer.invoke('start-watch', filePaths),
   stopWatch: () => ipcRenderer.invoke('stop-watch'),
   onFileChanged: (callback: (_filePath: string) => void) => {
-    ipcRenderer.on('file-changed', (_, filePath) => callback(filePath));
+    ipcRenderer.on('file-changed', (_: Electron.IpcRendererEvent, filePath: string) => callback(filePath));
   },
 
   // LLM operations
