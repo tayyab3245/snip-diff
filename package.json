@@ -2,7 +2,7 @@
   "name": "snip-diff-electron",
   "version": "1.0.0",
   "description": "Electron frontend for SNIP-DIFF file comparison tool",
-  "main": "dist/main/main/main.js",
+  "main": "dist/main/main.js",
   "homepage": "./",
   "scripts": {
     "dev": "concurrently \"npm run dev:ui\" \"npm run dev:main\"",
