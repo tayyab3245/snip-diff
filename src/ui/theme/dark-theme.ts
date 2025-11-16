@@ -22,11 +22,11 @@ export const darkTheme = {
 
   // === SURFACES & BACKGROUNDS ===
   background: {
-    primary: '#1a1d23',      // Main app background - darker
-    secondary: '#21252b',    // Secondary background - darker
-    tertiary: '#282c34',     // Elevated surfaces - darker
-    card: '#21252b',         // Card backgrounds - darker
-    modal: '#1a1d23',        // Modal backgrounds - darker
+    primary: '#0d0f12',      // Main app background - much darker
+    secondary: '#13151a',    // Secondary background - much darker
+    tertiary: '#1a1d23',     // Elevated surfaces - much darker
+    card: '#13151a',         // Card backgrounds - much darker
+    modal: '#0d0f12',        // Modal backgrounds - much darker
   },
 
   // === NEUMORPHIC SURFACES ===
@@ -56,9 +56,9 @@ export const darkTheme = {
 
   // === BORDERS ===
   border: {
-    primary: '#0d0f12',      // Primary borders - much darker
-    secondary: '#282c34',    // Secondary borders - darker
-    light: '#3a3f4b',        // Light borders - darker
+    primary: '#000000',      // Primary borders - darkest
+    secondary: '#1a1d23',    // Secondary borders - much darker
+    light: '#282c34',        // Light borders - darker
     focus: '#0ea5e9',        // Focus rings
   },
 
@@ -90,27 +90,27 @@ export const darkTheme = {
   components: {
     // File tree
     fileTree: {
-      background: '#1a1d23',
-      hover: '#282c34',
-      selected: '#282c34',
+      background: '#0d0f12',
+      hover: '#1a1d23',
+      selected: '#1a1d23',
       text: '#adb5bd',
       icon: '#6c7a89',
     },
     
     // Diff viewer
     diffViewer: {
-      background: '#21252b',
+      background: '#13151a',
       added: '#22805e',      // Desaturated green - less bright
       removed: '#c53030',    // Desaturated red - less bright  
       modified: '#d69e2e',   // Desaturated yellow/orange
       lineNumber: '#6c7a89',
-      gutter: '#1a1d23',
-      border: '#282c34',
+      gutter: '#0d0f12',
+      border: '#1a1d23',
     },
 
     // Title bar
     titleBar: {
-      background: '#1a1d23',
+      background: '#0d0f12',
       text: '#e5e7eb',
       controls: '#6c7a89',
       controlsHover: '#adb5bd',
@@ -118,7 +118,7 @@ export const darkTheme = {
 
     // Toolbar
     toolbar: {
-      background: '#21252b',
+      background: '#13151a',
       button: '#3a3f4b',
       buttonHover: '#454d5d',
       buttonActive: '#0ea5e9',
@@ -141,8 +141,8 @@ export const darkTheme = {
 
     // Chat panel
     chatPanel: {
-      background: '#1a1d23',
-      messagesBackground: 'linear-gradient(135deg, rgba(17, 24, 39, 0.1) 0%, rgba(31, 41, 55, 0.05) 100%)',
+      background: '#0a0c0f',
+      messagesBackground: 'linear-gradient(135deg, rgba(10, 12, 15, 0.3) 0%, rgba(13, 15, 18, 0.2) 100%)',
       emptyStateText: '#adb5bd',
       
       // Message styles

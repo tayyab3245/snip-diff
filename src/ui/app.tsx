@@ -27,10 +27,12 @@ const AppContent: React.FC = () => {
     chatMessages, 
     isChatLoading, 
     chatPanelWidth,
+    analyzedFilePaths,
     addChatMessage,
     clearChatMessages,
     setIsChatLoading,
     setChatPanelWidth,
+    setAnalyzedFilePaths,
   } = useAppStore();
 
   // Auto-load Git status when folder is selected
@@ -49,8 +51,10 @@ const AppContent: React.FC = () => {
   };
 
   const handleSummarize = async () => {
-    // Clear previous chat messages
+    // Clear previous chat messages and token tracking
     clearChatMessages();
+    TokenTracker.getInstance().reset();
+    setAnalyzedFilePaths([]);
     setIsChatLoading(true);
 
     try {
@@ -90,6 +94,9 @@ const AppContent: React.FC = () => {
         setIsChatLoading(false);
         return;
       }
+
+      // Store analyzed files so they persist
+      setAnalyzedFilePaths(filesToAnalyze);
 
       // Track original file content tokens
       const tokenTracker = TokenTracker.getInstance();
@@ -152,7 +159,7 @@ const AppContent: React.FC = () => {
       toolbar={<ContextBar />}
       sidebar={<FileTree />}
       mainContent={<DiffView />}
-      chatPanel={<ChatPanel messages={chatMessages} isLoading={isChatLoading} fileCount={selectedFiles.size || (activeFilePath ? 1 : openFiles.length)} filePaths={Array.from(selectedFiles).length > 0 ? Array.from(selectedFiles) : (activeFilePath ? [activeFilePath] : openFiles.map(f => f.path))} />}
+      chatPanel={<ChatPanel messages={chatMessages} isLoading={isChatLoading} fileCount={analyzedFilePaths.length} filePaths={analyzedFilePaths} />}
       chatPanelWidth={chatPanelWidth}
       onChatPanelResize={setChatPanelWidth}
       statusBar={

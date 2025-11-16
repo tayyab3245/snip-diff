@@ -19,18 +19,7 @@ export const TokenBadge: React.FC<TokenBadgeProps> = ({ filePath, className = ''
     const tracker = TokenTracker.getInstance();
     const data = tracker.getFileTokenData(filePath);
     setTokenData(data || null);
-
-    // Set up polling to update when summary is completed
-    const interval = setInterval(() => {
-      const updatedData = tracker.getFileTokenData(filePath);
-      if (updatedData?.summaryTokens !== undefined && updatedData !== tokenData) {
-        setTokenData(updatedData);
-        clearInterval(interval);
-      }
-    }, 500);
-
-    return () => clearInterval(interval);
-  }, [filePath, tokenData]);
+  }, [filePath]);
 
   if (!tokenData) {
     return null;
@@ -89,20 +78,8 @@ export const TokenSummary: React.FC<TokenSummaryProps> = ({ filePaths, className
 
   React.useEffect(() => {
     const tracker = TokenTracker.getInstance();
-    const updateStats = () => {
-      const summaryStats = tracker.getSummaryStats();
-      setStats(summaryStats);
-    };
-
-    updateStats();
-    
-    // Update periodically while summaries are being generated
-    const interval = setInterval(updateStats, 1000);
-    
-    // Clean up after 30 seconds (summaries should be done by then)
-    setTimeout(() => clearInterval(interval), 30000);
-
-    return () => clearInterval(interval);
+    const summaryStats = tracker.getSummaryStats();
+    setStats(summaryStats);
   }, [filePaths]);
 
   if (!stats || stats.totalSummaryTokens === 0) {
@@ -131,7 +108,7 @@ export const TokenSummary: React.FC<TokenSummaryProps> = ({ filePaths, className
         fontSize: '13px',
         fontWeight: 600
       }}>
-        -{tokenDifference}
+        {tokenDifference > 0 ? `-${tokenDifference}` : tokenDifference}
       </span>
     </div>
   );

@@ -14,12 +14,12 @@ export const ContextBar: React.FC = () => {
   const selectedCount = selectedFiles.size;
 
   const contextBarStyle: React.CSSProperties = {
-    height: '56px',
+    height: '64px',
     backgroundColor: theme.colors.background.secondary,
     borderBottom: `1px solid ${theme.colors.border.primary}`,
-    display: 'flex',
+    display: 'grid',
+    gridTemplateColumns: '1fr auto 1fr',
     alignItems: 'center',
-    justifyContent: 'space-between',  // Changed to space-between to have left and right sections
     padding: '0 20px',
     gap: '16px',
   };
@@ -29,7 +29,7 @@ export const ContextBar: React.FC = () => {
     alignItems: 'center',
     gap: '12px',
     color: theme.colors.text.secondary,
-    fontSize: '13px',
+    fontSize: '15px',
   };
 
   const selectedCountStyle: React.CSSProperties = {
@@ -37,9 +37,10 @@ export const ContextBar: React.FC = () => {
     fontWeight: selectedCount > 0 ? 600 : 400,
   };
 
-  const rightSectionStyle: React.CSSProperties = {
+  const centerSectionStyle: React.CSSProperties = {
     display: 'flex',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: '12px',
   };
 
@@ -52,12 +53,12 @@ export const ContextBar: React.FC = () => {
   };
 
   const toggleButtonStyle = (isActive: boolean): React.CSSProperties => ({
-    padding: '6px 12px',
+    padding: '10px 16px',
     backgroundColor: isActive ? theme.colors.background.secondary : 'transparent',
     border: 'none',
     borderRadius: '4px',
     cursor: 'pointer',
-    fontSize: '12px',
+    fontSize: '14px',
     fontWeight: 500,
     color: isActive ? theme.colors.text.primary : theme.colors.text.tertiary,
   });
@@ -73,7 +74,7 @@ export const ContextBar: React.FC = () => {
         </span>
       </div>
 
-      <div style={rightSectionStyle}>
+      <div style={centerSectionStyle}>
         <div style={toggleGroupStyle}>
           <button
             style={toggleButtonStyle(viewMode === 'incremental')}
@@ -104,6 +105,8 @@ export const ContextBar: React.FC = () => {
           </button>
         </div>
       </div>
+
+      <div />
     </div>
   );
 };

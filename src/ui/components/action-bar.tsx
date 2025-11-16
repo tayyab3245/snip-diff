@@ -18,23 +18,23 @@ export const ActionBar: React.FC<ActionBarProps> = ({
   const { theme } = useTheme();
 
   const containerStyle: React.CSSProperties = {
-    height: '60px',
+    height: '64px',
     backgroundColor: theme.colors.background.secondary,
     borderTop: `1px solid ${theme.colors.border.primary}`,
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-end',
     padding: '0 20px',
     gap: '12px',
   };
 
   const actionButtonStyle: React.CSSProperties = {
-    padding: '8px 16px',
+    padding: '12px 24px',
     backgroundColor: 'transparent',
     border: `1px solid ${theme.colors.border.secondary}`,
     borderRadius: '6px',
     cursor: 'pointer',
-    fontSize: '13px',
+    fontSize: '15px',
     fontWeight: 500,
     color: theme.colors.text.primary,
     display: 'flex',

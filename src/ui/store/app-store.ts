@@ -69,6 +69,7 @@ interface AppState {
   chatMessages: ChatMessage[];
   isChatLoading: boolean;
   chatPanelWidth: number;
+  analyzedFilePaths: string[]; // Persist analyzed files even when selection changes
   
   // Actions
   setSelectedPath: (path: string | null) => void;
@@ -95,6 +96,7 @@ interface AppState {
   clearChatMessages: () => void;
   setIsChatLoading: (loading: boolean) => void;
   setChatPanelWidth: (width: number) => void;
+  setAnalyzedFilePaths: (paths: string[]) => void;
 }
 
 export type { ChatMessage };
@@ -121,6 +123,7 @@ export const useAppStore = create<AppState>((set) => ({
   chatMessages: [],
   isChatLoading: false,
   chatPanelWidth: 400,
+  analyzedFilePaths: [],
 
   // Actions
   setSelectedPath: (path) => set({ selectedPath: path }),
@@ -221,4 +224,6 @@ export const useAppStore = create<AppState>((set) => ({
   setIsChatLoading: (loading) => set({ isChatLoading: loading }),
   
   setChatPanelWidth: (width) => set({ chatPanelWidth: Math.max(300, Math.min(800, width)) }),
+  
+  setAnalyzedFilePaths: (paths) => set({ analyzedFilePaths: paths }),
 }));

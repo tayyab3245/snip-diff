@@ -146,7 +146,10 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ messages, isLoading, fileC
 
   // Auto-scroll to bottom when new messages arrive
   React.useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messagesEndRef.current) {
+      // Use auto behavior for instant, non-erratic scroll
+      messagesEndRef.current.scrollIntoView({ behavior: 'auto', block: 'end' });
+    }
   }, [messages, typingMessages]);
 
   // Fade mask effect for AI messages

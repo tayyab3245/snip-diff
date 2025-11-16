@@ -122,12 +122,12 @@ export const DiffView: React.FC = () => {
   const emptyStateStyle: React.CSSProperties = {
     textAlign: 'center',
     color: theme.colors.text.secondary,
-    fontSize: '14px',
+    fontSize: '16px',
     padding: '60px 40px',
   };
 
   const filePathStyle: React.CSSProperties = {
-    fontSize: '13px',
+    fontSize: '15px',
     fontWeight: 500,
     color: theme.colors.text.secondary,
     marginBottom: '4px',
@@ -163,10 +163,10 @@ export const DiffView: React.FC = () => {
     }
 
     return {
-      fontSize: '11px',
+      fontSize: '12px',
       fontWeight: 600,
       textTransform: 'uppercase',
-      padding: '2px 8px',
+      padding: '3px 10px',
       borderRadius: '4px',
       backgroundColor: bgColor,
       color: textColor,
@@ -174,7 +174,7 @@ export const DiffView: React.FC = () => {
   };
 
   const timestampStyle: React.CSSProperties = {
-    fontSize: '11px',
+    fontSize: '13px',
     color: theme.colors.text.secondary,
     opacity: 0.7,
     padding: '0 20px 12px 20px',
@@ -188,7 +188,7 @@ export const DiffView: React.FC = () => {
     borderBottom: `1px solid ${theme.colors.border.primary}`,
     overflowX: 'hidden',
     overflowY: 'visible',
-    height: '35px',
+    height: '42px',
     flexShrink: 0,
   };
 
@@ -196,11 +196,11 @@ export const DiffView: React.FC = () => {
     display: 'flex',
     alignItems: 'center',
     gap: '8px',
-    padding: '8px 12px',
+    padding: '10px 16px',
     background: isActive ? theme.colors.background.primary : 'transparent',
     borderRight: `1px solid ${theme.colors.border.secondary}`,
     cursor: 'pointer',
-    fontSize: '13px',
+    fontSize: '15px',
     color: isActive ? theme.colors.text.primary : theme.colors.text.secondary,
     whiteSpace: 'nowrap',
     minWidth: '120px',
@@ -219,10 +219,10 @@ export const DiffView: React.FC = () => {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    width: '16px',
-    height: '16px',
+    width: '18px',
+    height: '18px',
     borderRadius: '3px',
-    fontSize: '14px',
+    fontSize: '16px',
     color: theme.colors.text.secondary,
     background: 'transparent',
     border: 'none',
@@ -241,13 +241,12 @@ export const DiffView: React.FC = () => {
 
   const contentStyle: React.CSSProperties = {
     fontFamily: 'Monaco, Menlo, "Courier New", monospace',
-    fontSize: '13px',
+    fontSize: '15px',
     lineHeight: '1.6',
-    whiteSpace: 'pre-wrap',
-    wordBreak: 'break-word',
-    color: theme.colors.text.primary,
-    padding: '20px',
+    whiteSpace: 'pre',
     overflowX: 'auto',
+    color: theme.colors.text.primary,
+    padding: '0',
   };
 
   const lineNumberStyle: React.CSSProperties = {
@@ -258,7 +257,7 @@ export const DiffView: React.FC = () => {
     color: theme.colors.text.secondary,
     opacity: 0.5,
     userSelect: 'none',
-    fontSize: '12px',
+    fontSize: '14px',
   };
 
   const sideBySideContainerStyle: React.CSSProperties = {
@@ -267,7 +266,7 @@ export const DiffView: React.FC = () => {
     gap: '1px',
     backgroundColor: theme.colors.components.diffViewer.border,
     fontFamily: 'Monaco, Menlo, "Courier New", monospace',
-    fontSize: '13px',
+    fontSize: '15px',
     lineHeight: '1.6',
   };
 
@@ -278,7 +277,7 @@ export const DiffView: React.FC = () => {
   };
 
   const sideBySideHeaderStyle: React.CSSProperties = {
-    fontSize: '12px',
+    fontSize: '14px',
     fontWeight: 600,
     color: theme.colors.text.secondary,
     marginBottom: '12px',
@@ -289,8 +288,11 @@ export const DiffView: React.FC = () => {
   const diffLineStyle = (lineType: DiffLine['type']): React.CSSProperties => {
     const baseStyle: React.CSSProperties = {
       display: 'block',
-      padding: '0 8px',
+      padding: '2px 20px',
       margin: 0,
+      borderRadius: '0',
+      minWidth: '100%',
+      width: 'fit-content',
     };
 
     switch (lineType) {
@@ -306,14 +308,12 @@ export const DiffView: React.FC = () => {
           ...baseStyle,
           background: 'rgba(46, 160, 67, 0.2)',
           color: '#3fb950',
-          borderLeft: '3px solid #3fb950',
         };
       case 'deletion':
         return {
           ...baseStyle,
           background: 'rgba(248, 81, 73, 0.2)',
           color: '#ff7b72',
-          borderLeft: '3px solid #ff7b72',
         };
       case 'hunk-header':
         return {
@@ -456,11 +456,6 @@ export const DiffView: React.FC = () => {
           <div>
             <div style={filePathStyle}>
               <span>{activeFile.path}</span>
-              {activeFile.gitStatus && (
-                <span style={statusBadgeStyle(activeFile.gitStatus)}>
-                  {activeFile.gitStatus}
-                </span>
-              )}
             </div>
             
             {lastUpdate && (

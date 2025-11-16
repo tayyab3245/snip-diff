@@ -156,6 +156,15 @@ export class TokenTracker {
   }
 
   /**
+   * Reset all tracking data
+   */
+  reset(): void {
+    this.state.files.clear();
+    this.state.totalOriginalTokens = 0;
+    this.state.totalSummaryTokens = 0;
+  }
+
+  /**
    * Format compression ratio for display
    */
   formatCompressionRatio(ratio: number): string {

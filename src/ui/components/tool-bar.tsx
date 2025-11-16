@@ -22,12 +22,6 @@ export const Toolbar: React.FC = () => {
     gap: '16px',
   };
 
-  const rightSectionStyle: React.CSSProperties = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px',
-  };
-
   const toggleGroupStyle: React.CSSProperties = {
     display: 'flex',
     backgroundColor: theme.colors.background.primary,

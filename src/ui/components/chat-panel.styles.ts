@@ -163,7 +163,7 @@ export const createChatPanelStyles = (theme: DarkTheme) => ({
     codeBlock: {
       margin: '8px 0',
       padding: '12px',
-      backgroundColor: 'rgba(17, 24, 39, 0.6)',
+      backgroundColor: 'rgba(10, 12, 15, 0.8)',
       borderRadius: '6px',
       overflow: 'auto' as const,
       border: '1px solid rgba(75, 85, 99, 0.3)',
