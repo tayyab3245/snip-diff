@@ -17,7 +17,7 @@ export const Toolbar: React.FC = () => {
     borderBottom: `1px solid ${theme.colors.border.primary}`,
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'flex-end',
+    justifyContent: 'center',
     padding: '0 20px',
     gap: '16px',
   };
@@ -49,36 +49,34 @@ export const Toolbar: React.FC = () => {
 
   return (
     <div style={toolbarStyle}>
-      <div style={rightSectionStyle}>
-        <div style={toggleGroupStyle}>
-          <button
-            style={toggleButtonStyle(viewMode === 'incremental')}
-            onClick={() => setViewMode('incremental')}
-          >
-            Incremental
-          </button>
-          <button
-            style={toggleButtonStyle(viewMode === 'full')}
-            onClick={() => setViewMode('full')}
-          >
-            Full File
-          </button>
-        </div>
+      <div style={toggleGroupStyle}>
+        <button
+          style={toggleButtonStyle(viewMode === 'incremental')}
+          onClick={() => setViewMode('incremental')}
+        >
+          Incremental
+        </button>
+        <button
+          style={toggleButtonStyle(viewMode === 'full')}
+          onClick={() => setViewMode('full')}
+        >
+          Full File
+        </button>
+      </div>
 
-        <div style={toggleGroupStyle}>
-          <button
-            style={toggleButtonStyle(diffMode === 'unified')}
-            onClick={() => setDiffMode('unified')}
-          >
-            Unified
-          </button>
-          <button
-            style={toggleButtonStyle(diffMode === 'side-by-side')}
-            onClick={() => setDiffMode('side-by-side')}
-          >
-            Side-by-side
-          </button>
-        </div>
+      <div style={toggleGroupStyle}>
+        <button
+          style={toggleButtonStyle(diffMode === 'unified')}
+          onClick={() => setDiffMode('unified')}
+        >
+          Unified
+        </button>
+        <button
+          style={toggleButtonStyle(diffMode === 'side-by-side')}
+          onClick={() => setDiffMode('side-by-side')}
+        >
+          Side-by-side
+        </button>
       </div>
     </div>
   );

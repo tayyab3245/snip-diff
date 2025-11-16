@@ -7,13 +7,11 @@ import React from 'react';
 import { useTheme } from '../theme';
 
 interface ActionBarProps {
-  onPrompts: () => void;
   onCopyAll: () => void;
   onSummarize: () => void;
 }
 
 export const ActionBar: React.FC<ActionBarProps> = ({ 
-  onPrompts, 
   onCopyAll, 
   onSummarize
 }) => {
@@ -45,13 +43,6 @@ export const ActionBar: React.FC<ActionBarProps> = ({
 
   return (
     <div style={containerStyle}>
-      <button
-        style={actionButtonStyle}
-        onClick={onPrompts}
-      >
-        <span>Prompts</span>
-      </button>
-
       <button
         style={actionButtonStyle}
         onClick={onCopyAll}

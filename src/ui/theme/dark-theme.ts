@@ -100,9 +100,9 @@ export const darkTheme = {
     // Diff viewer
     diffViewer: {
       background: '#21252b',
-      added: '#22c55e',
-      removed: '#ef4444',
-      modified: '#f59e0b',
+      added: '#22805e',      // Desaturated green - less bright
+      removed: '#c53030',    // Desaturated red - less bright  
+      modified: '#d69e2e',   // Desaturated yellow/orange
       lineNumber: '#6c7a89',
       gutter: '#1a1d23',
       border: '#282c34',
@@ -137,6 +137,42 @@ export const darkTheme = {
       background: '#282c34',
       fill: '#0ea5e9',
       text: '#e5e7eb',
+    },
+
+    // Chat panel
+    chatPanel: {
+      background: '#1a1d23',
+      messagesBackground: 'linear-gradient(135deg, rgba(17, 24, 39, 0.1) 0%, rgba(31, 41, 55, 0.05) 100%)',
+      emptyStateText: '#adb5bd',
+      
+      // Message styles
+      aiMessage: {
+        background: 'transparent',
+        text: '#e5e7eb',
+        border: 'none',
+      },
+      systemMessage: {
+        background: 'rgba(56, 139, 253, 0.1)',
+        text: '#d1d5db',
+        border: '1px solid #282c34',
+      },
+      errorMessage: {
+        background: 'rgba(220, 38, 38, 0.1)',
+        text: '#fca5a5',
+        border: '1px solid rgba(220, 38, 38, 0.3)',
+      },
+      
+      // Status and loading
+      statusText: '#9ca3af',
+      loadingDotsBackground: 'rgba(0, 0, 0, 0.1)',
+      
+      // Scrollbar
+      scrollbar: {
+        width: '6px',
+        track: 'rgba(0, 0, 0, 0.1)',
+        thumb: 'rgba(156, 163, 175, 0.5)',
+        thumbHover: 'rgba(156, 163, 175, 0.7)',
+      },
     },
   },
 

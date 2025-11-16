@@ -48,14 +48,6 @@ const AppContent: React.FC = () => {
     }
   };
 
-  const handlePrompts = () => {
-    addChatMessage({
-      type: 'system',
-      content: 'Opening prompts library...',
-    });
-    // TODO: Open prompts modal/sidebar
-  };
-
   const handleSummarize = async () => {
     // Clear previous chat messages
     clearChatMessages();
@@ -166,7 +158,6 @@ const AppContent: React.FC = () => {
       statusBar={
         <ActionBar 
           onCopyAll={handleCopyAll}
-          onPrompts={handlePrompts}
           onSummarize={handleSummarize}
         />
       }

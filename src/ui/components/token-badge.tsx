@@ -4,6 +4,7 @@
 
 import React from 'react';
 import { TokenTracker, FileTokenData } from '../../shared/token-tracker';
+import { useTheme } from '../theme';
 
 interface TokenBadgeProps {
   filePath: string;
@@ -11,6 +12,7 @@ interface TokenBadgeProps {
 }
 
 export const TokenBadge: React.FC<TokenBadgeProps> = ({ filePath, className = '' }) => {
+  const { theme } = useTheme();
   const [tokenData, setTokenData] = React.useState<FileTokenData | null>(null);
 
   React.useEffect(() => {
@@ -42,7 +44,7 @@ export const TokenBadge: React.FC<TokenBadgeProps> = ({ filePath, className = ''
       <div className={`token-badge original-only ${className}`}>
         <span style={{ 
           fontSize: '10px', 
-          color: '#6b7280',
+          color: theme.colors.text.tertiary,
           fontWeight: 500
         }}>
           {tokenData.originalTokens}
@@ -51,43 +53,26 @@ export const TokenBadge: React.FC<TokenBadgeProps> = ({ filePath, className = ''
     );
   }
 
-  const compressionRatio = tokenData.compressionRatio || 0;
-
   return (
     <div className={`token-badge compressed ${className}`} style={{
       display: 'flex',
       alignItems: 'center',
-      gap: '4px',
+      gap: '3px',
       fontSize: '10px',
       fontWeight: 500
     }}>
-      {/* Original tokens in red */}
+      {/* Original tokens in error color */}
       <span style={{ 
-        color: '#ef4444',
-        textDecoration: 'line-through'
+        color: theme.colors.semantic.error
       }}>
         {tokenData.originalTokens}
       </span>
       
-      {/* Arrow or divider */}
-      <span style={{ color: '#6b7280' }}>→</span>
-      
-      {/* New tokens in green */}
+      {/* New tokens in success color */}
       <span style={{ 
-        color: '#10b981'
+        color: theme.colors.semantic.success
       }}>
         {tokenData.summaryTokens}
-      </span>
-      
-      {/* Compression ratio badge */}
-      <span style={{
-        backgroundColor: TokenTracker.getInstance().getCompressionColor(compressionRatio),
-        color: 'white',
-        padding: '1px 4px',
-        borderRadius: '3px',
-        fontSize: '9px'
-      }}>
-        -{Math.round(compressionRatio * 100)}%
       </span>
     </div>
   );
@@ -99,6 +84,7 @@ interface TokenSummaryProps {
 }
 
 export const TokenSummary: React.FC<TokenSummaryProps> = ({ filePaths, className = '' }) => {
+  const { theme } = useTheme();
   const [stats, setStats] = React.useState<any>(null);
 
   React.useEffect(() => {
@@ -123,33 +109,29 @@ export const TokenSummary: React.FC<TokenSummaryProps> = ({ filePaths, className
     return null;
   }
 
+  const tokenDifference = stats.totalOriginalTokens - stats.totalSummaryTokens;
+
   return (
     <div className={`token-summary ${className}`} style={{
       display: 'flex',
       alignItems: 'center',
-      gap: '8px',
-      padding: '4px 8px',
-      backgroundColor: 'rgba(0, 0, 0, 0.05)',
+      justifyContent: 'flex-start',
+      padding: '8px 12px',
+      backgroundColor: theme.colors.background.secondary,
+      border: `1px solid ${theme.colors.border.secondary}`,
       borderRadius: '6px',
-      fontSize: '11px',
-      color: '#6b7280'
+      fontSize: '13px',
+      fontWeight: 500,
+      marginTop: '12px',
+      marginBottom: '6px'
     }}>
-      <span>Total compression:</span>
-      <span style={{ color: '#ef4444', textDecoration: 'line-through' }}>
-        {stats.totalOriginalTokens}
-      </span>
-      <span>→</span>
-      <span style={{ color: '#10b981' }}>
-        {stats.totalSummaryTokens}
-      </span>
+      <span style={{ marginRight: '8px', color: theme.colors.text.primary }}>Token reduction:</span>
       <span style={{
-        backgroundColor: TokenTracker.getInstance().getCompressionColor(stats.overallCompressionRatio),
-        color: 'white',
-        padding: '2px 6px',
-        borderRadius: '4px',
-        fontWeight: 500
+        color: theme.colors.semantic.success,
+        fontSize: '13px',
+        fontWeight: 600
       }}>
-        -{Math.round(stats.overallCompressionRatio * 100)}%
+        -{tokenDifference}
       </span>
     </div>
   );
