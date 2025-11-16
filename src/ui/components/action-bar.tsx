@@ -41,7 +41,6 @@ export const ActionBar: React.FC<ActionBarProps> = ({
     color: theme.colors.text.primary,
     display: 'flex',
     alignItems: 'center',
-    gap: '6px',
   };
 
   return (
@@ -50,7 +49,6 @@ export const ActionBar: React.FC<ActionBarProps> = ({
         style={actionButtonStyle}
         onClick={onPrompts}
       >
-        <span>⊕</span>
         <span>Prompts</span>
       </button>
 
@@ -58,7 +56,6 @@ export const ActionBar: React.FC<ActionBarProps> = ({
         style={actionButtonStyle}
         onClick={onCopyAll}
       >
-        <span>⎘</span>
         <span>Copy All</span>
       </button>
 
@@ -67,8 +64,7 @@ export const ActionBar: React.FC<ActionBarProps> = ({
         onClick={onSummarize}
         title="Summarize selected files from the tree, or open files if none selected"
       >
-        <span>✦</span>
-        <span>Smart Summarize</span>
+        <span>Summarize</span>
       </button>
     </div>
   );

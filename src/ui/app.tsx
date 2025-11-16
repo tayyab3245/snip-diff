@@ -14,6 +14,7 @@ import { ChatPanel } from './components/chat-panel';
 import { useAppStore } from './store/app-store';
 import { ThemeProvider } from './theme';
 import { useClipboard } from './hooks/use-clipboard';
+import { TokenTracker } from '../shared/token-tracker';
 
 // Main App Content Component (wrapped in theme provider)
 const AppContent: React.FC = () => {
@@ -27,6 +28,7 @@ const AppContent: React.FC = () => {
     isChatLoading, 
     chatPanelWidth,
     addChatMessage,
+    clearChatMessages,
     setIsChatLoading,
     setChatPanelWidth,
   } = useAppStore();
@@ -55,11 +57,9 @@ const AppContent: React.FC = () => {
   };
 
   const handleSummarize = async () => {
+    // Clear previous chat messages
+    clearChatMessages();
     setIsChatLoading(true);
-    addChatMessage({
-      type: 'system',
-      content: 'Analyzing changes and generating summary...',
-    });
 
     try {
       // Check if LLM is available
@@ -98,19 +98,44 @@ const AppContent: React.FC = () => {
         setIsChatLoading(false);
         return;
       }
-      
-      addChatMessage({
-        type: 'system',
-        content: `Analyzing ${filesToAnalyze.length} selected file${filesToAnalyze.length > 1 ? 's' : ''}...`,
-      });
+
+      // Track original file content tokens
+      const tokenTracker = TokenTracker.getInstance();
+      for (const filePath of filesToAnalyze) {
+        const fileData = openFiles.find(f => f.path === filePath);
+        if (fileData) {
+          tokenTracker.trackOriginalFile(filePath, fileData.content);
+        } else {
+          // Read file content for tracking if not already open
+          try {
+            const content = await window.electronAPI.readFile(filePath);
+            if (content) {
+              tokenTracker.trackOriginalFile(filePath, content);
+            }
+          } catch (error) {
+            console.warn(`Failed to read file for token tracking: ${filePath}`);
+          }
+        }
+      }
 
       // Call LLM service - main process will handle getting content/diffs
       const result = await window.electronAPI.llmSummarizeDiff(selectedPath, filesToAnalyze);
 
       if (result.success && result.summary) {
+        // Track the summary tokens
+        if (filesToAnalyze.length === 1) {
+          tokenTracker.trackSummary(filesToAnalyze[0], result.summary);
+        } else {
+          // For multiple files, track against all files (approximate)
+          filesToAnalyze.forEach(filePath => {
+            tokenTracker.trackSummary(filePath, result.summary);
+          });
+        }
+
         addChatMessage({
           type: 'ai',
           content: result.summary,
+          isTyping: true,
         });
       } else {
         addChatMessage({
@@ -135,7 +160,7 @@ const AppContent: React.FC = () => {
       toolbar={<ContextBar />}
       sidebar={<FileTree />}
       mainContent={<DiffView />}
-      chatPanel={<ChatPanel messages={chatMessages} isLoading={isChatLoading} />}
+      chatPanel={<ChatPanel messages={chatMessages} isLoading={isChatLoading} fileCount={selectedFiles.size || (activeFilePath ? 1 : openFiles.length)} filePaths={Array.from(selectedFiles).length > 0 ? Array.from(selectedFiles) : (activeFilePath ? [activeFilePath] : openFiles.map(f => f.path))} />}
       chatPanelWidth={chatPanelWidth}
       onChatPanelResize={setChatPanelWidth}
       statusBar={

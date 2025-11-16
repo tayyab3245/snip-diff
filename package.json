@@ -51,6 +51,7 @@
     "@google/generative-ai": "^0.24.1",
     "dotenv": "^17.2.3",
     "framer-motion": "^10.16.16",
+    "lucide-react": "^0.553.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "zustand": "^4.4.7"

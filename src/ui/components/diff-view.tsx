@@ -6,6 +6,7 @@
 import React from 'react';
 import { PanelLayout } from './layout';
 import { useAppStore } from '../store/app-store';
+import { TokenBadge } from './token-badge';
 import { useTheme } from '../theme';
 
 interface DiffLine {
@@ -423,6 +424,7 @@ export const DiffView: React.FC = () => {
               <span style={tabLabelStyle} title={file.path}>
                 {getFileName(file.path)}
               </span>
+              <TokenBadge filePath={file.path} />
               {file.gitStatus && (
                 <span style={{ fontSize: '10px', opacity: 0.7 }}>
                   {file.gitStatus === 'Modified' && 'M'}

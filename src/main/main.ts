@@ -297,9 +297,13 @@ class SnipDiffApp {
           diffContent,
         };
 
-        const result = await llmService.generateCommitMessage(context);
-        console.log('[LLM] Commit message result:', result.success ? 'success' : result.error);
-        return result;
+        // DEPRECATED - generateCommitMessage removed
+        // const result = await llmService.generateCommitMessage(context);
+        console.log('[LLM] Commit message generation deprecated - feature removed');
+        return {
+          success: false,
+          error: 'Commit message generation is no longer supported'
+        };
       } catch (error) {
         console.error('[LLM] Error:', error);
         return {

@@ -82,30 +82,31 @@ export class LLMService {
    * Generate commit message based on provided context
    * Caller must provide all data (diff content, file paths, git status)
    */
-  async generateCommitMessage(context: AgentContext): Promise<SummarizeResult> {
-    if (!this.isAvailable()) {
-      return {
-        success: false,
-        error: 'LLM service not initialized'
-      };
-    }
+  // DEPRECATED - generateCommitMessage removed as buildCommitPrompt was removed
+  // async generateCommitMessage(context: AgentContext): Promise<SummarizeResult> {
+  //   if (!this.isAvailable()) {
+  //     return {
+  //       success: false,
+  //       error: 'LLM service not initialized'
+  //     };
+  //   }
 
-    try {
-      const result = await aiOrchestrator.generateCommitMessage(context);
+  //   try {
+  //     const result = await aiOrchestrator.generateCommitMessage(context);
 
-      return {
-        success: true,
-        summary: result.content,
-        tokensUsed: result.tokensUsed,
-      };
-    } catch (error: any) {
-      console.error('[LLM Service] Generate commit error:', error);
-      return {
-        success: false,
-        error: error.message || 'Failed to generate commit message'
-      };
-    }
-  }
+  //     return {
+  //       success: true,
+  //       summary: result.content,
+  //       tokensUsed: result.tokensUsed,
+  //     };
+  //   } catch (error: any) {
+  //     console.error('[LLM Service] Generate commit error:', error);
+  //     return {
+  //       success: false,
+  //       error: error.message || 'Failed to generate commit message'
+  //     };
+  //   }
+  // }
 }
 
 export const llmService = new LLMService();

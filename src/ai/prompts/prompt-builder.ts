@@ -79,136 +79,28 @@ export class PromptBuilder {
       ? context.selectedFiles.map(f => `- ${f}`).join('\n')
       : 'No files selected';
 
-    // Diff content is provided by git service via main process
-    const diffContent = context.diffContent || 'No diff content available';
+    // Get diff content or file contents
+    let diffContent = '';
+    
+    if (context.diffContent) {
+      // We have git diff content
+      diffContent = context.diffContent;
+    } else if (context.fileContents) {
+      // We have full file contents (no git diff available)
+      diffContent = Array.from(context.fileContents.entries())
+        .map(([path, content]) => `=== ${path} ===\n${content}`)
+        .join('\n\n');
+    } else {
+      diffContent = 'No content available';
+    }
 
     // Render the template with variables
     return this.renderTemplate(template, {
       FILE_COUNT: context.selectedFiles.length.toString(),
       FILE_PATHS: filePaths,
       DIFF_CONTENT: diffContent,
-      REPO_PATH: context.repoPath,
     });
   }
 
-  /**
-   * Build a complete prompt for generating commit messages
-   */
-  buildCommitPrompt(context: AgentContext, _conversationHistory: Message[]): string {
-    const template = this.loadTemplate('commit');
-    
-    if (!template) {
-      // Fallback inline prompt
-      return this.buildCommitFallback(context);
-    }
 
-    const filePaths = context.selectedFiles.length > 0
-      ? context.selectedFiles.map(f => `- ${f}`).join('\n')
-      : 'No files selected';
-
-    return this.renderTemplate(template, {
-      FILE_COUNT: context.selectedFiles.length.toString(),
-      FILE_PATHS: filePaths,
-      DIFF_CONTENT: context.diffContent || 'No diff content available',
-      REPO_PATH: context.repoPath,
-    });
-  }
-
-  /**
-   * Build a complete prompt for explaining changes
-   */
-  buildExplainPrompt(context: AgentContext, _conversationHistory: Message[]): string {
-    const template = this.loadTemplate('explain');
-    
-    if (!template) {
-      // Fallback inline prompt
-      return this.buildExplainFallback(context);
-    }
-
-    const filePaths = context.selectedFiles.length > 0
-      ? context.selectedFiles.map(f => `- ${f}`).join('\n')
-      : 'No files selected';
-
-    return this.renderTemplate(template, {
-      FILE_COUNT: context.selectedFiles.length.toString(),
-      FILE_PATHS: filePaths,
-      DIFF_CONTENT: context.diffContent || 'No diff content available',
-      REPO_PATH: context.repoPath,
-    });
-  }
-
-  /**
-   * Fallback commit message prompt (inline)
-   */
-  private buildCommitFallback(context: AgentContext): string {
-    const gitStatusSummary = this.summarizeGitStatus(context.gitStatus);
-
-    return `Generate a conventional commit message for these changes:
-
-Repository: ${context.repoPath}
-Files affected:
-${gitStatusSummary}
-
-${context.diffContent ? `Changes:\n${context.diffContent}\n` : ''}
-
-Format:
-<type>(<scope>): <subject>
-
-<body>
-
-<footer>
-
-Types: feat, fix, docs, style, refactor, test, chore
-Keep subject under 50 chars, body under 72 chars per line.`;
-  }
-
-  /**
-   * Fallback explain prompt (inline)
-   */
-  private buildExplainFallback(context: AgentContext): string {
-    return `Explain the following code changes in detail:
-
-Repository: ${context.repoPath}
-Selected files: ${context.selectedFiles.join(', ')}
-
-${context.diffContent || 'No diff content available'}
-
-Please explain:
-1. What was changed
-2. Why it might have been changed
-3. How it affects the codebase
-4. Any notable patterns or techniques used`;
-  }
-
-  /**
-   * Summarize Git status for fallback prompts
-   */
-  private summarizeGitStatus(gitStatus: Map<string, string>): string {
-    const statusGroups: Record<string, string[]> = {
-      Modified: [],
-      Added: [],
-      Deleted: [],
-      Renamed: [],
-      Untracked: [],
-    };
-
-    gitStatus.forEach((status, path) => {
-      if (statusGroups[status]) {
-        statusGroups[status].push(path);
-      }
-    });
-
-    const lines: string[] = [];
-    Object.entries(statusGroups).forEach(([status, files]) => {
-      if (files.length > 0) {
-        lines.push(`${status}: ${files.length} file(s)`);
-        files.slice(0, 5).forEach(file => lines.push(`  - ${file}`));
-        if (files.length > 5) {
-          lines.push(`  ... and ${files.length - 5} more`);
-        }
-      }
-    });
-
-    return lines.join('\n');
-  }
 }

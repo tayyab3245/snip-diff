@@ -52,7 +52,7 @@ export interface ParsedAIResponse {
 
 export class AIResponseParser {
   /**
-   * Parse AI response and extract structured JSON data
+   * Parse AI response - now handles markdown output
    */
   parseResponse(rawResponse: string, tokensUsed?: number): ParsedAIResponse {
     const result: ParsedAIResponse = {
@@ -74,26 +74,14 @@ export class AIResponseParser {
         return result;
       }
 
-      // Extract JSON from response (may be wrapped in markdown code blocks)
-      const jsonData = this.extractJSON(rawResponse);
+      // Normalize markdown by removing code fence wrappers if present
+      const normalized = this.normalizeMarkdown(rawResponse);
       
-      if (jsonData) {
-        // Validate the structure
-        const validationErrors = this.validateStructure(jsonData);
-        
-        if (validationErrors.length === 0) {
-          result.structuredData = jsonData;
-          result.metadata.hasStructuredOutput = true;
-          result.displayContent = this.formatStructuredData(jsonData);
-          result.metadata.isValid = true;
-        } else {
-          result.metadata.parseErrors = validationErrors;
-          result.displayContent = this.formatFallback(rawResponse);
-        }
-      } else {
-        result.metadata.parseErrors?.push('No valid JSON found in response');
-        result.displayContent = this.formatFallback(rawResponse);
-      }
+      // Return markdown as-is for rendering
+      result.displayContent = normalized;
+      result.metadata.isValid = true;
+      result.metadata.hasStructuredOutput = false; // No longer parsing JSON
+      result.structuredData = undefined;
 
     } catch (error) {
       result.metadata.parseErrors?.push(
@@ -106,7 +94,36 @@ export class AIResponseParser {
   }
 
   /**
-   * Extract JSON from response (handles markdown code blocks)
+   * Normalize markdown by extracting only Summary section content
+   */
+  private normalizeMarkdown(content: string): string {
+    const trimmed = content.trim();
+    
+    // Remove code fence wrappers if present
+    const markdownFenceRegex = /^```(?:markdown)?\s*\n([\s\S]*?)\n```$/;
+    const fenceMatch = trimmed.match(markdownFenceRegex);
+    const cleanContent = fenceMatch ? fenceMatch[1].trim() : trimmed;
+    
+    // Extract content from Summary section only
+    const summaryMatch = cleanContent.match(/##\s*Summary\s*\n([\s\S]*?)(?=\n##|$)/i);
+    if (summaryMatch && summaryMatch[1]) {
+      return summaryMatch[1].trim();
+    }
+    
+    // If no Summary section found, look for content after any heading
+    const anyHeadingMatch = cleanContent.match(/##\s*[^\n]*\s*\n([\s\S]*)/i);
+    if (anyHeadingMatch && anyHeadingMatch[1]) {
+      return anyHeadingMatch[1].trim();
+    }
+    
+    // Fallback: return content as-is but remove any leading commentary
+    return cleanContent
+      .replace(/^(okay let's|let me|here's|i'll|alright)\s*/i, '')
+      .trim();
+  }
+
+  /**
+   * Extract JSON from response (DEPRECATED - kept for compatibility)
    */
   private extractJSON(response: string): StructuredSummary | null {
     try {
@@ -130,7 +147,7 @@ export class AIResponseParser {
   }
 
   /**
-   * Validate the JSON structure
+   * Validate the JSON structure (DEPRECATED - kept for compatibility)
    */
   private validateStructure(data: any): string[] {
     const errors: string[] = [];
@@ -173,7 +190,7 @@ export class AIResponseParser {
   }
 
   /**
-   * Format structured data for frontend display
+   * Format structured data for frontend display (DEPRECATED - kept for compatibility)
    */
   private formatStructuredData(data: StructuredSummary): string {
     let formatted = '';
@@ -217,10 +234,10 @@ export class AIResponseParser {
   }
 
   /**
-   * Fallback formatting for non-structured responses
+   * Fallback formatting for error responses
    */
   private formatFallback(rawResponse: string): string {
-    return `**Response Format Issue**\n\nThe AI did not return a properly structured response. Raw output:\n\n${rawResponse}`;
+    return `**Response Error**\n\nAn error occurred while processing the AI response. Raw output:\n\n${rawResponse}`;
   }
 
   /**
@@ -237,8 +254,8 @@ export class AIResponseParser {
       return false;
     }
 
-    // Display content must meet minimum length
-    if (parsed.displayContent.length < 10) {
+    // Display content must meet minimum length (at least some text)
+    if (parsed.displayContent.trim().length < 10) {
       return false;
     }
 

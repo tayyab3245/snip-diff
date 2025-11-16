@@ -33,9 +33,10 @@ interface OpenFile {
 
 interface ChatMessage {
   id: string;
-  type: 'ai' | 'system';
+  type: 'ai' | 'system' | 'error';
   content: string;
   timestamp: Date;
+  isTyping?: boolean;
 }
 
 interface AppState {
