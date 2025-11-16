@@ -3,10 +3,10 @@
  * Initializes and configures the AI system with providers and settings
  */
 
-import { BaseLLMProvider, OpenAIProvider, AnthropicProvider } from './providers';
+import { BaseLLMProvider, OpenAIProvider, AnthropicProvider, GeminiProvider } from './providers';
 
 export interface AIConfig {
-  provider: 'openai' | 'anthropic';
+  provider: 'openai' | 'anthropic' | 'gemini';
   apiKey: string;
   model?: string;
   temperature?: number;
@@ -35,6 +35,12 @@ export class AIInitializer {
         this.provider = new AnthropicProvider(
           config.apiKey,
           config.model || 'claude-3-opus-20240229'
+        );
+        break;
+      case 'gemini':
+        this.provider = new GeminiProvider(
+          config.apiKey,
+          config.model || 'gemini-pro'
         );
         break;
       default:

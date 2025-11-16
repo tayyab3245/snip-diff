@@ -14,6 +14,7 @@ export {
   BaseLLMProvider,
   OpenAIProvider,
   AnthropicProvider,
+  GeminiProvider,
 } from './providers';
 export type {
   Message,

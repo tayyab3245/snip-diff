@@ -38,9 +38,9 @@ ai/
 import { aiInitializer } from './ai';
 
 await aiInitializer.initialize({
-  provider: 'openai',  // or 'anthropic'
-  apiKey: process.env.OPENAI_API_KEY,
-  model: 'gpt-4-turbo-preview',
+  provider: 'gemini',  // or 'openai', 'anthropic'
+  apiKey: process.env.GEMINI_API_KEY,
+  model: 'gemini-pro',
   temperature: 0.7,
   maxTokens: 2000,
 });
@@ -91,6 +91,7 @@ console.log(response.content);
 - **BaseLLMProvider**: Abstract base class for all LLM providers
 - **OpenAIProvider**: OpenAI API integration (GPT-4, GPT-3.5)
 - **AnthropicProvider**: Anthropic API integration (Claude 3)
+- **GeminiProvider**: Google Gemini API integration (Gemini Pro, Gemini Ultra)
 
 ### Orchestrator
 Main coordinator that:
@@ -134,9 +135,12 @@ OPENAI_API_KEY=sk-...
 # Anthropic
 ANTHROPIC_API_KEY=sk-ant-...
 
+# Google Gemini
+GEMINI_API_KEY=...
+
 # Default provider
-AI_PROVIDER=openai
-AI_MODEL=gpt-4-turbo-preview
+AI_PROVIDER=gemini
+AI_MODEL=gemini-pro
 AI_TEMPERATURE=0.7
 AI_MAX_TOKENS=2000
 ```
