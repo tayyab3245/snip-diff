@@ -10,14 +10,19 @@ import { darkTheme, type DarkTheme } from './dark-theme';
 export { designTokens } from './tokens';
 export { darkTheme } from './dark-theme';
 export { 
-  ThemeProvider, 
+  ThemeProvider,
+  type ThemeContextType
+} from './theme-provider';
+export {
+  ThemeContext
+} from './theme-context';
+export {
   useTheme, 
   useThemedStyles, 
   useThemeValue, 
   useSystemTheme,
-  withTheme,
-  themes as prebuiltThemes
-} from './theme-provider';
+  withTheme
+} from './hooks';
 
 // Union type for both themes
 export type Theme = DarkTheme;

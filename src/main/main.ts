@@ -101,6 +101,7 @@ class SnipDiffApp {
       this.mainWindow.loadURL('http://localhost:5173');
       this.mainWindow.webContents.openDevTools();
     } else {
+      // In production, __dirname is dist/main, so we need to go to dist/ui/index.html
       this.mainWindow.loadFile(path.join(__dirname, '../ui/index.html'));
     }
 

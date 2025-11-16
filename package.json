@@ -64,7 +64,7 @@
     },
     "files": [
       "dist/main/**/*",
-      "dist/renderer/**/*",
+      "dist/ui/**/*",
       "node_modules/**/*"
     ],
     "win": {

@@ -3,21 +3,12 @@
  * React context provider for theme management
  */
 
-import React, { createContext, useContext, useEffect, ReactNode } from 'react';
-import { createTheme, type EnhancedTheme, type ThemeMode, themes } from './index';
+import React, { useEffect, ReactNode } from 'react';
+import { createTheme, type EnhancedTheme, type ThemeMode } from './index';
+import { ThemeContext, type ThemeContextType } from './theme-context';
 
-// Theme context interface
-interface ThemeContextType {
-  theme: EnhancedTheme;
-  themeMode: ThemeMode;
-  toggleTheme: () => void;
-  setThemeMode: (_mode: ThemeMode) => void;
-  isDark: boolean;
-  isLight: boolean;
-}
-
-// Create the context
-const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+// Re-export for convenience
+export type { ThemeContextType };
 
 // Theme provider props
 interface ThemeProviderProps {
@@ -90,49 +81,4 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
   );
 };
 
-// Custom hook to use theme context
-export const useTheme = (): ThemeContextType => {
-  const context = useContext(ThemeContext);
-  
-  if (context === undefined) {
-    throw new Error('useTheme must be used within a ThemeProvider');
-  }
-  
-  return context;
-};
-
-// HOC for class components
-export function withTheme<P extends object>(
-  Component: React.ComponentType<P & { theme: EnhancedTheme }>
-) {
-  const ThemedComponent = (props: P) => {
-    const { theme } = useTheme();
-    return <Component {...props} theme={theme} />;
-  };
-  
-  ThemedComponent.displayName = `withTheme(${Component.displayName || Component.name})`;
-  return ThemedComponent;
-}
-
-// Hook for CSS-in-JS styling
-export function useThemedStyles<T extends Record<string, any>>(
-  stylesFactory: (_theme: EnhancedTheme) => T
-): T {
-  const { theme } = useTheme();
-  return React.useMemo(() => stylesFactory(theme), [theme, stylesFactory]);
-}
-
-// Helper hook for conditional theme values
-export function useThemeValue<T>(lightValue: T, darkValue: T): T {
-  const { isDark } = useTheme();
-  return isDark ? darkValue : lightValue;
-}
-
-// System theme detection hook (always returns dark)
-export function useSystemTheme(): ThemeMode {
-  return 'dark';
-}
-
-// Export pre-configured themes for direct use
-export { themes };
-export type { EnhancedTheme, ThemeMode, ThemeContextType };
+export type { EnhancedTheme, ThemeMode };
