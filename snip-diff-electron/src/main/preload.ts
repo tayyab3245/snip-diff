@@ -28,6 +28,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('get-git-file-content', directory, filePath, ref),
   isGitRepo: (directory: string) => 
     ipcRenderer.invoke('is-git-repo', directory),
+  
+  // File operations
+  getFileTree: (dirPath: string) =>
+    ipcRenderer.invoke('get-file-tree', dirPath),
+  readFile: (filePath: string) =>
+    ipcRenderer.invoke('read-file', filePath),
+  readMultipleFiles: (filePaths: string[]) =>
+    ipcRenderer.invoke('read-multiple-files', filePaths),
 
   // File watching
   startWatch: (filePaths: string[]) => ipcRenderer.invoke('start-watch', filePaths),

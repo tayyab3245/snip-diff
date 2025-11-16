@@ -26,23 +26,6 @@ const AppContent: React.FC = () => {
     openFiles
   } = useAppStore();
   
-  // Test API connection on startup
-  useEffect(() => {
-    const checkConnection = async () => {
-      try {
-        const response = await apiRequest({
-          method: 'GET',
-          endpoint: '/health'
-        });
-        console.log('API connection test:', response.success ? 'OK' : 'Failed');
-      } catch (error) {
-        console.error('Failed to connect to API:', error);
-      }
-    };
-    
-    checkConnection();
-  }, [apiRequest]);
-
   // Listen for file changes from Chokidar
   useEffect(() => {
     console.log('[Renderer] Setting up file change listener. isWatching:', isWatching, 'selectedFiles:', Array.from(selectedFiles));

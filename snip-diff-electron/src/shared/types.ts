@@ -193,6 +193,9 @@ export interface ElectronAPI {
   // File system operations
   selectFolder: () => Promise<string | null>;
   selectFiles: () => Promise<string[] | null>;
+  getFileTree: (dirPath: string) => Promise<ApiResponse<{ nodes: FileNode[] }>>;
+  readFile: (filePath: string) => Promise<ApiResponse<{ content: string; filePath: string }>>;
+  readMultipleFiles: (filePaths: string[]) => Promise<ApiResponse<Array<{ path: string; content: string }>>>;
   
   // Git operations
   getGitDiff: (directory: string, filePaths?: string[]) => Promise<GitDiffResult>;

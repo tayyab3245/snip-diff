@@ -1,5 +1,5 @@
 /**
- * Renderer main entry point for SNIP-DIFF
+ * UI entry point for SNIP-DIFF
  */
 
 import React from 'react';

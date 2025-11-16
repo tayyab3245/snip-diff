@@ -109,8 +109,7 @@ const ChevronIcon: React.FC<{ isOpen: boolean }> = ({ isOpen }) => (
 
 const FileTreeNode: React.FC<FileTreeNodeProps> = ({ node, depth, onFileSelect, isSelected }) => {
   const [isExpanded, setIsExpanded] = useState(depth < 2);
-  const { activeFilePath, selectedFiles, selectedPath, openFile, closeFile } = useAppStore();
-  const { getFileContent } = useApiClient();
+  const { activeFilePath, selectedFiles, openFile, closeFile } = useAppStore();
   const { theme } = useTheme();
   const isActive = activeFilePath === node.path;
 
@@ -124,25 +123,23 @@ const FileTreeNode: React.FC<FileTreeNodeProps> = ({ node, depth, onFileSelect, 
       
       if (!wasSelected) {
         // File is being selected - open it
-        if (selectedPath) {
-          try {
-            console.log('Opening file:', node.path, 'from base:', selectedPath);
-            const response = await getFileContent(selectedPath, node.path);
-            
-            if (response.success && response.data && response.data.content !== undefined) {
-              openFile({
-                path: node.path,
-                content: response.data.content,
-                language: getFileExtension(node.name)
-              });
-              console.log('File opened successfully:', node.path);
-            } else {
-              const errorMsg = response.error || response.data?.error || 'Failed to open file';
-              console.error('Failed to get file content:', errorMsg);
-            }
-          } catch (error) {
-            console.error('Exception opening file:', error);
+        try {
+          console.log('Opening file:', node.path);
+          const response = await window.electronAPI.readFile(node.path);
+          
+          if (response.success && response.data) {
+            openFile({
+              path: node.path,
+              content: response.data.content,
+              language: getFileExtension(node.name)
+            });
+            console.log('File opened successfully:', node.path);
+          } else {
+            const errorMsg = response.error || 'Failed to open file';
+            console.error('Failed to get file content:', errorMsg);
           }
+        } catch (error) {
+          console.error('Exception opening file:', error);
         }
       } else {
         // File is being deselected - close it
@@ -243,7 +240,6 @@ export const FileTree: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const { theme } = useTheme();
   
-  const { getFileTree } = useApiClient();
   const { 
     selectedPath, 
     fileTree, 
@@ -272,7 +268,7 @@ export const FileTree: React.FC = () => {
     setError(null);
     
     try {
-      const response = await getFileTree(_path);
+      const response = await window.electronAPI.getFileTree(_path);
       
       if (response.success && response.data) {
         setFileTree(response.data.nodes || []);

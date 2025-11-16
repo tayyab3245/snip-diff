@@ -10,12 +10,14 @@ import * as path from 'path';
 import chokidar, { FSWatcher } from 'chokidar';
 import { gitService } from './services/git-service';
 import { llmService } from './services/llm-service';
+import { FileService } from './services/file-service';
 
 class SnipDiffApp {
   private mainWindow: BrowserWindow | null = null;
   private fileWatcher: FSWatcher | null = null;
   private watchedFiles: Set<string> = new Set();
   private readonly isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
+  private fileService = new FileService();
 
   constructor() {
     // Enable verbose logging in development
@@ -148,6 +150,24 @@ class SnipDiffApp {
       } catch (error) {
         return { success: false, isRepo: false };
       }
+    });
+
+    // File tree handler
+    ipcMain.handle('get-file-tree', async (_event: Electron.IpcMainInvokeEvent, dirPath: string) => {
+      console.log('[FileService] Getting file tree for:', dirPath);
+      return this.fileService.getFileTree(dirPath);
+    });
+
+    // File read handler - single file
+    ipcMain.handle('read-file', async (_event: Electron.IpcMainInvokeEvent, filePath: string) => {
+      console.log('[FileService] Reading file:', filePath);
+      return this.fileService.readFile(filePath);
+    });
+
+    // File read handler - multiple files (for batch operations and LLM)
+    ipcMain.handle('read-multiple-files', async (_event: Electron.IpcMainInvokeEvent, filePaths: string[]) => {
+      console.log('[FileService] Reading multiple files:', filePaths.length, 'files');
+      return this.fileService.readMultipleFiles(filePaths);
     });
 
     // LLM Summarization handlers

@@ -79,4 +79,4 @@ logs/
 *.tmp
 *.temp
 DIFF_SYSTEM_REWRITE_TICKETS.md
-snip-diff-electron/src/renderer/ui-final-example.html
+# Removed old renderer reference - now using src/ui/
