@@ -24,7 +24,7 @@ export class FileService {
   private readonly ignorePatterns = [
     /node_modules/,
     /\.git$/,
-    /^\./, // Hidden files
+    /^\./,
     /dist$/,
     /build$/,
     /\.cache/,
@@ -32,6 +32,36 @@ export class FileService {
     /\.next$/,
     /\.nuxt$/,
     /\.output$/,
+  ];
+
+  // Binary and non-text file extensions to exclude from LLM analysis
+  private readonly binaryExtensions = new Set([
+    '.png', '.jpg', '.jpeg', '.gif', '.bmp', '.ico', '.svg',
+    '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx',
+    '.zip', '.tar', '.gz', '.rar', '.7z',
+    '.exe', '.dll', '.so', '.dylib', '.bin',
+    '.mp3', '.mp4', '.avi', '.mov', '.wmv',
+    '.ttf', '.otf', '.woff', '.woff2', '.eot',
+    '.db', '.sqlite', '.mdb',
+  ]);
+
+  // Additional patterns for gitignored/non-analyzable files
+  private readonly llmIgnorePatterns = [
+    /node_modules/,
+    /\.git/,
+    /package-lock\.json$/,
+    /yarn\.lock$/,
+    /pnpm-lock\.yaml$/,
+    /\.min\.(js|css)$/,
+    /dist/,
+    /build/,
+    /coverage/,
+    /\.next/,
+    /\.nuxt/,
+    /\.output/,
+    /\.cache/,
+    /\.vscode/,
+    /\.idea/,
   ];
 
   /**
@@ -153,5 +183,66 @@ export class FileService {
    */
   private shouldIgnore(name: string): boolean {
     return this.ignorePatterns.some(pattern => pattern.test(name));
+  }
+
+  /**
+   * Check if file contains binary content by reading a sample
+   */
+  private isBinaryFile(filePath: string): boolean {
+    try {
+      const buffer = Buffer.alloc(8192);
+      const fd = fs.openSync(filePath, 'r');
+      const bytesRead = fs.readSync(fd, buffer, 0, 8192, 0);
+      fs.closeSync(fd);
+
+      if (bytesRead === 0) {
+        return false;
+      }
+
+      // Check for null bytes (strong indicator of binary)
+      for (let i = 0; i < bytesRead; i++) {
+        if (buffer[i] === 0) {
+          return true;
+        }
+      }
+
+      return false;
+    } catch {
+      // If we can't read it, assume it's safe to exclude
+      return true;
+    }
+  }
+
+  /**
+   * Check if file should be excluded from LLM analysis
+   * (binary files, lock files, minified files, etc.)
+   */
+  public shouldExcludeFromLLM(filePath: string): boolean {
+    const ext = path.extname(filePath).toLowerCase();
+    
+    // Check known binary extensions first (fast path)
+    if (this.binaryExtensions.has(ext)) {
+      return true;
+    }
+
+    // Check gitignore/non-analyzable patterns
+    if (this.llmIgnorePatterns.some(pattern => pattern.test(filePath))) {
+      return true;
+    }
+
+    // For remaining files, check if they contain binary content
+    // This catches files without extensions or misidentified files
+    if (this.isBinaryFile(filePath)) {
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Filter file paths to exclude binary and gitignored files
+   */
+  public filterFilesForLLM(filePaths: string[]): string[] {
+    return filePaths.filter(filePath => !this.shouldExcludeFromLLM(filePath));
   }
 }

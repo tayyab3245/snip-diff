@@ -48,7 +48,7 @@ export const darkTheme = {
 
   // === SEMANTIC COLORS ===
   semantic: {
-    success: '#10b981',      // Success states
+    success: '#047857',      // Success states - darker green
     warning: '#f59e0b',      // Warning states  
     error: '#ef4444',        // Error states
     info: '#3b82f6',         // Info states
@@ -99,7 +99,7 @@ export const darkTheme = {
     
     // Diff viewer
     diffViewer: {
-      background: '#13151a',
+      background: '#1e2128',
       added: '#22805e',      // Desaturated green - less bright
       removed: '#c53030',    // Desaturated red - less bright  
       modified: '#d69e2e',   // Desaturated yellow/orange

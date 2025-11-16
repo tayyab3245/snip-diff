@@ -4,14 +4,14 @@
  */
 
 import React, { createContext, useContext, useEffect, ReactNode } from 'react';
-import { createTheme, type EnhancedTheme, type ThemeMode, themes, generateCSSVariables } from './index';
+import { createTheme, type EnhancedTheme, type ThemeMode } from './index';
 
 // Theme context interface
 interface ThemeContextType {
   theme: EnhancedTheme;
   themeMode: ThemeMode;
   toggleTheme: () => void;
-  setThemeMode: (mode: ThemeMode) => void;
+  setThemeMode: (_mode: ThemeMode) => void;
   isDark: boolean;
   isLight: boolean;
 }
@@ -46,15 +46,9 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
     }
   }, [storageKey]);
 
-  // Apply CSS variables to document root
+  // Apply theme attributes to document root (CSS variables come from design-system.css)
   useEffect(() => {
     const root = document.documentElement;
-    const cssVariables = generateCSSVariables(theme);
-    
-    // Apply CSS custom properties
-    Object.entries(cssVariables).forEach(([property, value]) => {
-      root.style.setProperty(property, value);
-    });
     
     // Set theme mode as data attribute for CSS selectors
     root.setAttribute('data-theme', 'dark');
@@ -65,9 +59,6 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
     
     return () => {
       // Cleanup on unmount
-      Object.keys(cssVariables).forEach((property) => {
-        root.style.removeProperty(property);
-      });
       root.removeAttribute('data-theme');
       root.classList.remove('theme-dark');
     };
@@ -125,7 +116,7 @@ export function withTheme<P extends object>(
 
 // Hook for CSS-in-JS styling
 export function useThemedStyles<T extends Record<string, any>>(
-  stylesFactory: (theme: EnhancedTheme) => T
+  stylesFactory: (_theme: EnhancedTheme) => T
 ): T {
   const { theme } = useTheme();
   return React.useMemo(() => stylesFactory(theme), [theme, stylesFactory]);
@@ -143,5 +134,4 @@ export function useSystemTheme(): ThemeMode {
 }
 
 // Export pre-configured themes for direct use
-export { themes };
 export type { EnhancedTheme, ThemeMode, ThemeContextType };

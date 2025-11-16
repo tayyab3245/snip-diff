@@ -92,27 +92,27 @@ const FileTreeNode: React.FC<FileTreeNodeProps> = ({ node, depth, onFileSelect, 
   const fileStatus = gitStatus.get(node.path);
   const isModified = fileStatus && fileStatus !== 'Unchanged';
 
-  // Get status color for border (matching VS Code colors)
+  // Get status color for text (desaturated to match diff view)
   const getStatusColor = () => {
     if (!fileStatus || fileStatus === 'Unchanged') return null;
     
     switch (fileStatus) {
       case 'Untracked':
-        return '#73C991'; // Green for untracked (new files)
+        return '#5a9d6a'; // Desaturated green for untracked
       case 'Modified':
-        return '#E09F3E'; // Orange/yellow for modified
+        return '#c08a3a'; // Desaturated orange for modified
       case 'Added':
-        return '#73C991'; // Green for added (staged new files)
+        return '#5a9d6a'; // Desaturated green for added
       case 'Deleted':
-        return '#F48771'; // Red for deleted
+        return '#d87070'; // Desaturated red for deleted
       case 'Renamed':
-        return '#73C991'; // Green for renamed
+        return '#5a9d6a'; // Desaturated green for renamed
       case 'Copied':
-        return '#73C991'; // Green for copied
+        return '#5a9d6a'; // Desaturated green for copied
       case 'Ignored':
         return null; // No color for ignored
       default:
-        return '#E09F3E'; // Orange for other changes
+        return '#c08a3a'; // Desaturated orange for other changes
     }
   };
 
@@ -159,8 +159,7 @@ const FileTreeNode: React.FC<FileTreeNodeProps> = ({ node, depth, onFileSelect, 
     color: statusColor || (fileStatus === 'Ignored' ? '#6b7280' : theme.colors.components.fileTree.text),
     userSelect: 'none',
     background: isSelected ? 'rgba(56, 189, 248, 0.15)' : (isActive ? 'rgba(255, 255, 255, 0.08)' : 'transparent'),
-    borderLeft: statusColor ? `3px solid ${statusColor}` : '3px solid transparent',
-    transition: 'background 0.15s, border-left 0.15s, color 0.15s',
+    transition: 'background 0.15s, color 0.15s',
   };
 
   const iconContainerStyle: React.CSSProperties = {
@@ -380,22 +379,51 @@ export const FileTree: React.FC = () => {
     padding: '16px',
     textAlign: 'center',
     color: theme.colors.text.secondary,
-    fontSize: '13px',
+    fontSize: '15px',
   };
 
   const errorStyle: React.CSSProperties = {
     padding: '16px',
     textAlign: 'center',
     color: theme.colors.semantic.error,
-    fontSize: '13px',
+    fontSize: '15px',
     background: theme.colors.background.tertiary,
     borderRadius: '4px',
     margin: '8px',
   };
 
+  const handleOpenFolder = async () => {
+    await fileManager.selectFolder();
+  };
+
+  const chooseFolderButtonStyle: React.CSSProperties = {
+    width: '100%',
+    padding: '10px 16px',
+    margin: '8px 0',
+    backgroundColor: theme.colors.background.secondary,
+    border: 'none',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    fontSize: '14px',
+    fontWeight: 500,
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif',
+    color: theme.colors.text.primary,
+    transition: 'background 0.15s',
+    textAlign: 'center',
+  };
+
   // CONTENT: File tree (edge-to-edge with padding)
   const content = (
     <div style={{ padding: '8px', background: theme.colors.components.fileTree.background }}>
+      <button
+        style={chooseFolderButtonStyle}
+        onClick={handleOpenFolder}
+        onMouseEnter={(e) => e.currentTarget.style.background = theme.colors.background.tertiary}
+        onMouseLeave={(e) => e.currentTarget.style.background = theme.colors.background.secondary}
+      >
+        Choose Folder
+      </button>
+      
       {isLoading && <div style={loadingStyle}>Loading files...</div>}
       
       {error && <div style={errorStyle}>{error}</div>}

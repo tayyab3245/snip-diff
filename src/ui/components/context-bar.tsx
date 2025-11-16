@@ -7,6 +7,32 @@ import React from 'react';
 import { useTheme } from '../theme';
 import { useAppStore } from '../store/app-store';
 
+// Inject gradient animation styles
+const styleSheet = document.createElement('style');
+styleSheet.textContent = `
+  @keyframes aiGradient {
+    0%, 100% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+  }
+  
+  @keyframes aiPulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.85;
+    }
+  }
+`;
+if (!document.head.querySelector('[data-ai-gradient]')) {
+  styleSheet.setAttribute('data-ai-gradient', 'true');
+  document.head.appendChild(styleSheet);
+}
+
 export const ContextBar: React.FC = () => {
   const { theme } = useTheme();
   const { viewMode, diffMode, setViewMode, setDiffMode, selectedFiles } = useAppStore();
@@ -33,8 +59,18 @@ export const ContextBar: React.FC = () => {
   };
 
   const selectedCountStyle: React.CSSProperties = {
-    color: selectedCount > 0 ? '#38bdf8' : theme.colors.text.secondary,
-    fontWeight: selectedCount > 0 ? 600 : 400,
+    ...(selectedCount > 0 ? {
+      background: 'linear-gradient(90deg, #06b6d4, #3b82f6, #8b5cf6, #3b82f6, #06b6d4)',
+      backgroundSize: '200% 100%',
+      WebkitBackgroundClip: 'text',
+      WebkitTextFillColor: 'transparent',
+      backgroundClip: 'text',
+      animation: 'aiGradient 3s ease infinite, aiPulse 2s ease-in-out infinite',
+      fontWeight: 600,
+    } : {
+      color: theme.colors.text.secondary,
+      fontWeight: 400,
+    }),
   };
 
   const centerSectionStyle: React.CSSProperties = {

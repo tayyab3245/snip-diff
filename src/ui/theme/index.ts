@@ -34,19 +34,19 @@ export interface EnhancedTheme {
 // Theme utilities for common operations
 export interface ThemeUtils {
   // Get color with opacity
-  alpha: (color: string, opacity: number) => string;
+  alpha: (_color: string, _opacity: number) => string;
   
   // Mix two colors
-  mix: (color1: string, color2: string, amount: number) => string;
+  mix: (_color1: string, _color2: string, _amount: number) => string;
   
   // Get contrast color (black or white) for a background
-  getContrastColor: (backgroundColor: string) => string;
+  getContrastColor: (_backgroundColor: string) => string;
   
   // Generate neumorphic box shadow
-  neumorphic: (type: 'raised' | 'pressed' | 'float', intensity?: number) => string;
+  neumorphic: (_type: 'raised' | 'pressed' | 'float', _intensity?: number) => string;
   
   // Responsive value based on breakpoint
-  responsive: (values: { [key: string]: string }) => string;
+  responsive: (_values: { [key: string]: string }) => string;
 }
 
 // Theme utilities implementation

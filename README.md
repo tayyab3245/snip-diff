@@ -19,6 +19,12 @@
 ![React](https://img.shields.io/badge/React-20232A?style=flat&logo=react&logoColor=61DAFB)
 ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=flat&logo=typescript&logoColor=white)
 
+## Demo
+
+https://github.com/user-attachments/assets/demo.mp4
+
+*Watch SNIP-DIFF in action: intelligent code diffing, AI-powered summaries, and seamless context management*
+
 ## What SNIP-DIFF Does
 
 SNIP-DIFF is a desktop application that revolutionizes how developers work with AI language models by providing intelligent code diffing, context optimization, and snippet generation tools.

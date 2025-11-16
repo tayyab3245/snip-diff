@@ -7,6 +7,7 @@ import React from 'react';
 import { PanelLayout } from './layout';
 import { useAppStore } from '../store/app-store';
 import { useTheme } from '../theme';
+import { Copy, Check } from 'lucide-react';
 
 interface DiffLine {
   type: 'addition' | 'deletion' | 'context' | 'header' | 'file-header' | 'hunk-header';
@@ -25,6 +26,16 @@ const parseDiff = (diffContent: string): DiffLine[] => {
   for (const line of lines) {
     // Skip "\ No newline at end of file" - it's metadata, not content
     if (line.startsWith('\\ No newline at end of file')) {
+      continue;
+    }
+    
+    // Skip git metadata lines (index, mode, similarity, etc.)
+    if (line.startsWith('index ') || 
+        line.startsWith('new file mode') || 
+        line.startsWith('deleted file mode') ||
+        line.startsWith('similarity index') ||
+        line.startsWith('rename from') ||
+        line.startsWith('rename to')) {
       continue;
     }
     
@@ -69,6 +80,7 @@ export const DiffView: React.FC = () => {
   const { theme } = useTheme();
   const [lastUpdate, setLastUpdate] = React.useState<Date | null>(null);
   const [diffContent, setDiffContent] = React.useState<string | null>(null);
+  const [copied, setCopied] = React.useState(false);
 
   const { 
     openFiles,
@@ -190,6 +202,7 @@ export const DiffView: React.FC = () => {
     overflowY: 'visible',
     height: '42px',
     flexShrink: 0,
+    position: 'relative',
   };
 
   const tabStyle = (isActive: boolean): React.CSSProperties => ({
@@ -239,14 +252,60 @@ export const DiffView: React.FC = () => {
     closeFile(path);
   };
 
+  const handleCopyDiff = async () => {
+    if (openFiles.length === 0) return;
+
+    try {
+      let contentToCopy = '';
+
+      // Copy all open tabs
+      for (let i = 0; i < openFiles.length; i++) {
+        const file = openFiles[i];
+        
+        if (file.language === 'diff') {
+          // For diff files, fetch the content respecting viewMode
+          const fullContext = viewMode === 'full';
+          const diffResult = await window.electronAPI.getGitDiff(
+            selectedPath || '', 
+            [file.path], 
+            fullContext
+          );
+          
+          if (diffResult.success && diffResult.files && diffResult.files.length > 0) {
+            const fileData = diffResult.files[0];
+            if (fileData && fileData.diff) {
+              contentToCopy += `# ${file.path}\n\n${fileData.diff}`;
+            }
+          }
+        } else {
+          // For regular files, copy the content as-is
+          contentToCopy += `# ${file.path}\n\n${file.content}`;
+        }
+        
+        // Add separator between files
+        if (i < openFiles.length - 1) {
+          contentToCopy += '\n\n---\n\n';
+        }
+      }
+
+      await navigator.clipboard.writeText(contentToCopy);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
+
   const contentStyle: React.CSSProperties = {
-    fontFamily: 'Monaco, Menlo, "Courier New", monospace',
-    fontSize: '15px',
+    fontFamily: '"JetBrains Mono", "Fira Code", "Cascadia Code", "SF Mono", Consolas, monospace',
+    fontSize: '13px',
     lineHeight: '1.6',
     whiteSpace: 'pre',
     overflowX: 'auto',
     color: theme.colors.text.primary,
     padding: '0',
+    fontWeight: 400,
+    letterSpacing: '0.02em',
   };
 
   const lineNumberStyle: React.CSSProperties = {
@@ -257,7 +316,8 @@ export const DiffView: React.FC = () => {
     color: theme.colors.text.secondary,
     opacity: 0.5,
     userSelect: 'none',
-    fontSize: '14px',
+    fontSize: '12px',
+    fontFamily: '"JetBrains Mono", "Fira Code", "Cascadia Code", "SF Mono", Consolas, monospace',
   };
 
   const sideBySideContainerStyle: React.CSSProperties = {
@@ -265,9 +325,10 @@ export const DiffView: React.FC = () => {
     gridTemplateColumns: '1fr 1fr',
     gap: '1px',
     backgroundColor: theme.colors.components.diffViewer.border,
-    fontFamily: 'Monaco, Menlo, "Courier New", monospace',
-    fontSize: '15px',
+    fontFamily: '"JetBrains Mono", "Fira Code", "Cascadia Code", "SF Mono", Consolas, monospace',
+    fontSize: '13px',
     lineHeight: '1.6',
+    letterSpacing: '0.02em',
   };
 
   const sideBySidePaneStyle: React.CSSProperties = {
@@ -299,36 +360,45 @@ export const DiffView: React.FC = () => {
       case 'header':
         return {
           ...baseStyle,
-          background: 'rgba(56, 139, 253, 0.1)',
-          color: '#388bfd',
-          fontWeight: 600,
+          background: 'rgba(56, 139, 253, 0.08)',
+          color: '#6e9bd8',
+          fontWeight: 500,
+          fontSize: '12px',
+          padding: '4px 20px',
         };
       case 'addition':
         return {
           ...baseStyle,
-          background: 'rgba(46, 160, 67, 0.2)',
-          color: '#3fb950',
+          background: 'rgba(46, 160, 67, 0.08)',
+          color: '#5a9d6a',
         };
       case 'deletion':
         return {
           ...baseStyle,
-          background: 'rgba(248, 81, 73, 0.2)',
-          color: '#ff7b72',
+          background: 'rgba(248, 81, 73, 0.08)',
+          color: '#d87070',
         };
       case 'hunk-header':
         return {
           ...baseStyle,
-          background: 'rgba(56, 139, 253, 0.15)',
+          background: 'rgba(56, 139, 253, 0.12)',
           color: '#58a6ff',
-          fontWeight: 600,
+          fontWeight: 500,
+          fontSize: '12px',
+          marginTop: '12px',
+          marginBottom: '2px',
+          padding: '6px 20px',
         };
       case 'file-header':
         return {
           ...baseStyle,
-          background: 'rgba(110, 118, 129, 0.1)',
-          color: theme.colors.text.secondary,
+          background: 'rgba(110, 118, 129, 0.15)',
+          color: theme.colors.text.primary,
           fontWeight: 600,
-          marginTop: '16px',
+          marginTop: '20px',
+          marginBottom: '0px',
+          padding: '8px 20px',
+          borderBottom: `1px solid ${theme.colors.border.secondary}`,
         };
       case 'context':
       default:
@@ -353,8 +423,8 @@ export const DiffView: React.FC = () => {
               </span>
             </>
           )}
-          {line.type === 'addition' && <span style={{ color: '#3fb950', marginRight: '8px' }}>+</span>}
-          {line.type === 'deletion' && <span style={{ color: '#ff7b72', marginRight: '8px' }}>-</span>}
+          {line.type === 'addition' && <span style={{ color: '#5a9d6a', marginRight: '8px' }}>+</span>}
+          {line.type === 'deletion' && <span style={{ color: '#d87070', marginRight: '8px' }}>-</span>}
           {line.type === 'context' && <span style={{ marginRight: '8px', opacity: 0.5 }}> </span>}
           <span>{line.content || ' '}</span>
         </div>
@@ -411,7 +481,49 @@ export const DiffView: React.FC = () => {
 
   // CONTENT: Open file content
   const content = (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', position: 'relative' }}>
+      {/* Floating Copy Button - Fixed Position */}
+      {activeFile && (
+        <button
+          onClick={handleCopyDiff}
+          style={{
+            position: 'absolute',
+            top: '58px',
+            right: '16px',
+            zIndex: 100,
+            padding: '8px 14px',
+            backgroundColor: theme.colors.background.secondary,
+            border: 'none',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            fontSize: '13px',
+            fontWeight: 500,
+            color: theme.colors.text.primary,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            transition: 'all 0.15s',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = theme.colors.background.tertiary;
+            e.currentTarget.style.transform = 'translateY(-1px)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = theme.colors.background.secondary;
+            e.currentTarget.style.transform = 'translateY(0)';
+          }}
+          title="Copy diff content"
+        >
+          {copied ? (
+            <Check size={15} color="#10b981" style={{ transition: 'all 0.3s ease' }} />
+          ) : (
+            <Copy size={15} style={{ transition: 'all 0.3s ease' }} />
+          )}
+          <span>{copied ? 'Copied!' : 'Copy'}</span>
+        </button>
+      )}
+
       {openFiles.length > 0 && (
         <div style={tabBarStyle}>
           {openFiles.map((file) => (
@@ -454,16 +566,6 @@ export const DiffView: React.FC = () => {
 
         {activeFile && (
           <div>
-            <div style={filePathStyle}>
-              <span>{activeFile.path}</span>
-            </div>
-            
-            {lastUpdate && (
-              <div style={timestampStyle}>
-                Last updated: {lastUpdate.toLocaleTimeString()}
-              </div>
-            )}
-            
             {activeFile.language === 'diff' ? (
               // Render Git diff - viewMode controls context, diffMode controls format
               diffMode === 'side-by-side'

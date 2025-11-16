@@ -32,7 +32,7 @@ export const createChatPanelStyles = (theme: DarkTheme) => ({
     justifyContent: 'center',
     height: '100%',
     color: theme.components.chatPanel.emptyStateText,
-    fontSize: '13px',
+    fontSize: '15px',
     opacity: 0.7,
   },
 
@@ -82,8 +82,6 @@ export const createChatPanelStyles = (theme: DarkTheme) => ({
     display: 'flex',
     alignItems: 'center',
     gap: '8px',
-    marginBottom: '16px',
-    justifyContent: 'flex-start' as const,
     padding: '0',
   },
 
@@ -129,13 +127,10 @@ export const createChatPanelStyles = (theme: DarkTheme) => ({
       ? theme.components.chatPanel.errorMessage.text 
       : theme.components.chatPanel.systemMessage.text,
     position: 'relative' as const,
-    // Hide content completely during masked state, show with animation when animating
-    opacity: type === 'ai' ? (isMasked ? 0 : 1) : 1,
+    opacity: 1,
     animation: type === 'ai' && isAnimating 
       ? 'revealText 1.5s ease-out forwards' 
       : 'none',
-    // Ensure no transition during mask application for instant hiding
-    transition: type === 'ai' && isMasked ? 'none' : 'opacity 0.2s ease-out',
   }),
 
   // Timestamp styles

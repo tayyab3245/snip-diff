@@ -5,7 +5,7 @@
 
 import React from 'react';
 import { useTheme } from '../theme';
-import { AlertTriangle, Info } from 'lucide-react';
+import { AlertTriangle, Info, Copy, Check } from 'lucide-react';
 import { TokenSummary } from './token-badge';
 import { createChatPanelStyles } from './chat-panel.styles';
 import './chat-animations.css';
@@ -136,6 +136,7 @@ interface ChatPanelProps {
   isLoading?: boolean;
   fileCount?: number;
   filePaths?: string[];
+  onCopyAll?: () => void;
 }
 
 export const ChatPanel: React.FC<ChatPanelProps> = ({ messages, isLoading, fileCount = 0, filePaths = [] }) => {
@@ -143,6 +144,18 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ messages, isLoading, fileC
   const styles = createChatPanelStyles(theme.colors);
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
   const [typingMessages, setTypingMessages] = React.useState<Record<string, string>>({});
+  const [copiedMessageId, setCopiedMessageId] = React.useState<string | null>(null);
+
+  const handleCopyMessage = async (messageId: string, content: string) => {
+    try {
+      // Copy the entire AI message content
+      await navigator.clipboard.writeText(content);
+      setCopiedMessageId(messageId);
+      setTimeout(() => setCopiedMessageId(null), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
 
   // Auto-scroll to bottom when new messages arrive
   React.useEffect(() => {
@@ -152,34 +165,100 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ messages, isLoading, fileC
     }
   }, [messages, typingMessages]);
 
-  // Fade mask effect for AI messages
-  React.useEffect(() => {
+  // Fade mask effect for AI messages - use useLayoutEffect to run synchronously before paint
+  React.useLayoutEffect(() => {
     const aiMessages = messages.filter(m => m.type === 'ai' && m.isTyping);
     
     aiMessages.forEach(message => {
-      if (!typingMessages[message.id]) {
-        // Immediately show the mask (content hidden)
-        setTypingMessages(prev => ({ ...prev, [message.id]: 'masked' }));
-        
+      setTypingMessages(prev => {
+        // Only set to masked if not already in state
+        if (!prev[message.id]) {
+          return { ...prev, [message.id]: 'masked' };
+        }
+        return prev;
+      });
+    });
+  }, [messages]);
+
+  // Handle animation transitions after initial mask
+  React.useEffect(() => {
+    const aiMessages = messages.filter(m => m.type === 'ai' && m.isTyping);
+    
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    
+    aiMessages.forEach(message => {
+      if (typingMessages[message.id] === 'masked') {
         // Start the fade animation after a delay
-        setTimeout(() => {
-          setTypingMessages(prev => ({ ...prev, [message.id]: 'animating' }));
-        }, 500); // Increased delay to ensure loading animation is visible first
+        const animationTimer = setTimeout(() => {
+          setTypingMessages(prev => {
+            if (prev[message.id] === 'masked') {
+              return { ...prev, [message.id]: 'animating' };
+            }
+            return prev;
+          });
+        }, 800);
         
         // Remove mask after animation completes
-        setTimeout(() => {
+        const removeTimer = setTimeout(() => {
           setTypingMessages(prev => {
             const newState = { ...prev };
             delete newState[message.id];
             return newState;
           });
-        }, 2000); // 500ms delay + 1500ms animation
+        }, 2300);
+        
+        timers.push(animationTimer, removeTimer);
       }
     });
-  }, [messages]);
+    
+    return () => {
+      timers.forEach(timer => clearTimeout(timer));
+    };
+  }, [messages, typingMessages]);
 
   return (
     <div style={styles.container}>
+      {/* Floating Copy Button for Latest AI Message */}
+      {messages.length > 0 && messages[messages.length - 1]?.type === 'ai' && (
+        <button
+          onClick={() => handleCopyMessage(messages[messages.length - 1].id, messages[messages.length - 1].content)}
+          style={{
+            position: 'absolute',
+            top: '16px',
+            right: '16px',
+            zIndex: 100,
+            padding: '8px 14px',
+            backgroundColor: theme.colors.background.secondary,
+            border: 'none',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            fontSize: '13px',
+            fontWeight: 500,
+            color: theme.colors.text.primary,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            transition: 'all 0.15s',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = theme.colors.background.tertiary;
+            e.currentTarget.style.transform = 'translateY(-1px)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = theme.colors.background.secondary;
+            e.currentTarget.style.transform = 'translateY(0)';
+          }}
+          title="Copy AI response"
+        >
+          {copiedMessageId === messages[messages.length - 1].id ? (
+            <Check size={15} color="#10b981" style={{ transition: 'all 0.3s ease' }} />
+          ) : (
+            <Copy size={15} style={{ transition: 'all 0.3s ease' }} />
+          )}
+          <span>{copiedMessageId === messages[messages.length - 1].id ? 'Copied!' : 'Copy'}</span>
+        </button>
+      )}
 
       <div style={styles.messagesContainer} className="chat-messages">
         {messages.length === 0 && !isLoading ? (
@@ -189,7 +268,10 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ messages, isLoading, fileC
         ) : (
           <>
             {messages.map((message) => (
-              <div key={message.id} style={styles.getMessage(message.type)}>
+              <div key={message.id} style={{
+                ...styles.getMessage(message.type),
+                paddingTop: message.type === 'ai' ? '16px' : undefined,
+              }}>
                 {message.type !== 'ai' && (
                   <div style={styles.messageHeader}>
                     <div style={{
@@ -205,8 +287,9 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ messages, isLoading, fileC
                 
                 {/* Show analyzing status for AI messages */}
                 {message.type === 'ai' && (
-                  <div style={styles.analyzingContainer}>
-                    {typingMessages[message.id] && (
+                  <div style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', marginBottom: '16px', paddingLeft: '20px', paddingRight: '20px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    {typingMessages[message.id] === 'masked' && (
                       <div style={styles.animationSvgContainer}>
                         <svg
                           width="32"
@@ -251,22 +334,23 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ messages, isLoading, fileC
                       </div>
                     )}
                     <span style={styles.statusText}>
-                      {typingMessages[message.id] ? 'Summarizing' : 'Summarized'} {fileCount} file{fileCount !== 1 ? 's' : ''}
+                      {typingMessages[message.id] === 'masked' ? 'Summarizing' : 'Summarized'} {fileCount} file{fileCount !== 1 ? 's' : ''}
                     </span>
+                    </div>
                   </div>
                 )}
                 
-                <div style={styles.getMessageContent(
-                  message.type,
-                  typingMessages[message.id] === 'animating',
-                  typingMessages[message.id] === 'masked'
-                )}>
-                  {/* Only show content when not masked or when animation has started */}
-                  {!typingMessages[message.id] || typingMessages[message.id] === 'animating' ? (
-                    message.type === 'ai' ? renderMarkdown(message.content, styles) : message.content
-                  ) : null}
-                </div>
-                {message.type !== 'ai' && (
+                {/* Only render content container when ready */}
+                {(!typingMessages[message.id] || typingMessages[message.id] === 'animating') && (
+                  <div style={styles.getMessageContent(
+                    message.type,
+                    typingMessages[message.id] === 'animating',
+                    false
+                  )}>
+                    {message.type === 'ai' ? renderMarkdown(message.content, styles) : message.content}
+                  </div>
+                )}
+                {message.type !== 'ai' && message.timestamp && (
                   <div style={styles.timestamp}>
                     {message.timestamp.toLocaleTimeString()}
                   </div>
@@ -318,12 +402,12 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ messages, isLoading, fileC
                   </svg>
                 </div>
                 <span style={styles.loadingText}>
-                  Summarizing {fileCount} file{fileCount !== 1 ? 's' : ''}...
+                  Summarizing {fileCount} file{fileCount !== 1 ? 's' : ''}
                 </span>
               </div>
             )}
             <div ref={messagesEndRef} />
-            {filePaths.length > 0 && !Object.keys(typingMessages).some(id => typingMessages[id]) && (
+            {filePaths.length > 0 && !Object.keys(typingMessages).some(id => typingMessages[id] === 'masked') && (
               <TokenSummary filePaths={filePaths} className="token-summary-display" />
             )}
           </>

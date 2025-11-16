@@ -208,10 +208,19 @@ class SnipDiffApp {
     // LLM Summarization handlers
     ipcMain.handle('llm-summarize-diff', async (_event: IpcMainInvokeEvent, repoPath: string, files: string[]) => {
       try {
-        console.log('[LLM] Summarizing files:', files.length);
+        // Filter out binary and gitignored files
+        const filteredFiles = this.fileService.filterFilesForLLM(files);
+        console.log('[LLM] Summarizing files:', filteredFiles.length, '(filtered from', files.length, ')');
+        
+        if (filteredFiles.length === 0) {
+          return {
+            success: false,
+            error: 'No valid files to analyze (all files are binary or ignored)'
+          };
+        }
         
         // Try to get git diff first
-        const diffResult = await gitService.getDiff(repoPath, files, false);
+        const diffResult = await gitService.getDiff(repoPath, filteredFiles, false);
         
         let diffContent = '';
         const gitStatus = new Map<string, string>();
@@ -224,7 +233,7 @@ class SnipDiffApp {
         } else {
           // No diffs - read full file contents instead
           console.log('[LLM] No diffs found, reading full file contents');
-          const fileReadResult = await this.fileService.readMultipleFiles(files);
+          const fileReadResult = await this.fileService.readMultipleFiles(filteredFiles);
           
           if (fileReadResult.success && fileReadResult.data) {
             fileReadResult.data.forEach((f) => {
@@ -252,7 +261,7 @@ class SnipDiffApp {
         // Build context for AI
         const context = {
           repoPath,
-          selectedFiles: files,
+          selectedFiles: filteredFiles,
           gitStatus,
           diffContent,
           fileContents: fileContents.size > 0 ? fileContents : undefined,

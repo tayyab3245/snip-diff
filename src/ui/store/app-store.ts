@@ -35,7 +35,7 @@ interface ChatMessage {
   id: string;
   type: 'ai' | 'system' | 'error';
   content: string;
-  timestamp: Date;
+  timestamp?: Date;
   isTyping?: boolean;
 }
 
@@ -214,7 +214,7 @@ export const useAppStore = create<AppState>((set) => ({
       {
         ...message,
         id: `msg-${Date.now()}-${Math.random()}`,
-        timestamp: new Date(),
+        timestamp: message.type === 'error' ? undefined : new Date(),
       },
     ],
   })),

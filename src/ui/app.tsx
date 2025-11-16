@@ -159,13 +159,13 @@ const AppContent: React.FC = () => {
       toolbar={<ContextBar />}
       sidebar={<FileTree />}
       mainContent={<DiffView />}
-      chatPanel={<ChatPanel messages={chatMessages} isLoading={isChatLoading} fileCount={analyzedFilePaths.length} filePaths={analyzedFilePaths} />}
+      chatPanel={<ChatPanel messages={chatMessages} isLoading={isChatLoading} fileCount={analyzedFilePaths.length} filePaths={analyzedFilePaths} onCopyAll={handleCopyAll} />}
       chatPanelWidth={chatPanelWidth}
       onChatPanelResize={setChatPanelWidth}
       statusBar={
         <ActionBar 
-          onCopyAll={handleCopyAll}
           onSummarize={handleSummarize}
+          isDisabled={isChatLoading}
         />
       }
     />

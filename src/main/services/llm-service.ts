@@ -15,6 +15,8 @@ export interface SummarizeResult {
 
 export class LLMService {
   private initialized = false;
+  private lastRequestTime = 0;
+  private readonly minRequestInterval = 2000; // 2 seconds between requests
 
   async initialize(apiKey: string): Promise<void> {
     console.log('[LLM Service] initialize() called');
@@ -34,7 +36,7 @@ export class LLMService {
         apiKey,
         model: 'gemini-2.0-flash',
         temperature: 0.7,
-        maxTokens: 2048,
+        maxTokens: 8192,
       });
       
       this.initialized = true;
@@ -60,6 +62,19 @@ export class LLMService {
         error: 'LLM service not initialized'
       };
     }
+
+    // Rate limiting check
+    const now = Date.now();
+    const timeSinceLastRequest = now - this.lastRequestTime;
+    if (timeSinceLastRequest < this.minRequestInterval) {
+      const waitTime = Math.ceil((this.minRequestInterval - timeSinceLastRequest) / 1000);
+      return {
+        success: false,
+        error: `Please wait ${waitTime} second${waitTime > 1 ? 's' : ''} before making another request`
+      };
+    }
+
+    this.lastRequestTime = now;
 
     try {
       const result = await aiOrchestrator.summarizeChanges(context);
