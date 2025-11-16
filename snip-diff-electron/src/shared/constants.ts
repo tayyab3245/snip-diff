@@ -2,8 +2,6 @@
  * App constants for SNIP-DIFF
  */
 
-export const API_BASE_URL = 'http://127.0.0.1:8000';
-
 export const APP_CONFIG = {
   name: 'SNIP-DIFF',
   version: '1.0.0',

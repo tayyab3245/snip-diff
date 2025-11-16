@@ -4,7 +4,7 @@
  */
 
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { FileDiff, ChangeType } from '../types/diff';
+import { FileDiff, ChangeType } from '../../shared/types';
 
 export interface DiffEvent {
   type: 'file_diff' | 'ping' | 'subscription_confirmed' | 'subscription_updated' | 'error';

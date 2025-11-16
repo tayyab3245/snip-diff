@@ -8,8 +8,8 @@ import { spawn, ChildProcess } from 'child_process';
 import * as path from 'path';
 import * as os from 'os';
 import chokidar, { FSWatcher } from 'chokidar';
-import { gitService } from './git-service';
-import { llmService } from './llm-service';
+import { gitService } from './services/git-service';
+import { llmService } from './services/llm-service';
 
 class SnipDiffApp {
   private mainWindow: BrowserWindow | null = null;

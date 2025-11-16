@@ -73,6 +73,112 @@ export interface ApiRequestOptions {
   params?: Record<string, string>;
 }
 
+// ===== Diff View Types =====
+
+export enum LineType {
+  CONTEXT = "context",
+  ADDED = "added",
+  DELETED = "deleted",
+  MODIFIED = "modified"
+}
+
+export enum ChangeType {
+  ADDED = "added",
+  DELETED = "deleted",
+  MODIFIED = "modified",
+  RENAMED = "renamed",
+  UNCHANGED = "unchanged"
+}
+
+export enum DiffMode {
+  UNIFIED_FULL = "unified_full",
+  UNIFIED_CONTEXT = "unified_context",
+  SIDE_BY_SIDE = "side_by_side",
+  INLINE_FULL = "inline_full"
+}
+
+export interface LineToken {
+  line_no_old?: number;
+  line_no_new?: number;
+  line_type: LineType;
+  text: string;
+}
+
+export interface UnifiedHunk {
+  old_start: number;
+  old_count: number;
+  new_start: number;
+  new_count: number;
+  header: string;
+  lines: LineToken[];
+}
+
+export interface SideBySideRow {
+  left?: LineToken;
+  right?: LineToken;
+  row_type: LineType;
+}
+
+export interface DiffStats {
+  lines_added: number;
+  lines_deleted: number;
+  lines_modified: number;
+  lines_context: number;
+  total_changes: number;
+}
+
+export interface FileDiffMeta {
+  path: string;
+  old_path?: string;
+  change_type: ChangeType;
+  file_size_old: number;
+  file_size_new: number;
+  is_binary: boolean;
+  stats: DiffStats;
+}
+
+export interface FileDiff {
+  meta: FileDiffMeta;
+  hunks: UnifiedHunk[];
+  modes: Record<string, any>;
+}
+
+export interface RenderOptions {
+  context_radius: number;
+  max_lines?: number;
+  show_line_numbers: boolean;
+  collapse_unchanged: boolean;
+  char_level: boolean;
+}
+
+export interface CharDiff {
+  type: 'added' | 'deleted' | 'unchanged';
+  text: string;
+  start: number;
+  end: number;
+}
+
+export const DEFAULT_RENDER_OPTIONS: RenderOptions = {
+  context_radius: 3,
+  show_line_numbers: true,
+  collapse_unchanged: false,
+  char_level: false
+};
+
+export const DIFF_MODE_LABELS: Record<DiffMode, string> = {
+  [DiffMode.UNIFIED_FULL]: "Unified (Full)",
+  [DiffMode.UNIFIED_CONTEXT]: "Unified (Context)",
+  [DiffMode.SIDE_BY_SIDE]: "Side by Side",
+  [DiffMode.INLINE_FULL]: "Inline (Full)"
+};
+
+export const LINE_TYPE_SYMBOLS: Record<LineType, string> = {
+  [LineType.CONTEXT]: " ",
+  [LineType.ADDED]: "+",
+  [LineType.DELETED]: "-",
+  [LineType.MODIFIED]: "~"
+};
+
 // ===== Electron API Types =====
 
 export interface ElectronAPI {
