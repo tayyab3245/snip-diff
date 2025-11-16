@@ -35,6 +35,7 @@ interface AppState {
   selectedPath: string | null;
   fileTree: FileNode[];
   selectedFiles: Set<string>;
+  gitStatus: Map<string, string>; // path -> status (Modified, Untracked, etc.)
   
   // Diff state
   currentScanId: string | null;
@@ -59,6 +60,8 @@ interface AppState {
   setFileTree: (tree: FileNode[]) => void;
   toggleFileSelection: (filePath: string) => void;
   clearFileSelection: () => void;
+  selectChangedFiles: () => void;
+  setGitStatus: (status: Map<string, string>) => void;
   clearDiffResults: () => void;
   setScanStatus: (status: string | null) => void;
   setScanProgress: (progress: number | null) => void;
@@ -80,6 +83,7 @@ export const useAppStore = create<AppState>((set) => ({
   selectedPath: null,
   fileTree: [],
   selectedFiles: new Set(),
+  gitStatus: new Map(),
   currentScanId: null,
   scanStatus: null,
   scanProgress: null,
@@ -109,6 +113,18 @@ export const useAppStore = create<AppState>((set) => ({
   }),
   
   clearFileSelection: () => set({ selectedFiles: new Set() }),
+  
+  selectChangedFiles: () => set((state) => {
+    const changedFiles = new Set<string>();
+    state.gitStatus.forEach((status, path) => {
+      if (status !== 'Unchanged') {
+        changedFiles.add(path);
+      }
+    });
+    return { selectedFiles: changedFiles };
+  }),
+  
+  setGitStatus: (status) => set({ gitStatus: status }),
   
   clearDiffResults: () => set({ 
     diffSections: [], 
