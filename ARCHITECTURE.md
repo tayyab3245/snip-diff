@@ -1,16 +1,16 @@
 # SNIP-DIFF Architecture
 
-## 🏗️ Project Structure
+## Project Structure
 
 ```
 snip-diff-electron/
-├── config/                # ⚙️ Build Configuration (hidden from view)
+├── config/                # Build Configuration (hidden from view)
 │   ├── tsconfig.base.json      # Shared TypeScript settings
 │   ├── tsconfig.node.json      # Vite config compilation
 │   └── vite.config.ts          # Vite bundler configuration
 │
 ├── src/
-│   ├── main/              # 🔧 BACKEND (Node.js - Electron Main Process)
+│   ├── main/              # BACKEND (Node.js - Electron Main Process)
 │   │   ├── services/      # Business logic
 │   │   │   ├── git-service.ts      # Git operations (diff, status, content)
 │   │   │   └── llm-service.ts      # Gemini AI summarization
@@ -18,7 +18,7 @@ snip-diff-electron/
 │   │   ├── preload.ts     # Security bridge: exposes safe APIs to frontend
 │   │   └── tsconfig.json  # Backend TypeScript config (CommonJS, Node.js)
 │   │
-│   ├── renderer/          # 🎨 FRONTEND (React + Vite)
+│   ├── renderer/          # FRONTEND (React + Vite)
 │   │   ├── components/    # React UI components
 │   │   │   ├── action-bar.tsx      # Top action buttons
 │   │   │   ├── context-bar.tsx     # Context controls
@@ -32,7 +32,7 @@ snip-diff-electron/
 │   │   │   └── use-live-diff.ts    # File watching & diff updates
 │   │   ├── store/         # State management (Zustand)
 │   │   │   └── app-store.ts        # Global app state
-│   │   ├── theme/            # Design system
+│   │   ├── theme/         # Design system
 │   │   │   ├── dark-theme.ts       # Dark theme colors
 │   │   │   ├── tokens.ts           # Design tokens
 │   │   │   └── theme-provider.tsx  # Theme context
@@ -40,11 +40,11 @@ snip-diff-electron/
 │   │   ├── index.tsx      # React entry point (ReactDOM.render)
 │   │   └── index.html     # HTML shell
 │   │
-│   └── shared/            # 🔗 SHARED (Types & Constants)
+│   └── shared/            # SHARED (Types & Constants)
 │       ├── types.ts       # TypeScript interfaces (Git, LLM, Electron API)
 │       └── constants.ts   # App constants (config, window settings)
 │
-├── dist/                  # 📦 Build output
+├── dist/                  # Build output
 │   ├── main/             # Compiled backend
 │   └── renderer/         # Compiled frontend
 │
@@ -56,33 +56,33 @@ snip-diff-electron/
 
 ---
 
-## 🔄 Architecture Overview
+## Architecture Overview
 
 ### Electron Multi-Process Model
 
 **IMPORTANT:** Electron applications MUST have separate processes for security and performance:
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                    Electron App                         │
-├─────────────────────────────────────────────────────────┤
-│                                                          │
-│  ┌──────────────┐      ┌──────────────┐     ┌─────────┐ │
-│  │ Main Process │────▶│   Preload    │────▶│Renderer │ │
-│  │  (Backend)   │     │   (Bridge)   │     │(Frontend)│ │
-│  │   Node.js    │     │   Security   │     │  React  │ │
-│  │              │     │              │     │ Chromium│ │
-│  └──────────────┘     └──────────────┘     └─────────┘ │
-│   • Git Service         • IPC Bridge         • UI      │
-│   • LLM Service         • Type Safety        • State   │
-│   • File Watch          • Context Bridge     • Hooks   │
-│                                                          │
-└─────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                    Electron App                             │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  ┌──────────────┐      ┌──────────────┐     ┌────────────┐  │
+│  │ Main Process │────▶│   Preload    │────▶│  Renderer  │  │
+│  │  (Backend)   │      │   (Bridge)   │     │ (Frontend) │  │
+│  │   Node.js    │      │   Security   │     │    React   │  │
+│  │              │      │              │     │  Chromium  │  │
+│  └──────────────┘      └──────────────┘     └────────────┘  │
+│   • Git Service         • IPC Bridge         • UI           │
+│   • LLM Service         • Type Safety        • State        │
+│   • File Watch          • Context Bridge     • Hooks        │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 📝 TypeScript Configuration
+## TypeScript Configuration
 
 ### Simplified Config Structure
 
@@ -109,14 +109,14 @@ All TypeScript configs are now organized in `/config` folder (except root `tscon
 
 ### Why This Organization?
 
-- ✅ **Visual Clarity:** Build configs hidden in `/config`
-- ✅ **No Duplication:** Base config shared across projects
-- ✅ **Clear Purpose:** Root config = frontend, main/tsconfig.json = backend
-- ✅ **Less Clutter:** Root directory shows only essential files
+- **Visual Clarity:** Build configs hidden in `/config`
+- **No Duplication:** Base config shared across projects
+- **Clear Purpose:** Root config = frontend, main/tsconfig.json = backend
+- **Less Clutter:** Root directory shows only essential files
 
 ---
 
-## 🔐 Security Model: Why Preload?
+## Security Model: Why Preload?
 
 **Problem:** Renderer (Chromium) shouldn't have direct Node.js access (security risk)
 
@@ -138,7 +138,7 @@ window.electronAPI.selectFolder(); // Safe IPC call
 
 ---
 
-## 🧩 Separation of Concerns
+## Separation of Concerns
 
 ### Backend (`src/main/`)
 **Responsibility:** Business logic, system operations, security
@@ -162,7 +162,7 @@ window.electronAPI.selectFolder(); // Safe IPC call
 
 ---
 
-## 🚀 Development Flow
+## Development Flow
 
 ### Starting the App
 ```bash
@@ -182,23 +182,23 @@ npm run build
 
 ---
 
-## 📦 Key Technologies
+## Key Technologies
 
-| Layer | Technology | Purpose |
-|-------|-----------|---------|
-| **Desktop Shell** | Electron 28 | Cross-platform desktop app |
-| **Frontend** | React 18 + TypeScript | UI framework |
-| **Backend** | Node.js + TypeScript | Business logic |
-| **Bundler** | Vite 5 | Fast dev server & build |
-| **State** | Zustand | Lightweight state management |
-| **Styling** | Framer Motion | Animations & theme |
-| **Git** | Native `git` CLI | Diff operations |
-| **AI** | Google Gemini 1.5 Flash | Code summarization |
-| **Watch** | Chokidar | File system monitoring |
+| Layer           | Technology               | Purpose                       |
+|-----------------|--------------------------|-------------------------------|
+| Desktop Shell   | Electron 28              | Cross-platform desktop app    |
+| Frontend        | React 18 + TypeScript    | UI framework                  |
+| Backend         | Node.js + TypeScript     | Business logic                |
+| Bundler         | Vite 5                   | Fast dev server & build       |
+| State           | Zustand                  | Lightweight state management  |
+| Styling         | Framer Motion            | Animations & theme            |
+| Git             | Native `git` CLI         | Diff operations               |
+| AI              | Google Gemini 1.5 Flash  | Code summarization            |
+| Watch           | Chokidar                 | File system monitoring        |
 
 ---
 
-## 🎯 Use Cases
+## Use Cases
 
 1. **Copy Files to LLM** - Select files → Copy All → paste to ChatGPT
 2. **Summarize Files** - Select files → Summarize → Copy → paste to LLM (less tokens)
@@ -207,7 +207,7 @@ npm run build
 
 ---
 
-## 🔑 Environment Setup
+## Environment Setup
 
 Create `.env` file in `snip-diff-electron/`:
 ```env
@@ -218,7 +218,7 @@ Get API key: https://aistudio.google.com/app/apikey
 
 ---
 
-## 📚 File Naming Conventions
+## File Naming Conventions
 
 - **Backend Entry:** `main.ts` (Electron main process)
 - **Frontend Entry:** `index.tsx` (React root)
@@ -235,7 +235,7 @@ Get API key: https://aistudio.google.com/app/apikey
 
 ---
 
-## 🛠️ Common Tasks
+## Common Tasks
 
 ### Add New Backend Service
 1. Create `src/main/services/my-service.ts`
@@ -257,13 +257,13 @@ Get API key: https://aistudio.google.com/app/apikey
 
 ---
 
-## ✅ This Structure is CORRECT
+## This Structure is CORRECT
 
 The current organization follows **Electron best practices**:
-- ✅ Clear frontend/backend separation
-- ✅ Secure IPC communication
-- ✅ Proper TypeScript configuration for each target
-- ✅ Logical folder grouping (components, services, shared)
-- ✅ No unnecessary nesting
+- Clear frontend/backend separation
+- Secure IPC communication
+- Proper TypeScript configuration for each target
+- Logical folder grouping (components, services, shared)
+- No unnecessary nesting
 
 **The "multiple configs" and "subfolders" are NOT messy - they're required for Electron architecture!**

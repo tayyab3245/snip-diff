@@ -1,21 +1,16 @@
 # SNIP-DIFF Theme System
 
-A comprehensive, modular theme system for the SNIP-DIFF application with support for dark and light modes, neumorphic styling, and design tokens.
+A comprehensive dark theme system for the SNIP-DIFF application with neumorphic styling, design tokens, and component-specific colors.
 
 ## Architecture Overview
-
-The theme system follows a modular architecture with separate files as the source of truth:
 
 ```
 theme/
 ├── tokens.ts          # Design system tokens (spacing, typography, etc.)
-├── dark.theme.ts      # Complete dark theme color palette
-├── light.theme.ts     # Complete light theme color palette
+├── dark-theme.ts      # Complete dark theme color palette
 ├── index.ts           # Theme orchestration and utilities
-├── ThemeProvider.tsx  # React context provider
-├── styled.ts          # Styled components
-├── styled.d.ts        # TypeScript declarations
-└── demo.tsx           # Example usage
+├── theme-provider.tsx # React context provider
+└── README.md          # This documentation
 ```
 
 ## Quick Start
@@ -27,7 +22,7 @@ import { ThemeProvider } from './theme/ThemeProvider';
 
 function App() {
   return (
-    <ThemeProvider defaultTheme="light">
+    <ThemeProvider defaultTheme="dark">
       <YourAppComponents />
     </ThemeProvider>
   );
@@ -37,34 +32,11 @@ function App() {
 ### 2. Use the theme in components
 
 ```tsx
-import { useTheme } from './theme/ThemeProvider';
-import { GlobalThemeStyles, Button, Surface, Text } from './theme/styled';
+import { useTheme } from './theme';
 
 function MyComponent() {
-  const { theme, toggleTheme, isDark } = useTheme();
-  
-  return (
-    <>
-      <GlobalThemeStyles />
-      <Surface variant="raised">
-        <Text size="lg" weight="semibold">
-          Current theme: {theme.mode}
-        </Text>
-        <Button onClick={toggleTheme} variant="primary">
-          Switch to {isDark ? 'Light' : 'Dark'}
-        </Button>
-      </Surface>
-    </>
-  );
-}
-```
-
-### 3. Access theme values directly
-
-```tsx
-function CustomComponent() {
   const { theme } = useTheme();
-  
+
   return (
     <div style={{
       backgroundColor: theme.colors.background.primary,
@@ -72,122 +44,51 @@ function CustomComponent() {
       padding: theme.tokens.spacing.md,
       borderRadius: theme.tokens.radius.lg,
     }}>
-      Custom styled component
+      Themed component
     </div>
   );
 }
 ```
 
+### 3. Access theme values directly
+
+```tsx
+import { darkTheme } from './theme';
+
+const styles = {
+  background: darkTheme.background.primary,
+  textColor: darkTheme.text.primary,
+};
+```
+
 ## Theme Structure
 
 ### Design Tokens (tokens.ts)
-Shared values across all themes:
+Shared values across themes:
 - **Spacing**: `xs`, `sm`, `md`, `lg`, `xl`, `xxl`, `xxxl`
 - **Border Radius**: `none`, `sm`, `md`, `lg`, `xl`, `xxl`, `round`
 - **Typography**: Font families, sizes, weights, line heights
-- **Shadows**: Standard box shadows
+- **Shadows**: Standard box shadows and neumorphic shadows
 - **Transitions**: Animation timings
 - **Breakpoints**: Responsive design points
 
-### Dark Theme (dark.theme.ts)
+### Dark Theme (dark-theme.ts)
 Complete dark mode palette including:
 - **Primary Colors**: Blue scale (50-900)
 - **Backgrounds**: Primary, secondary, tertiary, card, modal
 - **Surfaces**: Base, raised, pressed, hover (neumorphic)
 - **Text**: Primary, secondary, tertiary, disabled, inverse
 - **Semantic**: Success, warning, error, info
-- **Borders**: Primary, secondary, tertiary
-- **Shadows**: Standard and neumorphic shadows
-- **Component Colors**: FileTree, DiffViewer, TitleBar, etc.
-
-### Light Theme (light.theme.ts)
-Matching light mode structure with appropriate colors.
-
-## Using Styled Components
-
-### Pre-built Components
-
-```tsx
-import { 
-  Container, 
-  FlexContainer, 
-  Surface, 
-  Button, 
-  Input, 
-  Text, 
-  Divider 
-} from './theme/styled';
-
-// Layout
-<Container maxWidth="1200px">
-  <FlexContainer direction="column" gap="20px">
-    <Surface variant="raised" padding="24px">
-      Content here
-    </Surface>
-  </FlexContainer>
-</Container>
-
-// Typography
-<Text size="xl" weight="bold" variant="primary">
-  Heading
-</Text>
-<Text size="sm" variant="secondary">
-  Subtitle
-</Text>
-
-// Buttons
-<Button variant="primary" size="lg" onClick={handleClick}>
-  Primary Action
-</Button>
-<Button variant="secondary" size="sm">
-  Secondary Action
-</Button>
-
-// Inputs
-<Input placeholder="Enter text..." />
-<Input variant="filled" hasError />
-```
-
-### Component Variants
-
-**Surface variants:**
-- `flat` (default): Basic border
-- `raised`: Elevated appearance
-- `pressed`: Inset appearance
-
-**Button variants:**
-- `primary`: Main brand color
-- `secondary`: Subtle background
-- `ghost`: Transparent background
-
-**Text variants:**
-- `primary`: Main text color
-- `secondary`: Muted text
-- `tertiary`: Very muted text
-- `error`: Error color
-- `success`: Success color
-- `warning`: Warning color
+- **Borders**: Primary, secondary, light, focus
+- **Component Colors**: FileTree, DiffViewer, TitleBar, Toolbar, etc.
+- **Neumorphic Shadows**: Raised, pressed, and float effects
 
 ## Theme Hooks
 
 ### useTheme()
 Main theme hook providing:
 ```tsx
-const {
-  theme,        // Current enhanced theme object
-  themeMode,    // 'light' | 'dark'
-  toggleTheme,  // Function to switch themes
-  setThemeMode, // Function to set specific theme
-  isDark,       // Boolean for dark mode
-  isLight,      // Boolean for light mode
-} = useTheme();
-```
-
-### useThemeValue()
-Conditional values based on theme:
-```tsx
-const iconColor = useThemeValue('#333', '#fff'); // light, dark
-const fontSize = useThemeValue('14px', '16px');
+const { theme, themeMode, isDark } = useTheme();
 ```
 
 ### useThemedStyles()
@@ -198,79 +99,136 @@ const styles = useThemedStyles((theme) => ({
     backgroundColor: theme.colors.background.primary,
     padding: theme.tokens.spacing.md,
   },
-  text: {
-    color: theme.colors.text.primary,
-    fontSize: theme.tokens.typography.fontSize.lg,
-  },
 }));
 ```
 
-## Customization
-
-### Adding New Colors
-1. Add to both `dark.theme.ts` and `light.theme.ts`
-2. Maintain consistent structure between themes
-3. Use semantic naming for reusability
-
-### Extending Design Tokens
-1. Add new tokens to `tokens.ts`
-2. Update TypeScript interfaces if needed
-3. Use tokens consistently across themes
-
-### Custom Components
-Create theme-aware components:
+### useThemeValue()
+Conditional values (currently always returns dark values):
 ```tsx
-import styled from 'styled-components';
-import { EnhancedTheme } from './theme';
-
-const CustomCard = styled.div<{ variant?: 'default' | 'highlighted' }>`
-  background-color: ${({ theme, variant }) => 
-    variant === 'highlighted' 
-      ? theme.colors.primary[100] 
-      : theme.colors.background.card
-  };
-  padding: ${({ theme }) => theme.tokens.spacing.lg};
-  border-radius: ${({ theme }) => theme.tokens.radius.lg};
-  border: 1px solid ${({ theme }) => theme.colors.border.primary};
-`;
+const color = useThemeValue(lightValue, darkValue); // Always returns darkValue
 ```
 
-## Best Practices
+## CSS Custom Properties
 
-1. **Use semantic color names** instead of specific colors
-2. **Leverage design tokens** for consistent spacing and typography
-3. **Test in both light and dark modes** during development
-4. **Use the pre-built components** when possible for consistency
-5. **Follow the component variant patterns** when creating custom components
+The theme automatically generates CSS variables on the document root:
 
-## Integration with Existing Components
+```css
+:root {
+  --color-primary-500: #0ea5e9;
+  --color-bg-primary: #2b303b;
+  --color-text-primary: #e5e7eb;
+  --spacing-md: 12px;
+  --radius-lg: 12px;
+}
+```
 
-To integrate with existing SNIP-DIFF components:
+## Component Integration
 
-1. **Wrap the app** with `ThemeProvider`
-2. **Replace hardcoded colors** with theme values
-3. **Use styled components** or theme hooks
-4. **Apply GlobalThemeStyles** for baseline styling
+All major SNIP-DIFF components use the theme system:
 
-Example migration:
+- **FileTree**: Uses `theme.colors.components.fileTree.*`
+- **TitleBar**: Uses `theme.colors.components.titleBar.*`
+- **ActionBar**: Uses `theme.colors.background.secondary`
+- **Layout**: Uses `theme.colors.background.primary`
+- **ContextBar**: Uses neumorphic shadows
+
+## Color Palette
+
+### Primary Colors
+```
+50: #f0f9ff  100: #e0f2fe  200: #bae6fd
+300: #7dd3fc  400: #38bdf8  500: #0ea5e9 (main)
+600: #0284c7  700: #0369a1  800: #075985
+900: #0c4a6e
+```
+
+### Background Hierarchy
+- **Primary**: `#2b303b` (main app background)
+- **Secondary**: `#343941` (elevated surfaces)
+- **Tertiary**: `#3c424e` (highest elevation)
+- **Card**: `#343941` (card backgrounds)
+
+### Text Colors
+- **Primary**: `#e5e7eb` (main text)
+- **Secondary**: `#adb5bd` (muted text)
+- **Tertiary**: `#6c7a89` (very muted)
+- **Disabled**: `#545d6d` (inactive text)
+
+## Neumorphic Design
+
+The theme includes neumorphic shadow effects:
+
+```css
+/* Raised effect */
+box-shadow:
+  20px 20px 60px #bebebe,
+  -20px -20px 60px #ffffff;
+
+/* Pressed effect */
+box-shadow:
+  inset 20px 20px 60px #bebebe,
+  inset -20px -20px 60px #ffffff;
+```
+
+## Current Limitations
+
+- **Dark theme only**: No light theme implementation
+- **No theme switching**: Always uses dark theme
+- **No styled components**: Uses inline styles and CSS modules
+- **No pre-built UI library**: Components use theme values directly
+
+## Future Enhancements
+
+- Light theme implementation
+- Theme switching capability
+- Styled components library
+- Pre-built UI component library
+- Theme customization options
+
+## Usage Examples
+
+### Basic Theming
 ```tsx
-// Before
-<div style={{ backgroundColor: '#1a1a2e', color: '#f8fafc' }}>
+function ThemedButton({ children, onClick }) {
+  const { theme } = useTheme();
 
-// After
-<div style={{ 
-  backgroundColor: theme.colors.background.secondary, 
-  color: theme.colors.text.primary 
-}}>
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        backgroundColor: theme.colors.primary[500],
+        color: theme.colors.text.inverse,
+        padding: `${theme.tokens.spacing.sm} ${theme.tokens.spacing.md}`,
+        borderRadius: theme.tokens.radius.md,
+        border: 'none',
+        cursor: 'pointer',
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+```
+
+### Component-Specific Styling
+```tsx
+function FileTreeItem({ file, isSelected }) {
+  const { theme } = useTheme();
+
+  return (
+    <div style={{
+      backgroundColor: isSelected
+        ? theme.colors.components.fileTree.selected
+        : theme.colors.components.fileTree.background,
+      color: theme.colors.components.fileTree.text,
+      padding: theme.tokens.spacing.sm,
+    }}>
+      {file.name}
+    </div>
+  );
+}
 ```
 
 ## Development
 
-Run the theme demo to see all components and colors:
-```tsx
-import ThemeDemoApp from './theme/demo';
-
-// Render ThemeDemoApp to see the full theme showcase
-```
-
-The demo includes examples of all components, color palettes, typography scales, and interactive theme switching.
+The theme system is actively used throughout the SNIP-DIFF application and provides consistent styling across all components.
