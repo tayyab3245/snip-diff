@@ -4,6 +4,11 @@
 
 ```
 snip-diff-electron/
+├── config/                # ⚙️ Build Configuration (hidden from view)
+│   ├── tsconfig.base.json      # Shared TypeScript settings
+│   ├── tsconfig.node.json      # Vite config compilation
+│   └── vite.config.ts          # Vite bundler configuration
+│
 ├── src/
 │   ├── main/              # 🔧 BACKEND (Node.js - Electron Main Process)
 │   │   ├── services/      # Business logic
@@ -27,12 +32,12 @@ snip-diff-electron/
 │   │   │   └── use-live-diff.ts    # File watching & diff updates
 │   │   ├── store/         # State management (Zustand)
 │   │   │   └── app-store.ts        # Global app state
-│   │   ├── theme/         # Design system
+│   │   ├── theme/            # Design system
 │   │   │   ├── dark-theme.ts       # Dark theme colors
 │   │   │   ├── tokens.ts           # Design tokens
 │   │   │   └── theme-provider.tsx  # Theme context
 │   │   ├── app.tsx        # Root React component
-│   │   ├── main.tsx       # React entry point (ReactDOM.render)
+│   │   ├── index.tsx      # React entry point (ReactDOM.render)
 │   │   └── index.html     # HTML shell
 │   │
 │   └── shared/            # 🔗 SHARED (Types & Constants)
@@ -43,11 +48,10 @@ snip-diff-electron/
 │   ├── main/             # Compiled backend
 │   └── renderer/         # Compiled frontend
 │
+├── .env                  # Environment variables (GEMINI_API_KEY)
 ├── package.json          # Dependencies & scripts
-├── tsconfig.json         # Frontend TypeScript config (ESNext, React)
-├── tsconfig.node.json    # Vite config TypeScript settings
-├── vite.config.ts        # Vite bundler configuration
-└── .env                  # Environment variables (GEMINI_API_KEY)
+├── tsconfig.json         # Root TypeScript config (extends base)
+└── README.md             # Quick start guide
 ```
 
 ---
@@ -78,28 +82,37 @@ snip-diff-electron/
 
 ---
 
-## 📝 Why Multiple TypeScript Configs?
+## 📝 TypeScript Configuration
 
-### 1. **Root `tsconfig.json`** - Frontend Configuration
-- **Target:** React renderer process
-- **Module System:** ESNext (for Vite)
-- **JSX:** React JSX support
-- **Includes:** `src/renderer`, `src/shared`
-- **Used by:** Vite bundler for frontend
+### Simplified Config Structure
 
-### 2. **`src/main/tsconfig.json`** - Backend Configuration
-- **Target:** Node.js main process
-- **Module System:** CommonJS (Electron compatibility)
-- **No JSX:** Pure TypeScript/Node.js
-- **Output:** `dist/main`
-- **Used by:** TypeScript compiler for backend
+All TypeScript configs are now organized in `/config` folder (except root `tsconfig.json`):
 
-### 3. **`tsconfig.node.json`** - Build Tools Configuration
-- **Target:** Vite config file
-- **Module System:** ESNext
-- **Used by:** `vite.config.ts` compilation
+**`tsconfig.json`** (Root - Frontend)
+- Extends `config/tsconfig.base.json`
+- Configures path aliases (`@/*`, `@shared/*`)
+- Used by: Vite for React compilation
 
-**Why separate?** Backend (Node.js) and frontend (browser) need different compilation settings.
+**`config/tsconfig.base.json`** (Shared Settings)
+- Common TypeScript compiler options
+- Target: ES2020, React JSX
+- Strict mode enabled
+
+**`config/tsconfig.node.json`** (Build Tools)
+- Configures Vite config compilation
+- Hidden from day-to-day development
+
+**`src/main/tsconfig.json`** (Backend - Hidden in src/main/)
+- Node.js + CommonJS for Electron main process
+- Includes shared types
+- Output: `dist/main`
+
+### Why This Organization?
+
+- ✅ **Visual Clarity:** Build configs hidden in `/config`
+- ✅ **No Duplication:** Base config shared across projects
+- ✅ **Clear Purpose:** Root config = frontend, main/tsconfig.json = backend
+- ✅ **Less Clutter:** Root directory shows only essential files
 
 ---
 
@@ -207,11 +220,18 @@ Get API key: https://aistudio.google.com/app/apikey
 
 ## 📚 File Naming Conventions
 
+- **Backend Entry:** `main.ts` (Electron main process)
+- **Frontend Entry:** `index.tsx` (React root)
 - **Components:** `kebab-case.tsx` (e.g., `file-tree.tsx`)
 - **Hooks:** `use-*.ts` (e.g., `use-live-diff.ts`)
 - **Services:** `*-service.ts` (e.g., `git-service.ts`)
-- **Types:** `types.ts` (centralized)
-- **Constants:** `constants.ts` (centralized)
+- **Types:** `types.ts` (centralized in shared/)
+- **Constants:** `constants.ts` (centralized in shared/)
+
+**Why `index.tsx` instead of `main.tsx`?**
+- Avoids confusion with backend `main.ts`
+- Standard convention: `index.*` = entry point
+- Clear separation: `main.ts` = backend, `index.tsx` = frontend
 
 ---
 
