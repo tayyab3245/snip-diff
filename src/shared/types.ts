@@ -37,6 +37,11 @@ export interface GitFileChange {
   diff: string;
 }
 
+export interface FileChangeEvent {
+  path: string;
+  status: GitStatus;
+}
+
 export interface GitDiffResult {
   success: boolean;
   files: GitFileChange[];
@@ -198,7 +203,7 @@ export interface ElectronAPI {
   readMultipleFiles: (filePaths: string[]) => Promise<ApiResponse<Array<{ path: string; content: string }>>>;
   
   // Git operations
-  getGitDiff: (directory: string, filePaths?: string[]) => Promise<GitDiffResult>;
+  getGitDiff: (directory: string, filePaths?: string[], fullContext?: boolean) => Promise<GitDiffResult>;
   getGitFileContent: (directory: string, filePath: string, ref?: string) => Promise<{
     success: boolean;
     content?: string;
@@ -207,9 +212,9 @@ export interface ElectronAPI {
   isGitRepo: (directory: string) => Promise<{ success: boolean; isRepo: boolean }>;
   
   // File watching
-  startWatch: (filePaths: string[]) => Promise<{ success: boolean; error?: string }>;
+  startWatch: (filePaths: string[]) => Promise<{ success: boolean; fileStatuses?: Record<string, string>; error?: string }>;
   stopWatch: () => Promise<{ success: boolean; error?: string }>;
-  onFileChanged: (callback: (filePath: string) => void) => void;
+  onFileChanged: (callback: (event: FileChangeEvent) => void) => void;
   
   // LLM operations
   llmSummarizeFile: (content: string, filePath: string) => Promise<LLMSummarizeResult>;

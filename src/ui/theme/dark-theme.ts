@@ -22,11 +22,11 @@ export const darkTheme = {
 
   // === SURFACES & BACKGROUNDS ===
   background: {
-    primary: '#2b303b',      // Main app background - matching mockup
-    secondary: '#343941',    // Secondary background
-    tertiary: '#3c424e',     // Elevated surfaces
-    card: '#343941',         // Card backgrounds
-    modal: '#2b303b',        // Modal backgrounds
+    primary: '#1a1d23',      // Main app background - darker
+    secondary: '#21252b',    // Secondary background - darker
+    tertiary: '#282c34',     // Elevated surfaces - darker
+    card: '#21252b',         // Card backgrounds - darker
+    modal: '#1a1d23',        // Modal backgrounds - darker
   },
 
   // === NEUMORPHIC SURFACES ===
@@ -56,9 +56,9 @@ export const darkTheme = {
 
   // === BORDERS ===
   border: {
-    primary: '#1e2229',      // Primary borders - darker
-    secondary: '#3c424e',    // Secondary borders
-    light: '#4a5261',        // Light borders
+    primary: '#0d0f12',      // Primary borders - much darker
+    secondary: '#282c34',    // Secondary borders - darker
+    light: '#3a3f4b',        // Light borders - darker
     focus: '#0ea5e9',        // Focus rings
   },
 
@@ -90,26 +90,27 @@ export const darkTheme = {
   components: {
     // File tree
     fileTree: {
-      background: '#2b303b',
-      hover: '#3c424e',
-      selected: '#3c424e',
+      background: '#1a1d23',
+      hover: '#282c34',
+      selected: '#282c34',
       text: '#adb5bd',
       icon: '#6c7a89',
     },
     
     // Diff viewer
     diffViewer: {
-      background: '#343941',
+      background: '#21252b',
       added: '#22c55e',
       removed: '#ef4444',
       modified: '#f59e0b',
       lineNumber: '#6c7a89',
-      gutter: '#2b303b',
+      gutter: '#1a1d23',
+      border: '#282c34',
     },
 
     // Title bar
     titleBar: {
-      background: '#2b303b',
+      background: '#1a1d23',
       text: '#e5e7eb',
       controls: '#6c7a89',
       controlsHover: '#adb5bd',
@@ -117,23 +118,23 @@ export const darkTheme = {
 
     // Toolbar
     toolbar: {
-      background: '#343941',
-      button: '#4a5261',
-      buttonHover: '#545d6d',
+      background: '#21252b',
+      button: '#3a3f4b',
+      buttonHover: '#454d5d',
       buttonActive: '#0ea5e9',
       text: '#adb5bd',
     },
 
     // Status overlay
     statusOverlay: {
-      background: 'rgba(43, 48, 59, 0.95)',
+      background: 'rgba(26, 29, 35, 0.95)',
       text: '#e5e7eb',
       accent: '#0ea5e9',
     },
 
     // Progress indicators
     progress: {
-      background: '#3c424e',
+      background: '#282c34',
       fill: '#0ea5e9',
       text: '#e5e7eb',
     },

@@ -9,9 +9,7 @@ import { useAppStore } from '../store/app-store';
 
 export const ContextBar: React.FC = () => {
   const { theme } = useTheme();
-  const { viewMode, diffMode, setViewMode, setDiffMode, selectChangedFiles, gitStatus } = useAppStore();
-
-  const hasChangedFiles = Array.from(gitStatus.values()).some(status => status !== 'Unchanged');
+  const { viewMode, diffMode, setViewMode, setDiffMode } = useAppStore();
 
   const contextBarStyle: React.CSSProperties = {
     height: '56px',
@@ -52,26 +50,12 @@ export const ContextBar: React.FC = () => {
   return (
     <div style={contextBarStyle}>
       <div style={rightSectionStyle}>
-        {hasChangedFiles && (
-          <button
-            style={{
-              ...toggleButtonStyle(false),
-              backgroundColor: theme.colors.primary[500],
-              color: '#ffffff',
-              padding: '8px 16px',
-            }}
-            onClick={() => selectChangedFiles()}
-          >
-            Select Changed Files
-          </button>
-        )}
-
         <div style={toggleGroupStyle}>
           <button
             style={toggleButtonStyle(viewMode === 'incremental')}
             onClick={() => setViewMode('incremental')}
           >
-            Incremental
+            Changes Only
           </button>
           <button
             style={toggleButtonStyle(viewMode === 'full')}

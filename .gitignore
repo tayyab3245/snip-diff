@@ -39,8 +39,16 @@ yarn-debug.log*
 yarn-error.log*
 
 # Build outputs
-/snip-diff-electron/dist/
-/snip-diff-electron/out/
+/dist/
+/out/
+
+# TypeScript compiled files in source
+/src/**/*.js
+/src/**/*.d.ts
+/src/**/*.js.map
+/src/**/*.d.ts.map
+!/src/**/*.d.ts
+# Allow intentional .d.ts files but ignore generated ones
 
 # Environment files
 .env.local

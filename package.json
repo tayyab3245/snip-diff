@@ -1,8 +1,8 @@
 {
-  "name": "snip-diff-electron",
+  "name": "src",
   "version": "1.0.0",
   "description": "Electron frontend for SNIP-DIFF file comparison tool",
-  "main": "dist/main/main.js",
+  "main": "dist/main/main/main.js",
   "homepage": "./",
   "scripts": {
     "dev": "concurrently \"npm run dev:ui\" \"npm run dev:main\"",
@@ -49,7 +49,6 @@
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
-    "chokidar": "^4.0.3",
     "dotenv": "^17.2.3",
     "framer-motion": "^10.16.16",
     "react": "^18.2.0",

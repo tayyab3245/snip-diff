@@ -5,15 +5,12 @@
 
 import { app, BrowserWindow, ipcMain, dialog, IpcMainInvokeEvent, Event } from 'electron';
 import * as path from 'path';
-import chokidar, { FSWatcher } from 'chokidar';
 import { gitService } from './services/git-service';
 import { llmService } from './services/llm-service';
 import { FileService } from './services/file-service';
 
 class SnipDiffApp {
   private mainWindow: BrowserWindow | null = null;
-  private fileWatcher: FSWatcher | null = null;
-  private watchedFiles: Set<string> = new Set();
   private readonly isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
   private fileService = new FileService();
 
@@ -111,10 +108,10 @@ class SnipDiffApp {
 
   private setupIpcHandlers() {
     // Get Git diff for files
-    ipcMain.handle('get-git-diff', async (_event: IpcMainInvokeEvent, directory: string, filePaths?: string[]) => {
+    ipcMain.handle('get-git-diff', async (_event: IpcMainInvokeEvent, directory: string, filePaths?: string[], fullContext?: boolean) => {
       try {
-        console.log('[Git] Getting diff for:', directory, filePaths);
-        const result = await gitService.getDiff(directory, filePaths);
+        console.log('[Git] Getting diff for:', directory, filePaths, 'fullContext:', fullContext);
+        const result = await gitService.getDiff(directory, filePaths, fullContext);
         console.log('[Git] Diff result:', result);
         return result;
       } catch (error) {
@@ -147,6 +144,23 @@ class SnipDiffApp {
         return { success: true, isRepo };
       } catch (error) {
         return { success: false, isRepo: false };
+      }
+    });
+
+    // Get Git status for all files in directory
+    ipcMain.handle('get-git-status', async (_event: IpcMainInvokeEvent, directory: string) => {
+      try {
+        console.log('[Git] Getting status for:', directory);
+        const statuses = await gitService.getStatus(directory);
+        console.log('[Git] Status result:', statuses.length, 'files');
+        return { success: true, statuses };
+      } catch (error) {
+        console.error('[Git] Error getting status:', error);
+        return {
+          success: false,
+          statuses: [],
+          error: error instanceof Error ? error.message : 'Unknown error'
+        };
       }
     });
 
@@ -220,77 +234,17 @@ class SnipDiffApp {
 
     // Start watching files
     ipcMain.handle('start-watch', async (_event: IpcMainInvokeEvent, filePaths: string[]) => {
-      try {
-        console.log('[Watch] Starting watch for files:', filePaths);
-        
-        // Stop existing watcher if any
-        if (this.fileWatcher) {
-          await this.fileWatcher.close();
-          this.fileWatcher = null;
-        }
-        
-        // Clear watched files
-        this.watchedFiles.clear();
-        filePaths.forEach(fp => this.watchedFiles.add(fp));
-        
-        // Create new watcher
-        this.fileWatcher = chokidar.watch(filePaths, {
-          persistent: true,
-          ignoreInitial: true,
-          awaitWriteFinish: {
-            stabilityThreshold: 100,
-            pollInterval: 50
-          }
-        });
-        
-        // Handle file changes
-        this.fileWatcher.on('change', async (filePath: string) => {
-          console.log('[Watch] File changed:', filePath);
-          
-          // Notify renderer about the change
-          if (this.mainWindow && !this.mainWindow.isDestroyed()) {
-            this.mainWindow.webContents.send('file-changed', filePath);
-          }
-        });
-        
-        this.fileWatcher.on('error', (error) => {
-          console.error('[Watch] Error:', error);
-        });
-        
-        console.log('[Watch] Started successfully');
-        return { success: true };
-        
-      } catch (error) {
-        console.error('[Watch] Failed to start:', error);
-        return { 
-          success: false, 
-          error: error instanceof Error ? error.message : 'Unknown error' 
-        };
-      }
+      // This handler is now deprecated - Git tracking is automatic
+      // Keeping for backward compatibility but returning success immediately
+      console.log('[Watch] Deprecated: Git tracking is automatic, no manual watch needed');
+      return { success: true };
     });
     
     // Stop watching files
     ipcMain.handle('stop-watch', async () => {
-      try {
-        console.log('[Watch] Stopping watch');
-        
-        if (this.fileWatcher) {
-          await this.fileWatcher.close();
-          this.fileWatcher = null;
-        }
-        
-        this.watchedFiles.clear();
-        
-        console.log('[Watch] Stopped successfully');
-        return { success: true };
-        
-      } catch (error) {
-        console.error('[Watch] Failed to stop:', error);
-        return { 
-          success: false, 
-          error: error instanceof Error ? error.message : 'Unknown error' 
-        };
-      }
+      // This handler is now deprecated - Git tracking is automatic
+      console.log('[Watch] Deprecated: Git tracking is automatic, no manual watch needed');
+      return { success: true };
     });
 
     // API request handler - proxy requests to FastAPI backend
@@ -419,12 +373,8 @@ class SnipDiffApp {
   }
 
   private cleanup() {
-    // Close file watcher
-    if (this.fileWatcher) {
-      console.log('Closing file watcher...');
-      this.fileWatcher.close();
-      this.fileWatcher = null;
-    }
+    // No cleanup needed - Git tracking is automatic
+    console.log('Cleaning up...');
   }
 }
 

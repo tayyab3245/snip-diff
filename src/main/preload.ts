@@ -4,7 +4,7 @@
  */
 
 import { contextBridge, ipcRenderer } from 'electron';
-import type { ElectronAPI } from '../shared/types';
+import type { ElectronAPI, FileChangeEvent } from '../shared/types';
 
 // Expose protected methods that allow the renderer process to use
 // the ipcRenderer without exposing the entire object
@@ -22,8 +22,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   selectFiles: () => ipcRenderer.invoke('select-files'),
 
   // Git operations
-  getGitDiff: (directory: string, filePaths?: string[]) => 
-    ipcRenderer.invoke('get-git-diff', directory, filePaths),
+  getGitDiff: (directory: string, filePaths?: string[], fullContext?: boolean) => 
+    ipcRenderer.invoke('get-git-diff', directory, filePaths, fullContext),
+  getGitStatus: (directory: string) =>
+    ipcRenderer.invoke('get-git-status', directory),
   getGitFileContent: (directory: string, filePath: string, ref?: string) => 
     ipcRenderer.invoke('get-git-file-content', directory, filePath, ref),
   isGitRepo: (directory: string) => 
@@ -40,8 +42,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // File watching
   startWatch: (filePaths: string[]) => ipcRenderer.invoke('start-watch', filePaths),
   stopWatch: () => ipcRenderer.invoke('stop-watch'),
-  onFileChanged: (callback: (_filePath: string) => void) => {
-    ipcRenderer.on('file-changed', (_: Electron.IpcRendererEvent, filePath: string) => callback(filePath));
+  onFileChanged: (callback: (event: FileChangeEvent) => void) => {
+    const listener = (_: Electron.IpcRendererEvent, event: FileChangeEvent) => callback(event);
+    ipcRenderer.on('file-changed', listener);
+    
+    // Return cleanup function
+    return () => {
+      ipcRenderer.removeListener('file-changed', listener);
+    };
   },
 
   // LLM operations

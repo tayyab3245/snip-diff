@@ -7,21 +7,15 @@ import React from 'react';
 import { useTheme } from '../theme';
 
 interface ActionBarProps {
-  onWatch: () => void;
   onPrompts: () => void;
   onCopyAll: () => void;
   onSummarize: () => void;
-  isWatching: boolean;
-  watchDisabled: boolean;
 }
 
 export const ActionBar: React.FC<ActionBarProps> = ({ 
-  onWatch, 
   onPrompts, 
   onCopyAll, 
-  onSummarize,
-  isWatching, 
-  watchDisabled 
+  onSummarize
 }) => {
   const { theme } = useTheme();
 
@@ -50,25 +44,8 @@ export const ActionBar: React.FC<ActionBarProps> = ({
     gap: '6px',
   };
 
-  const primaryButtonStyle: React.CSSProperties = {
-    ...actionButtonStyle,
-    backgroundColor: watchDisabled ? theme.colors.background.tertiary : (isWatching ? '#38bdf8' : 'transparent'),
-    cursor: watchDisabled ? 'not-allowed' : 'pointer',
-    opacity: watchDisabled ? 0.5 : 1,
-    border: isWatching ? '1px solid #38bdf8' : `1px solid ${theme.colors.border.secondary}`,
-  };
-
   return (
     <div style={containerStyle}>
-      <button
-        style={primaryButtonStyle}
-        onClick={onWatch}
-        disabled={watchDisabled}
-      >
-        <span>{isWatching ? '⏸' : '▶'}</span>
-        <span>{isWatching ? 'Stop Watch' : 'Watch'}</span>
-      </button>
-
       <button
         style={actionButtonStyle}
         onClick={onPrompts}

@@ -28,6 +28,7 @@ interface OpenFile {
   path: string;
   content: string;
   language?: string;
+  gitStatus?: string; // Git status: Modified, Added, Deleted, Untracked, etc.
 }
 
 interface AppState {
@@ -36,6 +37,7 @@ interface AppState {
   fileTree: FileNode[];
   selectedFiles: Set<string>;
   gitStatus: Map<string, string>; // path -> status (Modified, Untracked, etc.)
+  modifiedFiles: Set<string>; // Files that have been modified while watching
   
   // Diff state
   currentScanId: string | null;
@@ -59,9 +61,9 @@ interface AppState {
   setSelectedPath: (path: string | null) => void;
   setFileTree: (tree: FileNode[]) => void;
   toggleFileSelection: (filePath: string) => void;
-  clearFileSelection: () => void;
-  selectChangedFiles: () => void;
   setGitStatus: (status: Map<string, string>) => void;
+  markFileModified: (path: string) => void;
+  clearModifiedFiles: () => void;
   clearDiffResults: () => void;
   setScanStatus: (status: string | null) => void;
   setScanProgress: (progress: number | null) => void;
@@ -84,6 +86,7 @@ export const useAppStore = create<AppState>((set) => ({
   fileTree: [],
   selectedFiles: new Set(),
   gitStatus: new Map(),
+  modifiedFiles: new Set(),
   currentScanId: null,
   scanStatus: null,
   scanProgress: null,
@@ -94,8 +97,8 @@ export const useAppStore = create<AppState>((set) => ({
   isLoading: false,
   sidebarWidth: 350,
   isDarkMode: false,
-  viewMode: 'full',
-  diffMode: 'side-by-side',
+  viewMode: 'incremental',
+  diffMode: 'unified',
 
   // Actions
   setSelectedPath: (path) => set({ selectedPath: path }),
@@ -112,19 +115,15 @@ export const useAppStore = create<AppState>((set) => ({
     return { selectedFiles: newSelection };
   }),
   
-  clearFileSelection: () => set({ selectedFiles: new Set() }),
+  setGitStatus: (status) => set({ gitStatus: status }),
   
-  selectChangedFiles: () => set((state) => {
-    const changedFiles = new Set<string>();
-    state.gitStatus.forEach((status, path) => {
-      if (status !== 'Unchanged') {
-        changedFiles.add(path);
-      }
-    });
-    return { selectedFiles: changedFiles };
+  markFileModified: (path) => set((state) => {
+    const newModified = new Set(state.modifiedFiles);
+    newModified.add(path);
+    return { modifiedFiles: newModified };
   }),
   
-  setGitStatus: (status) => set({ gitStatus: status }),
+  clearModifiedFiles: () => set({ modifiedFiles: new Set() }),
   
   clearDiffResults: () => set({ 
     diffSections: [], 
@@ -144,10 +143,17 @@ export const useAppStore = create<AppState>((set) => ({
   setUnifiedDiff: (diff) => set({ unifiedDiff: diff }),
   
   openFile: (file) => set((state) => {
-    const exists = state.openFiles.some(f => f.path === file.path);
-    if (exists) {
-      return { activeFilePath: file.path };
+    const existingIndex = state.openFiles.findIndex(f => f.path === file.path);
+    if (existingIndex !== -1) {
+      // File already open - update its content and make it active
+      const newOpenFiles = [...state.openFiles];
+      newOpenFiles[existingIndex] = file;
+      return { 
+        openFiles: newOpenFiles,
+        activeFilePath: file.path 
+      };
     }
+    // File not open yet - add it
     return { 
       openFiles: [...state.openFiles, file],
       activeFilePath: file.path 
@@ -159,7 +165,10 @@ export const useAppStore = create<AppState>((set) => ({
     const newActive = state.activeFilePath === path 
       ? (newFiles.length > 0 ? newFiles[newFiles.length - 1].path : null)
       : state.activeFilePath;
-    return { openFiles: newFiles, activeFilePath: newActive };
+    // Also remove from selectedFiles to clear the selection indicator
+    const newSelection = new Set(state.selectedFiles);
+    newSelection.delete(path);
+    return { openFiles: newFiles, activeFilePath: newActive, selectedFiles: newSelection };
   }),
   
   setActiveFile: (path) => set({ activeFilePath: path }),

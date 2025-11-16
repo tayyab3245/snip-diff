@@ -3,11 +3,12 @@
  * Renders file tree structure with selection capabilities
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PanelLayout } from './layout';
-import { useApiClient } from '../hooks/use-api-client';
 import { useAppStore } from '../store/app-store';
 import { useTheme } from '../theme';
+import { useFileManager } from '../hooks/use-file-manager';
+import { normalizePathForCompare, getRelativePath } from '../../shared/path-utils';
 
 interface FileTreeNodeProps {
   node: any;
@@ -17,14 +18,14 @@ interface FileTreeNodeProps {
 }
 
 // Lucide-style SVG Icons
-const FolderIcon: React.FC<{ isOpen?: boolean }> = ({ isOpen }) => (
+const FolderIcon: React.FC<{ isOpen: boolean; color?: string }> = ({ isOpen, color = '#ffffff' }) => (
   <svg 
     width="16" 
     height="16" 
     viewBox="0 0 24 24" 
     fill="none" 
     xmlns="http://www.w3.org/2000/svg"
-    stroke={isOpen ? "#dcb67a" : "#8f8f8f"}
+    stroke={color}
     strokeWidth="2"
     strokeLinecap="round"
     strokeLinejoin="round"
@@ -42,33 +43,8 @@ const FolderIcon: React.FC<{ isOpen?: boolean }> = ({ isOpen }) => (
   </svg>
 );
 
-const FileIcon: React.FC<{ ext?: string }> = ({ ext }) => {
-  const getFileColor = (extension?: string) => {
-    if (!extension) return '#8f8f8f';
-    
-    const ext = extension.toLowerCase();
-    switch (ext) {
-      case 'ts':
-      case 'tsx':
-        return '#3178c6';
-      case 'js':
-      case 'jsx':
-        return '#f7df1e';
-      case 'py':
-        return '#3776ab';
-      case 'json':
-        return '#5a5a5a';
-      case 'html':
-        return '#e34c26';
-      case 'css':
-      case 'scss':
-        return '#264de4';
-      case 'md':
-        return '#ffffff';
-      default:
-        return '#8f8f8f';
-    }
-  };
+const FileIcon: React.FC<{ ext?: string; color?: string }> = ({ ext, color }) => {
+  const defaultColor = color || '#ffffff';
 
   return (
     <svg 
@@ -77,7 +53,7 @@ const FileIcon: React.FC<{ ext?: string }> = ({ ext }) => {
       viewBox="0 0 24 24" 
       fill="none" 
       xmlns="http://www.w3.org/2000/svg"
-      stroke={getFileColor(ext)}
+      stroke={defaultColor}
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
@@ -109,43 +85,60 @@ const ChevronIcon: React.FC<{ isOpen: boolean }> = ({ isOpen }) => (
 
 const FileTreeNode: React.FC<FileTreeNodeProps> = ({ node, depth, onFileSelect, isSelected }) => {
   const [isExpanded, setIsExpanded] = useState(depth < 2);
-  const { activeFilePath, selectedFiles, openFile, closeFile } = useAppStore();
+  const { activeFilePath, selectedFiles, gitStatus } = useAppStore();
+  const { toggleFile } = useFileManager();
   const { theme } = useTheme();
   const isActive = activeFilePath === node.path;
+  const fileStatus = gitStatus.get(node.path);
+  const isModified = fileStatus && fileStatus !== 'Unchanged';
+
+  // Get status color for border (matching VS Code colors)
+  const getStatusColor = () => {
+    if (!fileStatus || fileStatus === 'Unchanged') return null;
+    
+    switch (fileStatus) {
+      case 'Untracked':
+        return '#73C991'; // Green for untracked (new files)
+      case 'Modified':
+        return '#E09F3E'; // Orange/yellow for modified
+      case 'Added':
+        return '#73C991'; // Green for added (staged new files)
+      case 'Deleted':
+        return '#F48771'; // Red for deleted
+      case 'Renamed':
+        return '#73C991'; // Green for renamed
+      case 'Copied':
+        return '#73C991'; // Green for copied
+      case 'Ignored':
+        return null; // No color for ignored
+      default:
+        return '#E09F3E'; // Orange for other changes
+    }
+  };
+
+  const statusColor = getStatusColor();
+
+  // Get icon color: use status color if available, gray for ignored, white otherwise
+  const getIconColor = () => {
+    if (statusColor) {
+      return statusColor; // Use Git status color (green/orange/red)
+    }
+    if (fileStatus === 'Ignored') {
+      return '#6b7280'; // Gray for ignored files
+    }
+    return '#ffffff'; // White for all other files
+  };
+
+  const iconColor = getIconColor();
 
   const handleClick = async () => {
     if (node.type === 'file') {
       // Check if file is currently selected (before toggle)
       const wasSelected = selectedFiles.has(node.path);
       
-      // Toggle selection
+      // Toggle selection and open/close file
       onFileSelect(node.path);
-      
-      if (!wasSelected) {
-        // File is being selected - open it
-        try {
-          console.log('Opening file:', node.path);
-          const response = await window.electronAPI.readFile(node.path);
-          
-          if (response.success && response.data) {
-            openFile({
-              path: node.path,
-              content: response.data.content,
-              language: getFileExtension(node.name)
-            });
-            console.log('File opened successfully:', node.path);
-          } else {
-            const errorMsg = response.error || 'Failed to open file';
-            console.error('Failed to get file content:', errorMsg);
-          }
-        } catch (error) {
-          console.error('Exception opening file:', error);
-        }
-      } else {
-        // File is being deselected - close it
-        closeFile(node.path);
-        console.log('File closed:', node.path);
-      }
+      await toggleFile(node.path, wasSelected);
     } else {
       setIsExpanded(!isExpanded);
     }
@@ -163,11 +156,11 @@ const FileTreeNode: React.FC<FileTreeNodeProps> = ({ node, depth, onFileSelect, 
     alignItems: 'center',
     gap: '8px',
     fontSize: '13px',
-    color: theme.colors.components.fileTree.text,
+    color: statusColor || (fileStatus === 'Ignored' ? '#6b7280' : theme.colors.components.fileTree.text),
     userSelect: 'none',
     background: isSelected ? 'rgba(56, 189, 248, 0.15)' : (isActive ? 'rgba(255, 255, 255, 0.08)' : 'transparent'),
-    borderLeft: isSelected ? '3px solid #38bdf8' : '3px solid transparent',
-    transition: 'background 0.15s, border-left 0.15s',
+    borderLeft: statusColor ? `3px solid ${statusColor}` : '3px solid transparent',
+    transition: 'background 0.15s, border-left 0.15s, color 0.15s',
   };
 
   const iconContainerStyle: React.CSSProperties = {
@@ -209,9 +202,9 @@ const FileTreeNode: React.FC<FileTreeNodeProps> = ({ node, depth, onFileSelect, 
         
         <div style={iconContainerStyle}>
           {node.type === 'directory' ? (
-            <FolderIcon isOpen={isExpanded} />
+            <FolderIcon isOpen={isExpanded} color={iconColor} />
           ) : (
-            <FileIcon ext={getFileExtension(node.name)} />
+            <FileIcon ext={getFileExtension(node.name)} color={iconColor} />
           )}
         </div>
         
@@ -239,88 +232,148 @@ export const FileTree: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { theme } = useTheme();
+  const fileManager = useFileManager();
   
   const { 
     selectedPath, 
     fileTree, 
-    setSelectedPath, 
-    setFileTree,
     selectedFiles,
     toggleFileSelection,
-    clearFileSelection
+    setGitStatus,
+    modifiedFiles
   } = useAppStore();
 
-  const handleSelectFolder = async () => {
-    try {
-      const folderPath = await window.electronAPI.selectFolder();
-      if (folderPath) {
-        setSelectedPath(folderPath);
-        await loadFileTree(folderPath);
-      }
-    } catch (error) {
-      console.error('Failed to select folder:', error);
-      setError('Failed to select folder');
-    }
-  };
+  // Poll Git status every 2 seconds to detect changes
+  useEffect(() => {
+    if (!selectedPath) return;
 
-  const loadFileTree = async (_path: string) => {
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      const response = await window.electronAPI.getFileTree(_path);
-      
-      if (response.success && response.data) {
-        setFileTree(response.data.nodes || []);
-      } else {
-        setError(response.error || 'Failed to load file tree');
+    const pollGitStatus = async () => {
+      try {
+        const isRepo = await window.electronAPI.isGitRepo(selectedPath);
+        if (!isRepo.isRepo) return;
+
+        // Get Git status for all files in the repository
+        const statusResult = await window.electronAPI.getGitStatus(selectedPath);
+        if (!statusResult.success || !statusResult.statuses) return;
+
+        const statusMap = new Map<string, string>();
+        
+        // Get all files from the tree
+        const getAllFiles = (nodes: any[]): string[] => {
+          const files: string[] = [];
+          nodes.forEach(node => {
+            if (node.type === 'file') {
+              files.push(node.path);
+            } else if (node.type === 'directory' && node.children) {
+              files.push(...getAllFiles(node.children));
+            }
+          });
+          return files;
+        };
+
+        const allFiles = getAllFiles(fileTree);
+        
+        // Get all folders from the tree
+        const getAllFolders = (nodes: any[]): string[] => {
+          const folders: string[] = [];
+          nodes.forEach(node => {
+            if (node.type === 'directory') {
+              folders.push(node.path);
+              if (node.children) {
+                folders.push(...getAllFolders(node.children));
+              }
+            }
+          });
+          return folders;
+        };
+
+        const allFolders = getAllFolders(fileTree);
+        
+        // Map Git status to file paths in tree
+        statusResult.statuses.forEach((fileStatus: { path: string; status: string }) => {
+          const normalizedGitPath = normalizePathForCompare(fileStatus.path);
+          
+          // Handle folder status (Git returns folders with trailing /)
+          if (normalizedGitPath.endsWith('/')) {
+            // This is a folder - mark the folder itself and all files inside it
+            const folderPath = normalizedGitPath.slice(0, -1);
+            
+            // Mark the folder node itself
+            allFolders.forEach(treePath => {
+              const normalizedTreePath = normalizePathForCompare(treePath);
+              const relativeToRepo = normalizedTreePath.replace(normalizePathForCompare(selectedPath) + '/', '');
+              
+              if (relativeToRepo === folderPath || relativeToRepo.startsWith(folderPath + '/')) {
+                statusMap.set(treePath, fileStatus.status);
+              }
+            });
+            
+            // Mark all files inside it
+            allFiles.forEach(treePath => {
+              const normalizedTreePath = normalizePathForCompare(treePath);
+              const relativeToRepo = normalizedTreePath.replace(normalizePathForCompare(selectedPath) + '/', '');
+              
+              if (relativeToRepo.startsWith(folderPath + '/')) {
+                statusMap.set(treePath, fileStatus.status);
+              }
+            });
+          } else {
+            // This is a file - find matching file in tree
+            allFiles.forEach(treePath => {
+              const normalizedTreePath = normalizePathForCompare(treePath);
+              const fullGitPath = normalizePathForCompare(selectedPath + '/' + fileStatus.path);
+              
+              if (normalizedTreePath === fullGitPath || normalizedTreePath.endsWith('/' + normalizedGitPath)) {
+                statusMap.set(treePath, fileStatus.status);
+                
+                // Mark all parent folders to indicate they contain changed files
+                allFolders.forEach(folderPath => {
+                  const normalizedFolderPath = normalizePathForCompare(folderPath);
+                  if (normalizedTreePath.startsWith(normalizedFolderPath + '/') || 
+                      normalizedTreePath.startsWith(normalizedFolderPath + '\\')) {
+                    // Only set if folder doesn't already have a status (preserve specific folder status)
+                    if (!statusMap.has(folderPath)) {
+                      statusMap.set(folderPath, fileStatus.status);
+                    }
+                  }
+                });
+              }
+            });
+          }
+        });
+        
+        setGitStatus(statusMap);
+      } catch (error) {
+        console.error('[FileTree] Error polling Git status:', error);
       }
-    } catch (error) {
-      console.error('Error loading file tree:', error);
-      setError('Error loading file tree');
-    } finally {
-      setIsLoading(false);
+    };
+
+    // Initial poll
+    pollGitStatus();
+
+    // Poll every 2 seconds
+    const interval = setInterval(pollGitStatus, 2000);
+
+    return () => clearInterval(interval);
+  }, [selectedPath, fileTree, setGitStatus]);
+
+  // Auto-load file tree when path changes
+  useEffect(() => {
+    if (selectedPath) {
+      setIsLoading(true);
+      setError(null);
+      
+      fileManager.loadFileTree(selectedPath).then(result => {
+        if (!result.success) {
+          setError(result.error || 'Failed to load file tree');
+        }
+        setIsLoading(false);
+      });
     }
-  };
+  }, [selectedPath]);
 
   const handleFileSelect = (path: string) => {
-    console.log('File clicked:', path);
     toggleFileSelection(path);
-  };
-
-  const handleClearSelection = () => {
-    clearFileSelection();
-  };
-
-  // Button styles (non-layout)
-  const selectButtonStyle: React.CSSProperties = {
-    width: '100%',
-    padding: '10px 16px',
-    background: 'transparent',
-    border: `1px solid ${theme.colors.border.secondary}`,
-    borderRadius: '6px',
-    cursor: 'pointer',
-    fontSize: '13px',
-    fontWeight: 500,
-    color: theme.colors.text.primary,
-    textAlign: 'center',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '8px',
-  };
-
-  const clearButtonStyle: React.CSSProperties = {
-    width: '100%',
-    padding: '8px 16px',
-    background: 'transparent',
-    border: `1px solid ${theme.colors.border.secondary}`,
-    borderRadius: '6px',
-    cursor: 'pointer',
-    fontSize: '12px',
-    fontWeight: 500,
-    color: theme.colors.text.secondary,
-    textAlign: 'center',
   };
 
   const loadingStyle: React.CSSProperties = {
@@ -339,29 +392,6 @@ export const FileTree: React.FC = () => {
     borderRadius: '4px',
     margin: '8px',
   };
-
-  // TOP BAR: Folder selection and clear button
-  const topBar = (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-      <button 
-        style={selectButtonStyle}
-        onClick={handleSelectFolder}
-      >
-        Choose Folder
-      </button>
-      
-      <div style={{ minHeight: '36px' }}>
-        {selectedFiles.size > 0 && (
-          <button 
-            style={clearButtonStyle}
-            onClick={handleClearSelection}
-          >
-            Clear Selection
-          </button>
-        )}
-      </div>
-    </div>
-  );
 
   // CONTENT: File tree (edge-to-edge with padding)
   const content = (
@@ -392,7 +422,6 @@ export const FileTree: React.FC = () => {
 
   return (
     <PanelLayout 
-      topBar={topBar}
       content={content}
     />
   );
