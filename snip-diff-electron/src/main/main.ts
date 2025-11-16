@@ -9,10 +9,10 @@ import * as path from 'path';
 import * as os from 'os';
 import chokidar, { FSWatcher } from 'chokidar';
 import { gitService } from './git-service';
+import { llmService } from './llm-service';
 
 class SnipDiffApp {
   private mainWindow: BrowserWindow | null = null;
-  private apiProcess: ChildProcess | null = null;
   private fileWatcher: FSWatcher | null = null;
   private watchedFiles: Set<string> = new Set();
   private readonly isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
@@ -32,11 +32,9 @@ class SnipDiffApp {
     console.log(`Electron: ${process.versions.electron}`);
     console.log(`Chrome: ${process.versions.chrome}`);
     console.log(`Node: ${process.versions.node}`);
+    console.log(`LLM Service: ${llmService.isAvailable() ? 'Available' : 'Not configured'}`);
     
     await app.whenReady();
-    
-    // Start FastAPI backend
-    await this.startApiServer();
     
     // Create main window
     this.createMainWindow();
@@ -46,73 +44,6 @@ class SnipDiffApp {
     
     // Handle app events
     this.setupAppEvents();
-  }
-
-  private async startApiServer() {
-    if (this.isDev) {
-      // Development mode: connect to external API server
-      console.log('Development mode: connecting to external API server...');
-      try {
-        await this.waitForApiServer();
-        console.log('Connected to external FastAPI server');
-      } catch (error) {
-        console.log('Could not connect to external API server, will continue without it');
-      }
-      return;
-    }
-
-    // Production mode: start the API server
-    try {
-      console.log('Starting FastAPI backend server...');
-      const apiPath = path.join(process.resourcesPath, 'api');
-      const pythonPath = process.platform === 'win32' ? 'python.exe' : 'python3';
-
-      this.apiProcess = spawn(pythonPath, ['-m', 'uvicorn', 'app.main:app', '--host', '127.0.0.1', '--port', '8000'], {
-        cwd: apiPath,
-        stdio: 'pipe'
-      });
-
-      if (this.apiProcess.stderr) {
-        this.apiProcess.stderr.on('data', (data) => {
-          console.error('API Error:', data.toString());
-        });
-      }
-
-      if (this.apiProcess.stdout) {
-        this.apiProcess.stdout.on('data', (data) => {
-          console.log('API Output:', data.toString());
-        });
-      }
-
-      this.apiProcess.on('error', (error) => {
-        console.error('Failed to start API server:', error);
-      });
-
-      // Wait for server to be ready
-      await this.waitForApiServer();
-      console.log('FastAPI server started successfully');
-      
-    } catch (error) {
-      console.error('Error starting API server:', error);
-    }
-  }
-
-  private async waitForApiServer(maxRetries: number = 30): Promise<void> {
-    for (let i = 0; i < maxRetries; i++) {
-      try {
-        // Try to connect to the API server
-        const response = await fetch('http://127.0.0.1:8000/api/health');
-        if (response.ok) {
-          return;
-        }
-      } catch (error) {
-        // Server not ready yet, wait and retry
-      }
-      
-      await new Promise(resolve => setTimeout(resolve, 1000));
-    }
-    
-    throw new Error('API server failed to start within timeout period');
   }
 
   private createMainWindow() {
@@ -217,6 +148,56 @@ class SnipDiffApp {
       } catch (error) {
         return { success: false, isRepo: false };
       }
+    });
+
+    // LLM Summarization handlers
+    ipcMain.handle('llm-summarize-file', async (event, content: string, filePath: string) => {
+      try {
+        console.log('[LLM] Summarizing file:', filePath);
+        const result = await llmService.summarizeFile(content, filePath);
+        console.log('[LLM] Summary result:', result.success ? 'success' : result.error);
+        return result;
+      } catch (error) {
+        console.error('[LLM] Error:', error);
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        };
+      }
+    });
+
+    ipcMain.handle('llm-summarize-diff', async (event, diffContent: string, files: string[]) => {
+      try {
+        console.log('[LLM] Summarizing diff for files:', files);
+        const result = await llmService.summarizeDiff(diffContent, files);
+        console.log('[LLM] Diff summary result:', result.success ? 'success' : result.error);
+        return result;
+      } catch (error) {
+        console.error('[LLM] Error:', error);
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        };
+      }
+    });
+
+    ipcMain.handle('llm-summarize-multiple-files', async (event, files: Array<{ path: string; content: string }>) => {
+      try {
+        console.log('[LLM] Summarizing multiple files:', files.length);
+        const result = await llmService.summarizeMultipleFiles(files);
+        console.log('[LLM] Multi-file summary result:', result.success ? 'success' : result.error);
+        return result;
+      } catch (error) {
+        console.error('[LLM] Error:', error);
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        };
+      }
+    });
+
+    ipcMain.handle('llm-is-available', async () => {
+      return { available: llmService.isAvailable() };
     });
 
     // Start watching files
@@ -425,13 +406,6 @@ class SnipDiffApp {
       console.log('Closing file watcher...');
       this.fileWatcher.close();
       this.fileWatcher = null;
-    }
-    
-    // Terminate API server
-    if (this.apiProcess) {
-      console.log('Terminating API server...');
-      this.apiProcess.kill();
-      this.apiProcess = null;
     }
   }
 }
