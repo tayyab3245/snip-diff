@@ -1,1 +1,0 @@
-# SNIP-DIFF API package
