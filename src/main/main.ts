@@ -3,8 +3,17 @@
  * Handles window management, IPC, and FastAPI backend communication
  */
 
-import { app, BrowserWindow, ipcMain, dialog, IpcMainInvokeEvent, Event } from 'electron';
+// Load environment variables from .env file in project root
+import * as dotenv from 'dotenv';
 import * as path from 'path';
+import { app, BrowserWindow, ipcMain, dialog, IpcMainInvokeEvent, Event } from 'electron';
+
+// Load .env - dotenv will search up from cwd for .env file
+dotenv.config();
+
+console.log('CWD:', process.cwd());
+console.log('GEMINI_API_KEY present:', !!process.env.GEMINI_API_KEY);
+
 import { gitService } from './services/git-service';
 import { llmService } from './services/llm-service';
 import { FileService } from './services/file-service';
@@ -29,7 +38,19 @@ class SnipDiffApp {
     console.log(`Electron: ${process.versions.electron}`);
     console.log(`Chrome: ${process.versions.chrome}`);
     console.log(`Node: ${process.versions.node}`);
-    console.log(`LLM Service: ${llmService.isAvailable() ? 'Available' : 'Not configured'}`);
+    
+    // Initialize LLM service if API key is provided
+    const geminiApiKey = process.env.GEMINI_API_KEY;
+    if (geminiApiKey) {
+      try {
+        await llmService.initialize(geminiApiKey);
+        console.log(`LLM Service: Initialized with Gemini`);
+      } catch (error) {
+        console.error('LLM Service: Failed to initialize', error);
+      }
+    } else {
+      console.log('LLM Service: Skipped (no GEMINI_API_KEY in environment)');
+    }
     
     await app.whenReady();
     
@@ -183,25 +204,34 @@ class SnipDiffApp {
     });
 
     // LLM Summarization handlers
-    ipcMain.handle('llm-summarize-file', async (_event: IpcMainInvokeEvent, content: string, filePath: string) => {
-      try {
-        console.log('[LLM] Summarizing file:', filePath);
-        const result = await llmService.summarizeFile(content, filePath);
-        console.log('[LLM] Summary result:', result.success ? 'success' : result.error);
-        return result;
-      } catch (error) {
-        console.error('[LLM] Error:', error);
-        return {
-          success: false,
-          error: error instanceof Error ? error.message : 'Unknown error'
-        };
-      }
-    });
-
-    ipcMain.handle('llm-summarize-diff', async (_event: IpcMainInvokeEvent, diffContent: string, files: string[]) => {
+    ipcMain.handle('llm-summarize-diff', async (_event: IpcMainInvokeEvent, repoPath: string, files: string[]) => {
       try {
         console.log('[LLM] Summarizing diff for files:', files);
-        const result = await llmService.summarizeDiff(diffContent, files);
+        
+        // Get diff content from git service
+        const diffResult = await gitService.getDiff(repoPath, files, false);
+        if (!diffResult.success || diffResult.files.length === 0) {
+          return {
+            success: false,
+            error: 'No changes to summarize'
+          };
+        }
+
+        // Combine all diffs
+        const diffContent = diffResult.files.map(f => f.diff).join('\n\n');
+        
+        // Build git status map
+        const gitStatus = new Map(diffResult.files.map(f => [f.path, f.status]));
+
+        // Build context for AI
+        const context = {
+          repoPath,
+          selectedFiles: files,
+          gitStatus,
+          diffContent,
+        };
+
+        const result = await llmService.summarizeDiff(context);
         console.log('[LLM] Diff summary result:', result.success ? 'success' : result.error);
         return result;
       } catch (error) {
@@ -213,14 +243,52 @@ class SnipDiffApp {
       }
     });
 
-    ipcMain.handle('llm-summarize-multiple-files', async (_event: IpcMainInvokeEvent, files: Array<{ path: string; content: string }>) => {
+    ipcMain.handle('llm-generate-commit', async (_event: IpcMainInvokeEvent, repoPath: string, files: string[]) => {
       try {
-        console.log('[LLM] Summarizing multiple files:', files.length);
-        const result = await llmService.summarizeMultipleFiles(files);
-        console.log('[LLM] Multi-file summary result:', result.success ? 'success' : result.error);
+        console.log('[LLM] Generating commit message for files:', files);
+        
+        // Get diff content from git service
+        const diffResult = await gitService.getDiff(repoPath, files, false);
+        if (!diffResult.success || diffResult.files.length === 0) {
+          return {
+            success: false,
+            error: 'No changes to commit'
+          };
+        }
+
+        // Combine all diffs
+        const diffContent = diffResult.files.map(f => f.diff).join('\n\n');
+        
+        // Build git status map
+        const gitStatus = new Map(diffResult.files.map(f => [f.path, f.status]));
+
+        // Build context for AI
+        const context = {
+          repoPath,
+          selectedFiles: files,
+          gitStatus,
+          diffContent,
+        };
+
+        const result = await llmService.generateCommitMessage(context);
+        console.log('[LLM] Commit message result:', result.success ? 'success' : result.error);
         return result;
       } catch (error) {
         console.error('[LLM] Error:', error);
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        };
+      }
+    });
+
+    ipcMain.handle('llm-initialize', async (_event: IpcMainInvokeEvent, apiKey: string) => {
+      try {
+        console.log('[LLM] Initializing with API key');
+        await llmService.initialize(apiKey);
+        return { success: true };
+      } catch (error) {
+        console.error('[LLM] Initialization error:', error);
         return {
           success: false,
           error: error instanceof Error ? error.message : 'Unknown error'

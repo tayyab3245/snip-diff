@@ -2,4 +2,4 @@
  * Prompts Index
  */
 
-export { PromptManager } from './prompt-manager';
+export { PromptBuilder } from './prompt-builder';

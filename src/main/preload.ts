@@ -53,12 +53,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
 
   // LLM operations
-  llmSummarizeFile: (content: string, filePath: string) =>
-    ipcRenderer.invoke('llm-summarize-file', content, filePath),
-  llmSummarizeDiff: (diffContent: string, files: string[]) =>
-    ipcRenderer.invoke('llm-summarize-diff', diffContent, files),
-  llmSummarizeMultipleFiles: (files: Array<{ path: string; content: string }>) =>
-    ipcRenderer.invoke('llm-summarize-multiple-files', files),
+  llmInitialize: (apiKey: string) =>
+    ipcRenderer.invoke('llm-initialize', apiKey),
+  llmSummarizeDiff: (repoPath: string, files: string[]) =>
+    ipcRenderer.invoke('llm-summarize-diff', repoPath, files),
+  llmGenerateCommit: (repoPath: string, files: string[]) =>
+    ipcRenderer.invoke('llm-generate-commit', repoPath, files),
   llmIsAvailable: () =>
     ipcRenderer.invoke('llm-is-available'),
 

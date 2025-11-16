@@ -3,7 +3,7 @@
  * Initializes and configures the AI system with providers and settings
  */
 
-import { BaseLLMProvider, OpenAIProvider, AnthropicProvider, GeminiProvider } from './providers';
+import { BaseLLMProvider, GeminiProvider } from './providers';
 
 export interface AIConfig {
   provider: 'openai' | 'anthropic' | 'gemini';
@@ -25,18 +25,6 @@ export class AIInitializer {
 
     // Create provider instance
     switch (config.provider) {
-      case 'openai':
-        this.provider = new OpenAIProvider(
-          config.apiKey,
-          config.model || 'gpt-4-turbo-preview'
-        );
-        break;
-      case 'anthropic':
-        this.provider = new AnthropicProvider(
-          config.apiKey,
-          config.model || 'claude-3-opus-20240229'
-        );
-        break;
       case 'gemini':
         this.provider = new GeminiProvider(
           config.apiKey,
@@ -44,7 +32,7 @@ export class AIInitializer {
         );
         break;
       default:
-        throw new Error(`Unknown provider: ${config.provider}`);
+        throw new Error(`Unknown provider: ${config.provider}. Only 'gemini' is supported.`);
     }
 
     // Validate API key
@@ -80,7 +68,7 @@ export class AIInitializer {
    * Check if AI system is initialized
    */
   isInitialized(): boolean {
-    return this.provider !== null;
+    return this.provider !== null && this.config !== null;
   }
 
   /**

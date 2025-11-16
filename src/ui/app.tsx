@@ -58,14 +58,52 @@ const AppContent: React.FC = () => {
       content: 'Analyzing changes and generating summary...',
     });
 
-    // Simulate AI response
-    setTimeout(() => {
+    try {
+      // Check if LLM is available
+      const { available } = await window.electronAPI.llmIsAvailable();
+      
+      if (!available) {
+        addChatMessage({
+          type: 'error',
+          content: 'AI service is not available. Please set GEMINI_API_KEY environment variable.',
+        });
+        setIsChatLoading(false);
+        return;
+      }
+
+      // Get current diff content
+      if (!selectedPath) {
+        addChatMessage({
+          type: 'error',
+          content: 'Please select a folder first.',
+        });
+        setIsChatLoading(false);
+        return;
+      }
+
+      // Call LLM service - main process will handle getting diffs from git service
+      const result = await window.electronAPI.llmSummarizeDiff(selectedPath, []);
+
+      if (result.success && result.summary) {
+        addChatMessage({
+          type: 'ai',
+          content: result.summary,
+        });
+      } else {
+        addChatMessage({
+          type: 'error',
+          content: `Failed to generate summary: ${result.error || 'Unknown error'}`,
+        });
+      }
+    } catch (error) {
+      console.error('[AI] Summarize error:', error);
       addChatMessage({
-        type: 'ai',
-        content: `I've analyzed the changes in your repository. Here's what I found:\n\n• **${chatMessages.length + 1} files modified** with significant changes\n• Main focus areas: UI components and state management\n• Key improvements: Enhanced Git integration and tabbed interface\n• Potential concerns: None detected\n\nWould you like me to generate a detailed commit message or explain any specific changes?`,
+        type: 'error',
+        content: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
       });
+    } finally {
       setIsChatLoading(false);
-    }, 1500);
+    }
   };
 
   return (

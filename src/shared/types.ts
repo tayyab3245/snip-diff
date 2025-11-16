@@ -217,9 +217,9 @@ export interface ElectronAPI {
   onFileChanged: (callback: (event: FileChangeEvent) => void) => void;
   
   // LLM operations
-  llmSummarizeFile: (content: string, filePath: string) => Promise<LLMSummarizeResult>;
-  llmSummarizeDiff: (diffContent: string, files: string[]) => Promise<LLMSummarizeResult>;
-  llmSummarizeMultipleFiles: (files: FileWithContent[]) => Promise<LLMSummarizeResult>;
+  llmInitialize: (apiKey: string) => Promise<{ success: boolean; error?: string }>;
+  llmSummarizeDiff: (repoPath: string, files: string[]) => Promise<LLMSummarizeResult>;
+  llmGenerateCommit: (repoPath: string, files: string[]) => Promise<LLMSummarizeResult>;
   llmIsAvailable: () => Promise<{ available: boolean }>;
   
   // Legacy API request (for backward compatibility)

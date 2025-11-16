@@ -1,46 +1,41 @@
 /**
  * AI System Orchestrator
- * Main coordinator for AI agent operations, tool execution, and memory management
+ * Main coordinator for AI agent operations - stateless, context-based only
  */
 
 import { aiInitializer } from './initializer';
 import { Message } from './providers';
-import { MemoryManager } from './memory/memory-manager';
-import { ToolRegistry } from './tools/tool-registry';
-import { PromptManager } from './prompts/prompt-manager';
+import { PromptBuilder } from './prompts/prompt-builder';
+import { AIResponseParser, ParsedAIResponse } from './parsing';
 
 export interface AgentContext {
   repoPath: string;
   selectedFiles: string[];
   gitStatus: Map<string, string>;
-  diffContent?: string;
+  diffContent: string; // Always provided by caller (from git service)
+  fileContents?: Map<string, string>; // Optional full file contents (from file service)
 }
 
 export interface AgentResponse {
   content: string;
   toolsUsed?: string[];
   tokensUsed?: number;
+  parsed?: ParsedAIResponse; // Structured parsed response
 }
 
 export class AIOrchestrator {
-  private memory: MemoryManager;
-  private toolRegistry: ToolRegistry;
-  private promptManager: PromptManager;
+  private promptBuilder: PromptBuilder;
+  private responseParser: AIResponseParser;
 
   constructor() {
-    this.memory = new MemoryManager();
-    this.toolRegistry = new ToolRegistry();
-    this.promptManager = new PromptManager();
+    this.promptBuilder = new PromptBuilder();
+    this.responseParser = new AIResponseParser();
   }
 
   /**
-   * Execute an AI task with given context
+   * Summarize repository changes (stateless)
    */
-  async execute(
-    task: string,
-    context: AgentContext,
-    stream = false
-  ): Promise<AgentResponse> {
+  async summarizeChanges(context: AgentContext): Promise<AgentResponse> {
     // Ensure AI is initialized
     if (!aiInitializer.isInitialized()) {
       throw new Error('AI system not initialized');
@@ -49,76 +44,127 @@ export class AIOrchestrator {
     const provider = aiInitializer.getProvider();
     const config = aiInitializer.getConfig();
 
-    // Build system prompt
-    const systemPrompt = this.promptManager.getSystemPrompt();
-    
-    // Build task-specific prompt
-    const taskPrompt = this.promptManager.buildTaskPrompt(task, context);
+    // Build the complete prompt using PromptBuilder (no conversation history)
+    const userPrompt = this.promptBuilder.buildSummarizePrompt(context, []);
 
-    // Get conversation history
-    const history = this.memory.getRecentMessages(5);
-
-    // Combine messages
+    // Build message (single turn, no history)
     const messages: Message[] = [
-      { role: 'system', content: systemPrompt },
-      ...history,
-      { role: 'user', content: taskPrompt },
+      { role: 'user', content: userPrompt },
     ];
 
     // Execute with provider
-    if (stream) {
-      // TODO: Implement streaming response
-      throw new Error('Streaming not yet implemented');
-    } else {
-      const response = await provider.complete(messages, {
-        temperature: config.temperature,
-        maxTokens: config.maxTokens,
-      });
+    const response = await provider.complete(messages, {
+      temperature: config.temperature,
+      maxTokens: config.maxTokens,
+    });
 
-      // Store in memory
-      this.memory.addMessage({ role: 'user', content: taskPrompt });
-      this.memory.addMessage({ role: 'assistant', content: response.content });
+    // Parse and validate the response
+    const parsed = this.responseParser.parseResponse(
+      response.content,
+      response.usage?.totalTokens
+    );
 
-      return {
-        content: response.content,
-        tokensUsed: response.usage?.totalTokens,
-      };
+    // Validate the parsed response
+    if (!this.responseParser.validateResponse(parsed)) {
+      const errorMsg = this.responseParser.extractErrorMessage(parsed);
+      throw new Error(`Invalid AI response: ${errorMsg}`);
     }
+
+    return {
+      content: parsed.displayContent,
+      tokensUsed: response.usage?.totalTokens,
+      parsed, // Include full parsed response for frontend
+    };
   }
 
   /**
-   * Summarize repository changes
-   */
-  async summarizeChanges(context: AgentContext): Promise<AgentResponse> {
-    return this.execute('summarize_changes', context);
-  }
-
-  /**
-   * Generate commit message
+   * Generate commit message (stateless)
    */
   async generateCommitMessage(context: AgentContext): Promise<AgentResponse> {
-    return this.execute('generate_commit_message', context);
+    // Ensure AI is initialized
+    if (!aiInitializer.isInitialized()) {
+      throw new Error('AI system not initialized');
+    }
+
+    const provider = aiInitializer.getProvider();
+    const config = aiInitializer.getConfig();
+
+    // Build the complete prompt using PromptBuilder (no conversation history)
+    const userPrompt = this.promptBuilder.buildCommitPrompt(context, []);
+
+    // Build message (single turn, no history)
+    const messages: Message[] = [
+      { role: 'user', content: userPrompt },
+    ];
+
+    // Execute with provider
+    const response = await provider.complete(messages, {
+      temperature: config.temperature,
+      maxTokens: config.maxTokens,
+    });
+
+    // Parse and validate the response
+    const parsed = this.responseParser.parseResponse(
+      response.content,
+      response.usage?.totalTokens
+    );
+
+    // Validate the parsed response
+    if (!this.responseParser.validateResponse(parsed)) {
+      const errorMsg = this.responseParser.extractErrorMessage(parsed);
+      throw new Error(`Invalid AI response: ${errorMsg}`);
+    }
+
+    return {
+      content: parsed.displayContent,
+      tokensUsed: response.usage?.totalTokens,
+      parsed, // Include full parsed response for frontend
+    };
   }
 
   /**
-   * Explain code changes
+   * Explain code changes (stateless)
    */
   async explainChanges(context: AgentContext): Promise<AgentResponse> {
-    return this.execute('explain_changes', context);
-  }
+    // Ensure AI is initialized
+    if (!aiInitializer.isInitialized()) {
+      throw new Error('AI system not initialized');
+    }
 
-  /**
-   * Clear conversation memory
-   */
-  clearMemory(): void {
-    this.memory.clear();
-  }
+    const provider = aiInitializer.getProvider();
+    const config = aiInitializer.getConfig();
 
-  /**
-   * Get memory stats
-   */
-  getMemoryStats() {
-    return this.memory.getStats();
+    // Build the complete prompt using PromptBuilder (no conversation history)
+    const userPrompt = this.promptBuilder.buildExplainPrompt(context, []);
+
+    // Build message (single turn, no history)
+    const messages: Message[] = [
+      { role: 'user', content: userPrompt },
+    ];
+
+    // Execute with provider
+    const response = await provider.complete(messages, {
+      temperature: config.temperature,
+      maxTokens: config.maxTokens,
+    });
+
+    // Parse and validate the response
+    const parsed = this.responseParser.parseResponse(
+      response.content,
+      response.usage?.totalTokens
+    );
+
+    // Validate the parsed response
+    if (!this.responseParser.validateResponse(parsed)) {
+      const errorMsg = this.responseParser.extractErrorMessage(parsed);
+      throw new Error(`Invalid AI response: ${errorMsg}`);
+    }
+
+    return {
+      content: parsed.displayContent,
+      tokensUsed: response.usage?.totalTokens,
+      parsed, // Include full parsed response for frontend
+    };
   }
 }
 

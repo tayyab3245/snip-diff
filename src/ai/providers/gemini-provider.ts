@@ -64,7 +64,7 @@ export class GeminiProvider extends BaseLLMProvider {
       throw new Error(`Gemini API error: ${(error as any).error?.message || response.statusText}`);
     }
 
-    const data = await response.json();
+    const data = await response.json() as any;
     
     if (!data.candidates || data.candidates.length === 0) {
       throw new Error('No response from Gemini API');

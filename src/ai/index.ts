@@ -12,8 +12,6 @@ export type { AgentContext, AgentResponse } from './orchestrator';
 // Providers
 export {
   BaseLLMProvider,
-  OpenAIProvider,
-  AnthropicProvider,
   GeminiProvider,
 } from './providers';
 export type {
@@ -23,16 +21,12 @@ export type {
   StreamChunk,
 } from './providers';
 
-// Memory
-export { MemoryManager } from './memory';
-export type { MemoryStats } from './memory';
-
-// Tools
-export { ToolRegistry, fileAnalysisTool } from './tools';
-export type { Tool } from './tools';
-
 // Prompts
-export { PromptManager } from './prompts';
+export { PromptBuilder } from './prompts/prompt-builder';
+
+// Parsing
+export { AIResponseParser } from './parsing';
+export type { ParsedAIResponse } from './parsing';
 
 // Utils
 export * as AIUtils from './utils';
