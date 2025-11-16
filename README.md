@@ -21,7 +21,7 @@
 
 ## Demo
 
-https://github.com/user-attachments/assets/demo.mp4
+https://github.com/tayyab3245/snip-diff/raw/main/screenshots/demo.mp4
 
 *Watch SNIP-DIFF in action: intelligent code diffing, AI-powered summaries, and seamless context management*
 
