@@ -4,7 +4,7 @@
  */
 
 import React, { createContext, useContext, useEffect, ReactNode } from 'react';
-import { createTheme, type EnhancedTheme, type ThemeMode } from './index';
+import { createTheme, type EnhancedTheme, type ThemeMode, themes } from './index';
 
 // Theme context interface
 interface ThemeContextType {
@@ -134,4 +134,5 @@ export function useSystemTheme(): ThemeMode {
 }
 
 // Export pre-configured themes for direct use
+export { themes };
 export type { EnhancedTheme, ThemeMode, ThemeContextType };

@@ -21,9 +21,7 @@
 
 ## Demo
 
-[🎥 Watch Demo Video](./screenshots/demo.mp4)
-
-*To enable inline video playback on GitHub: Create a new issue/discussion, drag and drop `screenshots/demo.mp4`, copy the generated `https://github.com/user-attachments/assets/...` URL, and update this README*
+https://github.com/user-attachments/assets/demo.mp4
 
 *Watch SNIP-DIFF in action: intelligent code diffing, AI-powered summaries, and seamless context management*
 

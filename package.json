@@ -1,6 +1,6 @@
 {
   "name": "src",
-  "version": "1.1.1",
+  "version": "1.1.0",
   "description": "Electron frontend for SNIP-DIFF file comparison tool",
   "main": "dist/main/main/main.js",
   "homepage": "./",
