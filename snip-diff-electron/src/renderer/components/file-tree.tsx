@@ -267,12 +267,12 @@ export const FileTree: React.FC = () => {
     }
   };
 
-  const loadFileTree = async (path: string) => {
+  const loadFileTree = async (_path: string) => {
     setIsLoading(true);
     setError(null);
     
     try {
-      const response = await getFileTree(path);
+      const response = await getFileTree(_path);
       
       if (response.success && response.data) {
         setFileTree(response.data.nodes || []);

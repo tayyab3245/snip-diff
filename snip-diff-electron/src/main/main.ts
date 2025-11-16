@@ -3,10 +3,10 @@
  * Handles window management, IPC, and FastAPI backend communication
  */
 
+/// <reference types="node" />
+
 import { app, BrowserWindow, ipcMain, dialog } from 'electron';
-import { spawn, ChildProcess } from 'child_process';
 import * as path from 'path';
-import * as os from 'os';
 import chokidar, { FSWatcher } from 'chokidar';
 import { gitService } from './services/git-service';
 import { llmService } from './services/llm-service';

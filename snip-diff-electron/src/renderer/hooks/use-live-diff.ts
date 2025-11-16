@@ -57,8 +57,8 @@ export function useLiveDiff(
   const wsRef = useRef<WebSocket | null>(null);
   const subscribedPathsRef = useRef<Set<string>>(new Set());
   const eventListenersRef = useRef<Map<string, (event: DiffEvent) => void>>(new Map());
-  const heartbeatTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const heartbeatTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const connect = useCallback(() => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
@@ -313,10 +313,10 @@ export function useFileDiff(filePath: string, clientId: string = 'default') {
       liveDiff.subscribe([filePath]);
       
       // Listen for changes
-      const cleanup = liveDiff.onDiffEvent(filePath, (event) => {
-        if (event.type === 'file_diff' && event.diff) {
-          setFileDiff(event.diff);
-          setLastChange(event.change_type || null);
+      const cleanup = liveDiff.onDiffEvent(filePath, (_event) => {
+        if (_event.type === 'file_diff' && _event.diff) {
+          setFileDiff(_event.diff);
+          setLastChange(_event.change_type || null);
         }
       });
 
