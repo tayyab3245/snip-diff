@@ -9,10 +9,15 @@ import * as path from 'path';
 import { app, BrowserWindow, ipcMain, dialog, IpcMainInvokeEvent, Event } from 'electron';
 
 // Load .env - dotenv will search up from cwd for .env file
-dotenv.config();
+const dotenvResult = dotenv.config();
 
+console.log('=== Environment Loading Debug ===');
 console.log('CWD:', process.cwd());
+console.log('Dotenv result:', dotenvResult.error ? 'ERROR: ' + dotenvResult.error.message : 'Success');
+console.log('Dotenv parsed keys:', dotenvResult.parsed ? Object.keys(dotenvResult.parsed).length : 0);
 console.log('GEMINI_API_KEY present:', !!process.env.GEMINI_API_KEY);
+console.log('GEMINI_API_KEY length:', process.env.GEMINI_API_KEY?.length || 0);
+console.log('================================');
 
 import { gitService } from './services/git-service';
 import { llmService } from './services/llm-service';
@@ -41,15 +46,19 @@ class SnipDiffApp {
     
     // Initialize LLM service if API key is provided
     const geminiApiKey = process.env.GEMINI_API_KEY;
+    console.log('[LLM Init] API key available:', !!geminiApiKey);
+    console.log('[LLM Init] API key length:', geminiApiKey?.length || 0);
+    
     if (geminiApiKey) {
       try {
+        console.log('[LLM Init] Attempting to initialize LLM service...');
         await llmService.initialize(geminiApiKey);
-        console.log(`LLM Service: Initialized with Gemini`);
+        console.log('[LLM Init] ✓ Initialized with Gemini');
       } catch (error) {
-        console.error('LLM Service: Failed to initialize', error);
+        console.error('[LLM Init] ✗ Failed to initialize:', error);
       }
     } else {
-      console.log('LLM Service: Skipped (no GEMINI_API_KEY in environment)');
+      console.log('[LLM Init] Skipped - no GEMINI_API_KEY in environment');
     }
     
     await app.whenReady();
@@ -131,9 +140,7 @@ class SnipDiffApp {
     // Get Git diff for files
     ipcMain.handle('get-git-diff', async (_event: IpcMainInvokeEvent, directory: string, filePaths?: string[], fullContext?: boolean) => {
       try {
-        console.log('[Git] Getting diff for:', directory, filePaths, 'fullContext:', fullContext);
         const result = await gitService.getDiff(directory, filePaths, fullContext);
-        console.log('[Git] Diff result:', result);
         return result;
       } catch (error) {
         console.error('[Git] Error getting diff:', error);
@@ -171,9 +178,7 @@ class SnipDiffApp {
     // Get Git status for all files in directory
     ipcMain.handle('get-git-status', async (_event: IpcMainInvokeEvent, directory: string) => {
       try {
-        console.log('[Git] Getting status for:', directory);
         const statuses = await gitService.getStatus(directory);
-        console.log('[Git] Status result:', statuses.length, 'files');
         return { success: true, statuses };
       } catch (error) {
         console.error('[Git] Error getting status:', error);
@@ -187,41 +192,62 @@ class SnipDiffApp {
 
     // File tree handler
     ipcMain.handle('get-file-tree', async (_event: IpcMainInvokeEvent, dirPath: string) => {
-      console.log('[FileService] Getting file tree for:', dirPath);
       return this.fileService.getFileTree(dirPath);
     });
 
     // File read handler - single file
     ipcMain.handle('read-file', async (_event: IpcMainInvokeEvent, filePath: string) => {
-      console.log('[FileService] Reading file:', filePath);
       return this.fileService.readFile(filePath);
     });
 
     // File read handler - multiple files (for batch operations and LLM)
     ipcMain.handle('read-multiple-files', async (_event: IpcMainInvokeEvent, filePaths: string[]) => {
-      console.log('[FileService] Reading multiple files:', filePaths.length, 'files');
       return this.fileService.readMultipleFiles(filePaths);
     });
 
     // LLM Summarization handlers
     ipcMain.handle('llm-summarize-diff', async (_event: IpcMainInvokeEvent, repoPath: string, files: string[]) => {
       try {
-        console.log('[LLM] Summarizing diff for files:', files);
+        console.log('[LLM] Summarizing files:', files.length);
         
-        // Get diff content from git service
+        // Try to get git diff first
         const diffResult = await gitService.getDiff(repoPath, files, false);
-        if (!diffResult.success || diffResult.files.length === 0) {
-          return {
-            success: false,
-            error: 'No changes to summarize'
-          };
+        
+        let diffContent = '';
+        const gitStatus = new Map<string, string>();
+        const fileContents = new Map<string, string>();
+        
+        // If we have diff content, use it
+        if (diffResult.success && diffResult.files.length > 0) {
+          diffContent = diffResult.files.map(f => f.diff).join('\n\n');
+          diffResult.files.forEach(f => gitStatus.set(f.path, f.status));
+        } else {
+          // No diffs - read full file contents instead
+          console.log('[LLM] No diffs found, reading full file contents');
+          const fileReadResult = await this.fileService.readMultipleFiles(files);
+          
+          if (fileReadResult.success && fileReadResult.data) {
+            fileReadResult.data.forEach((f) => {
+              if (f.content) {
+                fileContents.set(f.path, f.content);
+                // Mark as unchanged in git
+                gitStatus.set(f.path, 'Unchanged');
+              }
+            });
+            
+            // Create a "diff" representation of the full files
+            diffContent = Array.from(fileContents.entries())
+              .map(([path, content]) => `=== ${path} ===\n${content}`)
+              .join('\n\n');
+          }
         }
 
-        // Combine all diffs
-        const diffContent = diffResult.files.map(f => f.diff).join('\n\n');
-        
-        // Build git status map
-        const gitStatus = new Map(diffResult.files.map(f => [f.path, f.status]));
+        if (!diffContent && fileContents.size === 0) {
+          return {
+            success: false,
+            error: 'No content to summarize'
+          };
+        }
 
         // Build context for AI
         const context = {
@@ -229,10 +255,11 @@ class SnipDiffApp {
           selectedFiles: files,
           gitStatus,
           diffContent,
+          fileContents: fileContents.size > 0 ? fileContents : undefined,
         };
 
         const result = await llmService.summarizeDiff(context);
-        console.log('[LLM] Diff summary result:', result.success ? 'success' : result.error);
+        console.log('[LLM] Summary result:', result.success ? 'success' : result.error);
         return result;
       } catch (error) {
         console.error('[LLM] Error:', error);

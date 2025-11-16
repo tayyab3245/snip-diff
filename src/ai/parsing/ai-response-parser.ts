@@ -180,13 +180,13 @@ export class AIResponseParser {
 
     // Overview
     formatted += `**${data.overview.summary}**\n\n`;
-    formatted += `📊 **${data.overview.totalFiles} files** changed across categories: ${data.overview.categories.join(', ')}\n\n`;
+    formatted += `**${data.overview.totalFiles} files** changed across categories: ${data.overview.categories.join(', ')}\n\n`;
 
     // Files
     formatted += `## Changes by File\n\n`;
     data.files.forEach(file => {
       formatted += `### ${file.path}\n`;
-      formatted += `🏷️ **${file.category}** | `;
+      formatted += `**${file.category}** | `;
       formatted += `+${file.linesAdded} −${file.linesDeleted}\n\n`;
       formatted += `${file.summary}\n\n`;
       if (file.keyChanges.length > 0) {
@@ -202,14 +202,14 @@ export class AIResponseParser {
     formatted += `## Impact\n`;
     formatted += `**Severity:** ${data.impact.severity.toUpperCase()}`;
     if (data.impact.breaking) {
-      formatted += ` ⚠️ **BREAKING CHANGE**`;
+      formatted += ` - **BREAKING CHANGE**`;
     }
     formatted += `\n\n${data.impact.description}\n`;
 
     if (data.impact.concerns.length > 0) {
       formatted += `\n**Concerns:**\n`;
       data.impact.concerns.forEach(concern => {
-        formatted += `⚠️ ${concern}\n`;
+        formatted += `• ${concern}\n`;
       });
     }
 
@@ -220,7 +220,7 @@ export class AIResponseParser {
    * Fallback formatting for non-structured responses
    */
   private formatFallback(rawResponse: string): string {
-    return `⚠️ **Response Format Issue**\n\nThe AI did not return a properly structured response. Raw output:\n\n${rawResponse}`;
+    return `**Response Format Issue**\n\nThe AI did not return a properly structured response. Raw output:\n\n${rawResponse}`;
   }
 
   /**

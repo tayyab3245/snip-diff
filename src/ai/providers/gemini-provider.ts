@@ -12,9 +12,9 @@ import {
 } from './base-provider';
 
 export class GeminiProvider extends BaseLLMProvider {
-  private readonly apiEndpoint = 'https://generativelanguage.googleapis.com/v1beta';
+  private readonly apiEndpoint = 'https://generativelanguage.googleapis.com/v1';
 
-  constructor(apiKey: string, model: string = 'gemini-pro') {
+  constructor(apiKey: string, model: string = 'gemini-2.0-flash') {
     super(apiKey, model);
   }
 
@@ -163,11 +163,27 @@ export class GeminiProvider extends BaseLLMProvider {
   }
 
   async validate(): Promise<boolean> {
+    console.log('[Gemini Provider] validate() called');
+    console.log('[Gemini Provider] API key available:', !!this.apiKey);
+    console.log('[Gemini Provider] API key length:', this.apiKey?.length || 0);
+    console.log('[Gemini Provider] Model:', this.defaultModel);
+    
     try {
       const url = `${this.apiEndpoint}/models/${this.defaultModel}?key=${this.apiKey}`;
+      console.log('[Gemini Provider] Validation URL:', url.replace(this.apiKey, '***KEY***'));
+      
       const response = await fetch(url);
+      console.log('[Gemini Provider] Response status:', response.status);
+      console.log('[Gemini Provider] Response OK:', response.ok);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('[Gemini Provider] Validation failed:', errorText);
+      }
+      
       return response.ok;
-    } catch {
+    } catch (error) {
+      console.error('[Gemini Provider] Validation error:', error);
       return false;
     }
   }

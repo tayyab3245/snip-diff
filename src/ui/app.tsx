@@ -20,6 +20,9 @@ const AppContent: React.FC = () => {
   const clipboard = useClipboard();
   const { 
     selectedPath, 
+    openFiles,
+    activeFilePath,
+    selectedFiles,  // Add selectedFiles to get the selected files from tree
     chatMessages, 
     isChatLoading, 
     chatPanelWidth,
@@ -71,7 +74,7 @@ const AppContent: React.FC = () => {
         return;
       }
 
-      // Get current diff content
+      // Get current active file or open files
       if (!selectedPath) {
         addChatMessage({
           type: 'error',
@@ -81,8 +84,28 @@ const AppContent: React.FC = () => {
         return;
       }
 
-      // Call LLM service - main process will handle getting diffs from git service
-      const result = await window.electronAPI.llmSummarizeDiff(selectedPath, []);
+      // Get files to analyze - prioritize selected files from tree, then fall back to open files
+      const selectedFilesArray = Array.from(selectedFiles);
+      const filesToAnalyze = selectedFilesArray.length > 0 
+        ? selectedFilesArray 
+        : (activeFilePath ? [activeFilePath] : openFiles.map(f => f.path));
+
+      if (filesToAnalyze.length === 0) {
+        addChatMessage({
+          type: 'error',
+          content: 'Please select files in the file tree or open a file first.',
+        });
+        setIsChatLoading(false);
+        return;
+      }
+      
+      addChatMessage({
+        type: 'system',
+        content: `Analyzing ${filesToAnalyze.length} selected file${filesToAnalyze.length > 1 ? 's' : ''}...`,
+      });
+
+      // Call LLM service - main process will handle getting content/diffs
+      const result = await window.electronAPI.llmSummarizeDiff(selectedPath, filesToAnalyze);
 
       if (result.success && result.summary) {
         addChatMessage({

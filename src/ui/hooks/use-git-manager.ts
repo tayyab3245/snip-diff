@@ -26,7 +26,6 @@ export const useGitManager = () => {
     }
 
     try {
-      console.log('[GitManager] Generating diff...');
       setScanStatus('running');
       
       const selectedFilesArray = Array.from(selectedFiles);
@@ -48,7 +47,6 @@ export const useGitManager = () => {
         });
         
         setScanStatus(diffResult.files.length > 0 ? 'completed' : null);
-        console.log('[GitManager] Diff generated successfully');
         return true;
       } else {
         console.error('[GitManager] Git diff failed:', diffResult.error);

@@ -65,6 +65,7 @@ export const ActionBar: React.FC<ActionBarProps> = ({
       <button
         style={actionButtonStyle}
         onClick={onSummarize}
+        title="Summarize selected files from the tree, or open files if none selected"
       >
         <span>✦</span>
         <span>Smart Summarize</span>

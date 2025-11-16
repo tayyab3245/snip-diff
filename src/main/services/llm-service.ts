@@ -17,23 +17,30 @@ export class LLMService {
   private initialized = false;
 
   async initialize(apiKey: string): Promise<void> {
+    console.log('[LLM Service] initialize() called');
+    console.log('[LLM Service] Already initialized:', this.initialized);
+    console.log('[LLM Service] API key provided:', !!apiKey);
+    console.log('[LLM Service] API key length:', apiKey?.length || 0);
+    
     if (this.initialized) {
+      console.log('[LLM Service] Skipping - already initialized');
       return;
     }
 
     try {
+      console.log('[LLM Service] Calling aiInitializer.initialize()...');
       await aiInitializer.initialize({
         provider: 'gemini',
         apiKey,
-        model: 'gemini-pro',
+        model: 'gemini-2.0-flash',
         temperature: 0.7,
         maxTokens: 2048,
       });
       
       this.initialized = true;
-      console.log('[LLM Service] AI system initialized');
+      console.log('[LLM Service] ✓ AI system initialized successfully');
     } catch (error) {
-      console.error('[LLM Service] Failed to initialize:', error);
+      console.error('[LLM Service] ✗ Failed to initialize:', error);
       throw error;
     }
   }

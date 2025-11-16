@@ -116,7 +116,10 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ messages, isLoading }) => 
         {messages.length === 0 && !isLoading ? (
           <div style={emptyStateStyle}>
             <div style={{ fontSize: '24px', marginBottom: '8px' }}>🤖</div>
-            <div>Click "Smart Summarize" or other action buttons to get AI insights</div>
+            <div>Select files in the tree and click "Smart Summarize" to get AI insights</div>
+            <div style={{ fontSize: '11px', marginTop: '8px', opacity: 0.7 }}>
+              Tip: Click files in the tree to select them for AI analysis
+            </div>
           </div>
         ) : (
           <>

@@ -14,8 +14,11 @@ export class PromptBuilder {
   private templateCache: Map<string, string> = new Map();
 
   constructor() {
-    // Prompts are stored in src/ai/prompts/
-    this.promptsDir = __dirname;
+    // Prompts are in src/ai/prompts/
+    // After compilation, __dirname is dist/ai/prompts, go back to project root then into src
+    this.promptsDir = path.join(__dirname, '..', '..', '..', '..', 'src', 'ai', 'prompts');
+    console.log('[PromptBuilder] __dirname:', __dirname);
+    console.log('[PromptBuilder] Prompts directory:', this.promptsDir);
   }
 
   /**
@@ -24,13 +27,16 @@ export class PromptBuilder {
   private loadTemplate(name: string): string {
     // Check cache first
     if (this.templateCache.has(name)) {
+      console.log('[PromptBuilder] Loading template from cache:', name);
       return this.templateCache.get(name)!;
     }
 
     // Load from file
     const filePath = path.join(this.promptsDir, `${name}.md`);
+    console.log('[PromptBuilder] Loading template from file:', filePath);
     
     if (!fs.existsSync(filePath)) {
+      console.error('[PromptBuilder] Template not found:', filePath);
       throw new Error(`Prompt template not found: ${name}.md`);
     }
 

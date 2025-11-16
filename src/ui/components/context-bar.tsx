@@ -9,7 +9,9 @@ import { useAppStore } from '../store/app-store';
 
 export const ContextBar: React.FC = () => {
   const { theme } = useTheme();
-  const { viewMode, diffMode, setViewMode, setDiffMode } = useAppStore();
+  const { viewMode, diffMode, setViewMode, setDiffMode, selectedFiles } = useAppStore();
+
+  const selectedCount = selectedFiles.size;
 
   const contextBarStyle: React.CSSProperties = {
     height: '56px',
@@ -17,9 +19,22 @@ export const ContextBar: React.FC = () => {
     borderBottom: `1px solid ${theme.colors.border.primary}`,
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'flex-end',
+    justifyContent: 'space-between',  // Changed to space-between to have left and right sections
     padding: '0 20px',
     gap: '16px',
+  };
+
+  const leftSectionStyle: React.CSSProperties = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    color: theme.colors.text.secondary,
+    fontSize: '13px',
+  };
+
+  const selectedCountStyle: React.CSSProperties = {
+    color: selectedCount > 0 ? '#38bdf8' : theme.colors.text.secondary,
+    fontWeight: selectedCount > 0 ? 600 : 400,
   };
 
   const rightSectionStyle: React.CSSProperties = {
@@ -49,6 +64,15 @@ export const ContextBar: React.FC = () => {
 
   return (
     <div style={contextBarStyle}>
+      <div style={leftSectionStyle}>
+        <span style={selectedCountStyle}>
+          {selectedCount > 0 
+            ? `${selectedCount} file${selectedCount > 1 ? 's' : ''} selected for AI` 
+            : 'Select files in tree for AI summarization'
+          }
+        </span>
+      </div>
+
       <div style={rightSectionStyle}>
         <div style={toggleGroupStyle}>
           <button
