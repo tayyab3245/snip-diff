@@ -21,7 +21,9 @@
 
 ## Demo
 
-https://github.com/tayyab3245/snip-diff/raw/main/screenshots/demo.mp4
+[🎥 Watch Demo Video](./screenshots/demo.mp4)
+
+*To enable inline video playback on GitHub: Create a new issue/discussion, drag and drop `screenshots/demo.mp4`, copy the generated `https://github.com/user-attachments/assets/...` URL, and update this README*
 
 *Watch SNIP-DIFF in action: intelligent code diffing, AI-powered summaries, and seamless context management*
 
