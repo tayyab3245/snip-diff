@@ -35,32 +35,19 @@ export class LLMService {
   private readonly minRequestInterval = 2000; // 2 seconds between requests
 
   async initialize(apiKey: string): Promise<void> {
-    console.log('[LLM Service] initialize() called');
-    console.log('[LLM Service] Already initialized:', this.initialized);
-    console.log('[LLM Service] API key provided:', !!apiKey);
-    console.log('[LLM Service] API key length:', apiKey?.length || 0);
-    
     if (this.initialized) {
-      console.log('[LLM Service] Skipping - already initialized');
       return;
     }
 
-    try {
-      console.log('[LLM Service] Calling aiInitializer.initialize()...');
-      await aiInitializer.initialize({
-        provider: 'gemini',
-        apiKey,
-        model: 'gemini-2.0-flash',
-        temperature: 0.7,
-        maxTokens: 8192,
-      });
-      
-      this.initialized = true;
-      console.log('[LLM Service] ✓ AI system initialized successfully');
-    } catch (error) {
-      console.error('[LLM Service] ✗ Failed to initialize:', error);
-      throw error;
-    }
+    await aiInitializer.initialize({
+      provider: 'gemini',
+      apiKey,
+      model: 'gemini-2.0-flash',
+      temperature: 0.7,
+      maxTokens: 8192,
+    });
+    
+    this.initialized = true;
   }
 
   isAvailable(): boolean {
@@ -101,7 +88,6 @@ export class LLMService {
         tokensUsed: result.tokensUsed,
       };
     } catch (error: any) {
-      console.error('[LLM Service] Diff summarization error:', error);
       return {
         success: false,
         error: error.message || 'Failed to summarize diff'
@@ -113,31 +99,6 @@ export class LLMService {
    * Generate commit message based on provided context
    * Caller must provide all data (diff content, file paths, git status)
    */
-  // DEPRECATED - generateCommitMessage removed as buildCommitPrompt was removed
-  // async generateCommitMessage(context: AgentContext): Promise<SummarizeResult> {
-  //   if (!this.isAvailable()) {
-  //     return {
-  //       success: false,
-  //       error: 'LLM service not initialized'
-  //     };
-  //   }
-
-  //   try {
-  //     const result = await aiOrchestrator.generateCommitMessage(context);
-
-  //     return {
-  //       success: true,
-  //       summary: result.content,
-  //       tokensUsed: result.tokensUsed,
-  //     };
-  //   } catch (error: any) {
-  //     console.error('[LLM Service] Generate commit error:', error);
-  //     return {
-  //       success: false,
-  //       error: error.message || 'Failed to generate commit message'
-  //     };
-  //   }
-  // }
 }
 
 export const llmService = new LLMService();

@@ -114,7 +114,6 @@ export class GitService {
           };
         });
     } catch (error) {
-      console.error('Error getting Git status:', error);
       return [];
     }
   }
@@ -159,7 +158,6 @@ export class GitService {
             diff += `@@ -0,0 +1,${lines.length} @@\n`;
             diff += lines.map(line => `+${line}`).join('\n');
           } catch (error) {
-            console.error(`Error reading untracked file ${file.path}:`, error);
             continue;
           }
         } else {
@@ -181,7 +179,6 @@ export class GitService {
               diff = cachedDiff;
             }
           } catch (error) {
-            console.error(`Error getting diff for ${file.path}:`, error);
             continue;
           }
         }
@@ -200,7 +197,6 @@ export class GitService {
         files
       };
     } catch (error: any) {
-      console.error('Error getting Git diff:', error);
       return {
         success: false,
         files: [],
