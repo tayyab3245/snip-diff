@@ -27,14 +27,6 @@ import { app, BrowserWindow, ipcMain, dialog, IpcMainInvokeEvent, Event } from '
 // Load .env - dotenv will search up from cwd for .env file
 const dotenvResult = dotenv.config();
 
-console.log('=== Environment Loading Debug ===');
-console.log('CWD:', process.cwd());
-console.log('Dotenv result:', dotenvResult.error ? 'ERROR: ' + dotenvResult.error.message : 'Success');
-console.log('Dotenv parsed keys:', dotenvResult.parsed ? Object.keys(dotenvResult.parsed).length : 0);
-console.log('GEMINI_API_KEY present:', !!process.env.GEMINI_API_KEY);
-console.log('GEMINI_API_KEY length:', process.env.GEMINI_API_KEY?.length || 0);
-console.log('================================');
-
 import { gitService } from './services/git-service';
 import { llmService } from './services/llm-service';
 import { FileService } from './services/file-service';
@@ -53,29 +45,6 @@ class SnipDiffApp {
   }
 
   async initialize() {
-    console.log('=== SNIP-DIFF Application Starting ===');
-    console.log(`Mode: ${this.isDev ? 'DEVELOPMENT' : 'PRODUCTION'}`);
-    console.log(`Platform: ${process.platform}`);
-    console.log(`Electron: ${process.versions.electron}`);
-    console.log(`Chrome: ${process.versions.chrome}`);
-    console.log(`Node: ${process.versions.node}`);
-    
-    // Initialize LLM service if API key is provided
-    const geminiApiKey = process.env.GEMINI_API_KEY;
-    console.log('[LLM Init] API key available:', !!geminiApiKey);
-    console.log('[LLM Init] API key length:', geminiApiKey?.length || 0);
-    
-    if (geminiApiKey) {
-      try {
-        console.log('[LLM Init] Attempting to initialize LLM service...');
-        await llmService.initialize(geminiApiKey);
-        console.log('[LLM Init] ✓ Initialized with Gemini');
-      } catch (error) {
-        console.error('[LLM Init] ✗ Failed to initialize:', error);
-      }
-    } else {
-      console.log('[LLM Init] Skipped - no GEMINI_API_KEY in environment');
-    }
     
     await app.whenReady();
     
@@ -90,7 +59,6 @@ class SnipDiffApp {
   }
 
   private createMainWindow() {
-    console.log('isDev:', this.isDev, 'NODE_ENV:', process.env.NODE_ENV, 'isPackaged:', app.isPackaged);
     
     this.mainWindow = new BrowserWindow({
       width: 1400,
@@ -123,32 +91,26 @@ class SnipDiffApp {
 
     // Show window when ready
     this.mainWindow.once('ready-to-show', () => {
-      console.log('Window ready to show');
       this.mainWindow?.show();
     });
 
     // Forward renderer console logs to main process
     this.mainWindow.webContents.on('console-message', (_event: Event, level: number, message: string, line: number, sourceId: string) => {
       const logLevel = ['LOG', 'WARNING', 'ERROR'][level] || 'LOG';
-      console.log(`[RENDERER ${logLevel}] ${message} (${sourceId}:${line})`);
     });
 
     // Log navigation events
     this.mainWindow.webContents.on('did-start-loading', () => {
-      console.log('Renderer: Started loading');
     });
 
     this.mainWindow.webContents.on('did-finish-load', () => {
-      console.log('Renderer: Finished loading');
     });
 
     this.mainWindow.webContents.on('did-fail-load', (_event: Event, errorCode: number, errorDescription: string) => {
-      console.error(`Renderer: Failed to load - ${errorCode}: ${errorDescription}`);
     });
 
     // Handle window closed
     this.mainWindow.on('closed', () => {
-      console.log('Main window closed');
       this.mainWindow = null;
     });
   }
@@ -160,7 +122,6 @@ class SnipDiffApp {
         const result = await gitService.getDiff(directory, filePaths, fullContext);
         return result;
       } catch (error) {
-        console.error('[Git] Error getting diff:', error);
         return {
           success: false,
           files: [],
@@ -198,7 +159,6 @@ class SnipDiffApp {
         const statuses = await gitService.getStatus(directory);
         return { success: true, statuses };
       } catch (error) {
-        console.error('[Git] Error getting status:', error);
         return {
           success: false,
           statuses: [],
@@ -227,7 +187,6 @@ class SnipDiffApp {
       try {
         // Filter out binary and gitignored files
         const filteredFiles = this.fileService.filterFilesForLLM(files);
-        console.log('[LLM] Summarizing files:', filteredFiles.length, '(filtered from', files.length, ')');
         
         if (filteredFiles.length === 0) {
           return {
@@ -249,7 +208,6 @@ class SnipDiffApp {
           diffResult.files.forEach(f => gitStatus.set(f.path, f.status));
         } else {
           // No diffs - read full file contents instead
-          console.log('[LLM] No diffs found, reading full file contents');
           const fileReadResult = await this.fileService.readMultipleFiles(filteredFiles);
           
           if (fileReadResult.success && fileReadResult.data) {
@@ -285,10 +243,8 @@ class SnipDiffApp {
         };
 
         const result = await llmService.summarizeDiff(context);
-        console.log('[LLM] Summary result:', result.success ? 'success' : result.error);
         return result;
       } catch (error) {
-        console.error('[LLM] Error:', error);
         return {
           success: false,
           error: error instanceof Error ? error.message : 'Unknown error'
@@ -298,7 +254,6 @@ class SnipDiffApp {
 
     ipcMain.handle('llm-generate-commit', async (_event: IpcMainInvokeEvent, repoPath: string, files: string[]) => {
       try {
-        console.log('[LLM] Generating commit message for files:', files);
         
         // Get diff content from git service
         const diffResult = await gitService.getDiff(repoPath, files, false);
@@ -325,13 +280,11 @@ class SnipDiffApp {
 
         // DEPRECATED - generateCommitMessage removed
         // const result = await llmService.generateCommitMessage(context);
-        console.log('[LLM] Commit message generation deprecated - feature removed');
         return {
           success: false,
           error: 'Commit message generation is no longer supported'
         };
       } catch (error) {
-        console.error('[LLM] Error:', error);
         return {
           success: false,
           error: error instanceof Error ? error.message : 'Unknown error'
@@ -341,11 +294,9 @@ class SnipDiffApp {
 
     ipcMain.handle('llm-initialize', async (_event: IpcMainInvokeEvent, apiKey: string) => {
       try {
-        console.log('[LLM] Initializing with API key');
         await llmService.initialize(apiKey);
         return { success: true };
       } catch (error) {
-        console.error('[LLM] Initialization error:', error);
         return {
           success: false,
           error: error instanceof Error ? error.message : 'Unknown error'
@@ -361,14 +312,12 @@ class SnipDiffApp {
     ipcMain.handle('start-watch', async (_event: IpcMainInvokeEvent, filePaths: string[]) => {
       // This handler is now deprecated - Git tracking is automatic
       // Keeping for backward compatibility but returning success immediately
-      console.log('[Watch] Deprecated: Git tracking is automatic, no manual watch needed');
       return { success: true };
     });
     
     // Stop watching files
     ipcMain.handle('stop-watch', async () => {
       // This handler is now deprecated - Git tracking is automatic
-      console.log('[Watch] Deprecated: Git tracking is automatic, no manual watch needed');
       return { success: true };
     });
 
@@ -390,11 +339,6 @@ class SnipDiffApp {
           });
         }
 
-        console.log(`[API Request] ${method} ${url.toString()}`);
-        if (params) {
-          console.log('[API Request] Params:', params);
-        }
-
         const fetchOptions: RequestInit = {
           method: method.toUpperCase(),
           headers: {
@@ -409,9 +353,6 @@ class SnipDiffApp {
         const response = await fetch(url.toString(), fetchOptions);
         const responseData = await response.json();
 
-        console.log(`[API Response] Status: ${response.status}, OK: ${response.ok}`);
-        console.log('[API Response] Data:', responseData);
-
         return {
           success: response.ok,
           status: response.status,
@@ -419,7 +360,6 @@ class SnipDiffApp {
         };
 
       } catch (error) {
-        console.error('API request error:', error);
         return {
           success: false,
           error: error instanceof Error ? error.message : 'Unknown error'
@@ -499,13 +439,11 @@ class SnipDiffApp {
 
   private cleanup() {
     // No cleanup needed - Git tracking is automatic
-    console.log('Cleaning up...');
   }
 }
 
 // Initialize the app
 const snipDiffApp = new SnipDiffApp();
 snipDiffApp.initialize().catch((error) => {
-  console.error('Fatal error during initialization:', error);
   app.quit();
 });
