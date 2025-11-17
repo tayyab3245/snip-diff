@@ -21,13 +21,13 @@
 
 ## Demo
 
-https://github.com/user-attachments/assets/demo.mp4
+https://github.com/user-attachments/assets/screenshot-example.png
 
 *Watch SNIP-DIFF in action: intelligent code diffing, AI-powered summaries, and seamless context management*
 
 ## What SNIP-DIFF Does
 
-SNIP-DIFF is a desktop application that revolutionizes how developers work with AI language models by providing intelligent code diffing, context optimization, and snippet generation tools.
+SNIP-DIFF is a desktop application that changes how developers work with AI language models by providing intelligent code diffing, context optimization, and snippet generation tools.
 
 ### Smart Code Diffing
 Automatically detect and analyze Git repository changes. Compare different versions of files with syntax highlighting. Identify additions, deletions, and modifications with precision. Real-time diff processing as you work.

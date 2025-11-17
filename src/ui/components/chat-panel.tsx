@@ -1,3 +1,19 @@
+/*
+ * Copyright 2025 Tayyab
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 /**
  * ChatPanel Component for SNIP-DIFF
  * AI Agent output panel - displays AI responses (no user input)
@@ -287,10 +303,26 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ messages, isLoading, fileC
                 
                 {/* Show analyzing status for AI messages */}
                 {message.type === 'ai' && (
-                  <div style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', marginBottom: '16px', paddingLeft: '20px', paddingRight: '20px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    marginBottom: '16px',
+                    paddingLeft: '0px',
+                    paddingRight: '0px',
+                    minHeight: '48px',
+                  }}>
+                    {/* Only show animation container when there's an animation */}
                     {typingMessages[message.id] === 'masked' && (
-                      <div style={styles.animationSvgContainer}>
+                      <div style={{
+                        width: '32px',
+                        height: '32px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                      }}>
+                        <div style={styles.animationSvgContainer}>
                         <svg
                           width="32"
                           height="32"
@@ -331,16 +363,14 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ messages, isLoading, fileC
                             </filter>
                           </defs>
                         </svg>
+                        </div>
                       </div>
                     )}
                     <span style={styles.statusText}>
                       {typingMessages[message.id] === 'masked' ? 'Summarizing' : 'Summarized'} {fileCount} file{fileCount !== 1 ? 's' : ''}
                     </span>
-                    </div>
                   </div>
-                )}
-                
-                {/* Only render content container when ready */}
+                )}                {/* Only render content container when ready */}
                 {(!typingMessages[message.id] || typingMessages[message.id] === 'animating') && (
                   <div style={styles.getMessageContent(
                     message.type,
