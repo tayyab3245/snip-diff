@@ -21,9 +21,9 @@
 
 ## Demo
 
-https://github.com/user-attachments/assets/screenshot-example.png
+![SNIP-DIFF Screenshot](screenshots/example.png)
 
-*Watch SNIP-DIFF in action: intelligent code diffing, AI-powered summaries, and seamless context management*
+*SNIP-DIFF in action: intelligent code diffing, AI-powered summaries, and seamless context management*
 
 ## What SNIP-DIFF Does
 
